@@ -5,10 +5,22 @@ import { supabase } from "../../services/supabase";
 function Register() {
   const navigate = useNavigate();
 
+  const currentYear = new Date().getFullYear();
+
+  const years = Array.from(
+    { length: currentYear - 1999 },
+    (_, index) => currentYear - index
+  );
+
   const [form, setForm] = useState({
     fullName: "",
     username: "",
     email: "",
+    province: "",
+    municipalityCity: "",
+    barangay: "",
+    yearStarted: "",
+    convergenceName: "",
     password: "",
     confirmPassword: "",
   });
@@ -50,6 +62,12 @@ function Register() {
           data: {
             full_name: form.fullName.trim(),
             username: form.username.trim(),
+
+            province: form.province.trim(),
+            municipality_city: form.municipalityCity.trim(),
+            barangay: form.barangay.trim(),
+            year_started: Number(form.yearStarted),
+            convergence_name: form.convergenceName.trim(),
           },
         },
       });
@@ -63,9 +81,7 @@ function Register() {
       }
 
       setSuccess(true);
-      setMessage(
-        "Account created successfully. Check your email if confirmation is required."
-      );
+      setMessage("Account created successfully.");
 
       setTimeout(() => {
         navigate("/login", { replace: true });
@@ -81,8 +97,6 @@ function Register() {
     <main className="auth-page">
       <div className="auth-card auth-card-large">
         <div className="auth-brand">
-          <div className="brand-mark">L</div>
-
           <div>
             <h1>Create Account</h1>
             <p>Register for AMIANAN-CADP L.E.N.S.</p>
@@ -103,31 +117,111 @@ function Register() {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="username">Username</label>
 
-            <input
-              id="username"
-              name="username"
-              value={form.username}
-              onChange={handleChange}
-              placeholder="Choose a username"
-              autoComplete="username"
-              required
-            />
+              <input
+                id="username"
+                name="username"
+                value={form.username}
+                onChange={handleChange}
+                placeholder="Choose a username"
+                autoComplete="username"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="registerEmail">Email</label>
+
+              <input
+                id="registerEmail"
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                autoComplete="email"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="province">Province</label>
+
+              <input
+                id="province"
+                name="province"
+                value={form.province}
+                onChange={handleChange}
+                placeholder="Enter province"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="municipalityCity">
+                Municipality / City
+              </label>
+
+              <input
+                id="municipalityCity"
+                name="municipalityCity"
+                value={form.municipalityCity}
+                onChange={handleChange}
+                placeholder="Enter municipality or city"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="barangay">Barangay</label>
+
+              <input
+                id="barangay"
+                name="barangay"
+                value={form.barangay}
+                onChange={handleChange}
+                placeholder="Enter barangay"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="yearStarted">Year Started</label>
+
+              <select
+                id="yearStarted"
+                name="yearStarted"
+                value={form.yearStarted}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select year</option>
+
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="form-group">
-            <label htmlFor="registerEmail">Email</label>
+            <label htmlFor="convergenceName">Convergence Name</label>
 
             <input
-              id="registerEmail"
-              name="email"
-              type="email"
-              value={form.email}
+              id="convergenceName"
+              name="convergenceName"
+              value={form.convergenceName}
               onChange={handleChange}
-              placeholder="Enter your email"
-              autoComplete="email"
+              placeholder="Enter convergence name"
               required
             />
           </div>
@@ -149,7 +243,9 @@ function Register() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm Password</label>
+              <label htmlFor="confirmPassword">
+                Confirm Password
+              </label>
 
               <input
                 id="confirmPassword"
@@ -165,18 +261,27 @@ function Register() {
           </div>
 
           {message && (
-            <div className={`form-message ${success ? "success" : "error"}`}>
+            <div
+              className={`form-message ${
+                success ? "success" : "error"
+              }`}
+            >
               {message}
             </div>
           )}
 
-          <button className="primary-button" type="submit" disabled={loading}>
+          <button
+            className="primary-button"
+            type="submit"
+            disabled={loading}
+          >
             {loading ? "Creating Account..." : "Create Account"}
           </button>
         </form>
 
         <p className="auth-switch">
-          Already have an account? <Link to="/login">Sign In</Link>
+          Already have an account?{" "}
+          <Link to="/login">Sign In</Link>
         </p>
       </div>
     </main>
