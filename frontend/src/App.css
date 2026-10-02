@@ -580,3 +580,277 @@ input {
     box-shadow: 0 0 0 3px rgba(47, 125, 70, 0.12);
   }
 }
+
+
+/* =========================================
+   DASHBOARD LAYOUT
+========================================= */
+
+.dashboard-layout {
+  min-height: 100vh;
+  display: flex;
+  background: #f5f7f5;
+}
+
+.dashboard-sidebar {
+  width: 270px;
+  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  background: #174c2d;
+  color: #ffffff;
+  box-shadow: 4px 0 18px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+}
+
+.sidebar-brand {
+  min-height: 95px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sidebar-logo {
+  width: 47px;
+  height: 47px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #f4c24f;
+  color: #174c2d;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.sidebar-brand strong,
+.sidebar-brand span {
+  display: block;
+}
+
+.sidebar-brand strong {
+  font-size: 14px;
+}
+
+.sidebar-brand span {
+  margin-top: 2px;
+  color: #f4c24f;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 22px 12px;
+}
+
+.sidebar-link {
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 6px;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+}
+
+.sidebar-link.active {
+  background: #ffffff;
+  color: #174c2d;
+}
+
+.sidebar-icon {
+  width: 23px;
+  display: inline-flex;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.sidebar-footer {
+  padding: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sidebar-user {
+  margin-bottom: 13px;
+}
+
+.sidebar-user span {
+  display: block;
+  margin-bottom: 3px;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.sidebar-user strong {
+  font-size: 14px;
+}
+
+.sidebar-logout {
+  width: 100%;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: transparent;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sidebar-logout:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.dashboard-main {
+  width: calc(100% - 270px);
+  min-height: 100vh;
+  margin-left: 270px;
+}
+
+.dashboard-topbar {
+  min-height: 95px;
+  padding: 18px 35px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e4e9e5;
+}
+
+.dashboard-topbar h1 {
+  margin: 4px 0 0;
+  color: #173b26;
+  font-size: 25px;
+}
+
+.dashboard-eyebrow {
+  margin: 0;
+  color: #438050;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.topbar-role {
+  padding: 8px 14px;
+  border-radius: 30px;
+  background: #edf6ef;
+  color: #246a3b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dashboard-content {
+  padding: 35px;
+}
+
+.dashboard-card {
+  max-width: 650px;
+  padding: 28px;
+  border: 1px solid #e2e8e3;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 7px 24px rgba(25, 65, 37, 0.06);
+}
+
+.dashboard-card > span {
+  display: block;
+  margin-bottom: 7px;
+  color: #778079;
+  font-size: 12px;
+}
+
+.dashboard-card > strong {
+  display: block;
+  color: #246a3b;
+  font-size: 24px;
+}
+
+.dashboard-card p {
+  margin: 13px 0 0;
+  color: #667069;
+  line-height: 1.6;
+}
+
+/* MOBILE */
+
+@media (max-width: 800px) {
+  .dashboard-sidebar {
+    width: 78px;
+  }
+
+  .sidebar-brand {
+    padding: 15px;
+    justify-content: center;
+  }
+
+  .sidebar-brand > div:not(.sidebar-logo),
+  .sidebar-link:not(.active) {
+    /* keep links visible */
+  }
+
+  .sidebar-brand strong,
+  .sidebar-brand span,
+  .sidebar-link {
+    font-size: 0;
+  }
+
+  .sidebar-link {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .sidebar-icon {
+    font-size: 20px;
+  }
+
+  .sidebar-user {
+    display: none;
+  }
+
+  .sidebar-logout {
+    font-size: 0;
+  }
+
+  .sidebar-logout::after {
+    content: "↪";
+    font-size: 20px;
+  }
+
+  .dashboard-main {
+    width: calc(100% - 78px);
+    margin-left: 78px;
+  }
+
+  .dashboard-topbar {
+    padding: 18px 20px;
+  }
+
+  .dashboard-content {
+    padding: 20px;
+  }
+}

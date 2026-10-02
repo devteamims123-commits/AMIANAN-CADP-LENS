@@ -1,12 +1,18 @@
-import DashboardShell from "./DashboardShell";
-
 function SuperAdminDashboard() {
   return (
-    <DashboardShell
-      title="Super Admin Dashboard"
-      role="Super Admin"
-    />
+    <div className="module-page">
+      <header className="module-header">
+        <p className="module-eyebrow">AMIANAN-CADP L.E.N.S.</p>
+        <h1>Super Admin Dashboard</h1>
+      </header>
+      <section className="module-content">
+        <div className="module-card">
+          <span>Current Role</span>
+          <strong>Super Admin</strong>
+          <p>Welcome to AMIANAN-CADP L.E.N.S. Select a module from the navigation menu to get started.</p>
+        </div>
+      </section>
+    </div>
   );
 }
-
 export default SuperAdminDashboard;
