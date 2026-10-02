@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../../services/supabase";
 import "./DashboardShell.css";
@@ -22,6 +22,18 @@ function DashboardShell() {
   const location = useLocation();
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+  const logoutDialogRef = useRef(null);
+
+  useEffect(() => {
+    const dialog = logoutDialogRef.current;
+    if (!dialog) return;
+
+    if (showLogoutConfirm && !dialog.open) dialog.showModal();
+    if (!showLogoutConfirm && dialog.open) dialog.close();
+  }, [showLogoutConfirm]);
 
   useEffect(() => {
     let mounted = true;
@@ -51,7 +63,14 @@ function DashboardShell() {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    setIsLoggingOut(true);
+    setLogoutError("");
+    const { error } = await supabase.auth.signOut();
+    setIsLoggingOut(false);
+    if (error) {
+      setLogoutError("Unable to sign out. Please try again.");
+      return;
+    }
     navigate("/login", { replace: true });
   };
 
@@ -109,11 +128,59 @@ function DashboardShell() {
 
         <div className="sidebar-footer">
           <div className="sidebar-user"><small>Current Role</small><strong>{roleLabels[role] || role}</strong></div>
-          <button type="button" className="sidebar-logout" onClick={handleLogout}>Sign Out</button>
+          <button
+            type="button"
+            className="sidebar-logout"
+            onClick={() => {
+              setLogoutError("");
+              setShowLogoutConfirm(true);
+            }}
+          >
+            Sign Out
+          </button>
         </div>
       </aside>
 
       <section className="dashboard-main"><Outlet /></section>
+
+      <dialog
+        ref={logoutDialogRef}
+        className="logout-dialog"
+        aria-labelledby="logout-dialog-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          if (!isLoggingOut) setShowLogoutConfirm(false);
+        }}
+        onClick={(event) => {
+          if (event.target === event.currentTarget && !isLoggingOut) {
+            setShowLogoutConfirm(false);
+          }
+        }}
+      >
+        <div className="logout-dialog-mark" aria-hidden="true">L</div>
+        <p className="logout-dialog-eyebrow">AMIANAN-CADP L.E.N.S.</p>
+        <h2 id="logout-dialog-title">Sign out?</h2>
+        <p className="logout-dialog-copy">You will need to sign in again to access your dashboard.</p>
+        {logoutError && <p className="logout-dialog-error" role="alert">{logoutError}</p>}
+        <div className="logout-dialog-actions">
+          <button
+            type="button"
+            className="logout-dialog-cancel"
+            disabled={isLoggingOut}
+            onClick={() => setShowLogoutConfirm(false)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="logout-dialog-confirm"
+            disabled={isLoggingOut}
+            onClick={handleLogout}
+          >
+            {isLoggingOut ? "Signing out..." : "Sign out"}
+          </button>
+        </div>
+      </dialog>
     </main>
   );
 }
