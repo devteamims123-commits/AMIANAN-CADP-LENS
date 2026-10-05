@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { supabaseAdmin } from "./config/supabase.js";
 import userRoutes from "./routes/userRoutes.js";
+import maintenanceLogRoutes from "./routes/maintenanceLogRoutes.js";
 
 dotenv.config();
 
@@ -61,7 +62,12 @@ app.get("/api/health", async (req, res) => {
 // Super Admin User Management API
 app.use("/api/users", userRoutes);
 
-// 404
+// Maintenance Logs API
+// Accessible only to Super Admin and Admin
+// through requireAdminOrSuperAdmin middleware.
+app.use("/api/maintenance-logs", maintenanceLogRoutes);
+
+// 404 - Keep this AFTER all API routes
 app.use((req, res) => {
   res.status(404).json({
     success: false,

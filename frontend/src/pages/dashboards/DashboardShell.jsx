@@ -124,7 +124,11 @@ function DashboardShell() {
           )}
 
           {["super_admin", "admin"].includes(role) && (
-            <button type="button" className="sidebar-link" disabled title="Coming next">
+            <button
+              type="button"
+              className={`sidebar-link ${isActive("/maintenance-logs") ? "active" : ""}`}
+              onClick={() => navigate("/maintenance-logs")}
+            >
               <span className="sidebar-icon">⚙</span><span>Maintenance Logs</span>
             </button>
           )}

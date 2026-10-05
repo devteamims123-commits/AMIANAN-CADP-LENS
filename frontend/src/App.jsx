@@ -17,6 +17,7 @@ import ViewerDashboard from "./pages/dashboards/ViewerDashboard";
 import CADPSiteRegistration from "./pages/CADPSiteRegistration";
 import ProgramsProjects from "./pages/ProgramsProjects";
 import UserManagement from "./pages/UserManagement";
+import MaintenanceLogs from "./pages/MaintenanceLogs";
 
 function App() {
   return (
@@ -111,6 +112,16 @@ function App() {
             element={
               <RoleRoute allowedRoles={["super_admin"]}>
                 <UserManagement />
+              </RoleRoute>
+            }
+          />
+
+          {/* Maintenance Logs */}
+          <Route
+            path="/maintenance-logs"
+            element={
+              <RoleRoute allowedRoles={["super_admin", "admin"]}>
+                <MaintenanceLogs />
               </RoleRoute>
             }
           />

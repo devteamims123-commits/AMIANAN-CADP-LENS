@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../config/supabase.js";
+import { writeMaintenanceLog } from "../services/maintenanceLogService.js";
 
 const ALLOWED_ROLES = ["admin", "user", "viewer"];
 const clean = (value) => typeof value === "string" ? value.trim() : "";
@@ -72,6 +73,13 @@ export async function createUser(req, res) {
 
     if (profileError) throw profileError;
 
+    await writeMaintenanceLog({
+      userId: req.authUser.id,
+      activity: "Account Created",
+      module: "User Management",
+      details: `Created ${role} account for ${fullName} (${username}).`,
+    });
+
     res.status(201).json({ success: true, message: "Account created successfully." });
   } catch (error) {
     if (createdUserId) {
@@ -120,6 +128,13 @@ export async function updateUser(req, res) {
       .eq("id", id);
     if (profileError) throw profileError;
 
+    await writeMaintenanceLog({
+      userId: req.authUser.id,
+      activity: "Account Updated",
+      module: "User Management",
+      details: `Updated account for ${fullName} (${username}); role: ${role}.`,
+    });
+
     res.json({ success: true, message: "Account updated successfully." });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message || "Unable to update account." });
@@ -136,7 +151,7 @@ export async function deleteUser(req, res) {
 
     const { data: target, error: lookupError } = await supabaseAdmin
       .from("profiles")
-      .select("role")
+      .select("full_name, username, role")
       .eq("id", id)
       .single();
 
@@ -149,6 +164,13 @@ export async function deleteUser(req, res) {
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
     if (error) throw error;
+
+    await writeMaintenanceLog({
+      userId: req.authUser.id,
+      activity: "Account Deleted",
+      module: "User Management",
+      details: `Deleted ${target.role} account for ${target.full_name || target.username || id}.`,
+    });
 
     res.json({ success: true, message: "Account deleted successfully." });
   } catch (error) {

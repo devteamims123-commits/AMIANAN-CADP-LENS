@@ -1,0 +1,24 @@
+.logs-page { min-height: 100%; background: #f4f7f4; padding: 28px; color: #1f2937; }
+.logs-header { margin-bottom: 22px; }
+.logs-header p { margin: 0 0 6px; color: #237a3b; font-size: 12px; font-weight: 800; letter-spacing: .12em; }
+.logs-header h1 { margin: 0; font-size: 30px; color: #163d25; }
+.logs-header span { display: block; margin-top: 7px; color: #667085; }
+.logs-card { background: #fff; border: 1px solid #e3e9e4; border-radius: 16px; box-shadow: 0 8px 24px rgba(25, 61, 37, .06); overflow: hidden; }
+.logs-toolbar { display: grid; grid-template-columns: minmax(240px, 1fr) 190px 160px auto; gap: 12px; align-items: center; padding: 18px; border-bottom: 1px solid #edf1ed; }
+.logs-toolbar input, .logs-toolbar select { width: 100%; min-height: 42px; border: 1px solid #d7ded8; border-radius: 9px; padding: 0 12px; background: #fff; font: inherit; outline: none; }
+.logs-toolbar input:focus, .logs-toolbar select:focus { border-color: #2f7d45; box-shadow: 0 0 0 3px rgba(47, 125, 69, .10); }
+.logs-count { color: #667085; font-size: 13px; white-space: nowrap; }
+.logs-table-wrap { overflow-x: auto; }
+.logs-table { width: 100%; border-collapse: collapse; min-width: 1050px; }
+.logs-table th { background: #f7faf7; color: #36513e; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; text-align: left; padding: 13px 14px; border-bottom: 1px solid #e5ebe6; }
+.logs-table td { padding: 14px; border-bottom: 1px solid #edf1ed; vertical-align: top; font-size: 14px; }
+.logs-table tbody tr:hover { background: #fbfdfb; }
+.logs-date { white-space: nowrap; color: #667085; }
+.logs-details { min-width: 280px; max-width: 440px; line-height: 1.45; }
+.logs-status { display: inline-block; padding: 5px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; text-transform: capitalize; }
+.logs-status.success { background: #e8f6ec; color: #237a3b; }
+.logs-status.failed { background: #fdecec; color: #b42318; }
+.logs-state, .logs-message { padding: 38px 20px; text-align: center; color: #667085; }
+.logs-message.error { color: #b42318; background: #fff5f5; }
+@media (max-width: 900px) { .logs-page { padding: 18px; } .logs-toolbar { grid-template-columns: 1fr 1fr; } .logs-count { grid-column: 1 / -1; } }
+@media (max-width: 560px) { .logs-toolbar { grid-template-columns: 1fr; } .logs-count { grid-column: auto; } .logs-header h1 { font-size: 25px; } }
