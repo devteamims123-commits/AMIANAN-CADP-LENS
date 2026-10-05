@@ -564,4 +564,83 @@
   .programs-modal-actions button {
     width: 100%;
   }
+  /* Physical Target Year Filter */
+  .programs-period-field {
+    width: min(190px, 100%);
+  }
+
+  .programs-period-label {
+    display: block;
+    margin-top: 3px;
+    color: #438050;
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  /* Physical Target */
+  .programs-target {
+    color: #245c36;
+    font-weight: 700;
+  }
+
+  .programs-financial {
+    color: #174c2d;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* Physical Target section inside Add/Edit modal */
+  .programs-target-section {
+    padding: 16px;
+    border: 1px solid #d6dfd8;
+    border-radius: 7px;
+    background: #f8faf8;
+  }
+
+  .programs-target-title {
+    margin-bottom: 12px;
+    color: #234a30;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .programs-target-inputs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .programs-target-inputs label {
+    display: grid;
+    gap: 6px;
+  }
+
+  .programs-target-inputs label span {
+    color: #425449;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .programs-target-inputs input {
+    text-align: center;
+  }
+
+  @media (max-width: 900px) {
+    .programs-target-inputs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 800px) {
+    .programs-period-field {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .programs-target-inputs {
+      grid-template-columns: 1fr;
+    }
+  }
 }

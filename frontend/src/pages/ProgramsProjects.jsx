@@ -2,16 +2,24 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../services/supabase";
 import "./ProgramsProjects.css";
 
-const initialForm = {
-  cadpSiteId: "",
-  intervention: "",
-  kpi: "",
-  sourceOfFund: "",
-  status: "Proposed",
-  physicalTarget: "",
-  financialTarget: "",
-  remarks: "",
-};
+const TARGET_PERIODS = [
+  {
+    label: "2025–2026",
+    field: "physical_target_2025_2026",
+  },
+  {
+    label: "2026–2027",
+    field: "physical_target_2026_2027",
+  },
+  {
+    label: "2027–2028",
+    field: "physical_target_2027_2028",
+  },
+  {
+    label: "2028–2029",
+    field: "physical_target_2028_2029",
+  },
+];
 
 const STATUS_OPTIONS = [
   "Proposed",
@@ -21,17 +29,37 @@ const STATUS_OPTIONS = [
   "Cancelled",
 ];
 
+const initialForm = {
+  cadpSiteId: "",
+  intervention: "",
+  kpi: "",
+  sourceOfFund: "",
+  status: "Proposed",
+
+  physicalTarget2025_2026: "",
+  physicalTarget2026_2027: "",
+  physicalTarget2027_2028: "",
+  physicalTarget2028_2029: "",
+
+  financialTarget: "",
+  remarks: "",
+};
+
 function ProgramsProjects() {
   const [records, setRecords] = useState([]);
   const [sites, setSites] = useState([]);
 
   const [selectedSite, setSelectedSite] = useState("");
+  const [selectedPeriod, setSelectedPeriod] =
+    useState("physical_target_2025_2026");
+
   const [search, setSearch] = useState("");
 
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
 
   const [showForm, setShowForm] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -47,54 +75,64 @@ function ProgramsProjects() {
     setErrorMessage("");
 
     try {
-      const [sitesResult, recordsResult] = await Promise.all([
-        supabase
-          .from("cadp_sites")
-          .select(
-            "id, convergence_name, province, municipality_city, barangay"
-          )
-          .order("convergence_name"),
+      const [sitesResult, recordsResult] =
+        await Promise.all([
+          supabase
+            .from("cadp_sites")
+            .select(
+              "id, convergence_name, province, municipality_city, barangay"
+            )
+            .order("convergence_name"),
 
-        supabase
-          .from("programs_projects")
-          .select("*")
-          .order("created_at", { ascending: false }),
-      ]);
+          supabase
+            .from("programs_projects")
+            .select("*")
+            .order("created_at", {
+              ascending: false,
+            }),
+        ]);
 
-      if (sitesResult.error) throw sitesResult.error;
-      if (recordsResult.error) throw recordsResult.error;
+      if (sitesResult.error) {
+        throw sitesResult.error;
+      }
 
-      setSites(sitesResult.data || []);
-      setRecords(recordsResult.data || []);
+      if (recordsResult.error) {
+        throw recordsResult.error;
+      }
 
-      if (!selectedSite && sitesResult.data?.length) {
-        setSelectedSite(sitesResult.data[0].id);
+      const siteData = sitesResult.data || [];
+      const recordData = recordsResult.data || [];
+
+      setSites(siteData);
+      setRecords(recordData);
+
+      if (!selectedSite && siteData.length > 0) {
+        setSelectedSite(siteData[0].id);
       }
     } catch (error) {
       console.error(error);
 
       setErrorMessage(
-        error.message || "Unable to load Programs and Projects."
+        error.message ||
+          "Unable to load Programs and Projects."
       );
     } finally {
       setLoading(false);
     }
   }
 
-  const siteName = (siteId) => {
-    const site = sites.find((item) => item.id === siteId);
-
-    if (!site) return "—";
-
-    return site.convergence_name;
-  };
+  const selectedPeriodLabel =
+    TARGET_PERIODS.find(
+      (period) => period.field === selectedPeriod
+    )?.label || "2025–2026";
 
   const filteredRecords = useMemo(() => {
     const query = search.trim().toLowerCase();
 
     return records.filter((record) => {
       const matchesSite =
-        !selectedSite || record.cadp_site_id === selectedSite;
+        !selectedSite ||
+        record.cadp_site_id === selectedSite;
 
       const matchesSearch =
         !query ||
@@ -103,7 +141,10 @@ function ProgramsProjects() {
           record.kpi,
           record.source_of_fund,
           record.status,
-          record.physical_target,
+          record.physical_target_2025_2026,
+          record.physical_target_2026_2027,
+          record.physical_target_2027_2028,
+          record.physical_target_2028_2029,
           record.financial_target,
           record.remarks,
         ].some((value) =>
@@ -122,7 +163,6 @@ function ProgramsProjects() {
       [field]: value,
     }));
 
-    setMessage("");
     setErrorMessage("");
   };
 
@@ -131,7 +171,8 @@ function ProgramsProjects() {
 
     setForm({
       ...initialForm,
-      cadpSiteId: selectedSite || sites[0]?.id || "",
+      cadpSiteId:
+        selectedSite || sites[0]?.id || "",
     });
 
     setMessage("");
@@ -143,17 +184,41 @@ function ProgramsProjects() {
     setEditingId(record.id);
 
     setForm({
-      cadpSiteId: record.cadp_site_id || "",
-      intervention: record.intervention || "",
-      kpi: record.kpi || "",
-      sourceOfFund: record.source_of_fund || "",
-      status: record.status || "Proposed",
-      physicalTarget: record.physical_target || "",
+      cadpSiteId:
+        record.cadp_site_id || "",
+
+      intervention:
+        record.intervention || "",
+
+      kpi:
+        record.kpi || "",
+
+      sourceOfFund:
+        record.source_of_fund || "",
+
+      status:
+        record.status || "Proposed",
+
+      physicalTarget2025_2026:
+        record.physical_target_2025_2026 || "",
+
+      physicalTarget2026_2027:
+        record.physical_target_2026_2027 || "",
+
+      physicalTarget2027_2028:
+        record.physical_target_2027_2028 || "",
+
+      physicalTarget2028_2029:
+        record.physical_target_2028_2029 || "",
+
       financialTarget:
-        record.financial_target !== null
+        record.financial_target !== null &&
+        record.financial_target !== undefined
           ? String(record.financial_target)
           : "",
-      remarks: record.remarks || "",
+
+      remarks:
+        record.remarks || "",
     });
 
     setMessage("");
@@ -196,34 +261,67 @@ function ProgramsProjects() {
         !form.sourceOfFund.trim() ||
         !form.status
       ) {
-        throw new Error("Please complete all required fields.");
+        throw new Error(
+          "Please complete all required fields."
+        );
       }
 
-      const payload = {
-        cadp_site_id: form.cadpSiteId,
-        intervention: form.intervention.trim(),
-        kpi: form.kpi.trim(),
-        source_of_fund: form.sourceOfFund.trim(),
-        status: form.status,
-        physical_target:
-          form.physicalTarget.trim() || null,
-        financial_target:
-          form.financialTarget === ""
-            ? null
-            : Number(form.financialTarget),
-        remarks: form.remarks.trim() || null,
-        updated_at: new Date().toISOString(),
-      };
+      const financialTarget =
+        form.financialTarget === ""
+          ? null
+          : Number(form.financialTarget);
 
       if (
-        payload.financial_target !== null &&
-        (!Number.isFinite(payload.financial_target) ||
-          payload.financial_target < 0)
+        financialTarget !== null &&
+        (!Number.isFinite(financialTarget) ||
+          financialTarget < 0)
       ) {
         throw new Error(
           "Financial Target must be a valid positive amount."
         );
       }
+
+      const payload = {
+        cadp_site_id:
+          form.cadpSiteId,
+
+        intervention:
+          form.intervention.trim(),
+
+        kpi:
+          form.kpi.trim(),
+
+        source_of_fund:
+          form.sourceOfFund.trim(),
+
+        status:
+          form.status,
+
+        physical_target_2025_2026:
+          form.physicalTarget2025_2026.trim() ||
+          null,
+
+        physical_target_2026_2027:
+          form.physicalTarget2026_2027.trim() ||
+          null,
+
+        physical_target_2027_2028:
+          form.physicalTarget2027_2028.trim() ||
+          null,
+
+        physical_target_2028_2029:
+          form.physicalTarget2028_2029.trim() ||
+          null,
+
+        financial_target:
+          financialTarget,
+
+        remarks:
+          form.remarks.trim() || null,
+
+        updated_at:
+          new Date().toISOString(),
+      };
 
       if (editingId) {
         const { error } = await supabase
@@ -231,9 +329,13 @@ function ProgramsProjects() {
           .update(payload)
           .eq("id", editingId);
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
 
-        setMessage("Program / Project updated successfully.");
+        setMessage(
+          "Program / Project updated successfully."
+        );
       } else {
         const { error } = await supabase
           .from("programs_projects")
@@ -242,9 +344,13 @@ function ProgramsProjects() {
             created_by: user.id,
           });
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
 
-        setMessage("Program / Project added successfully.");
+        setMessage(
+          "Program / Project added successfully."
+        );
       }
 
       setShowForm(false);
@@ -256,7 +362,8 @@ function ProgramsProjects() {
       console.error(error);
 
       setErrorMessage(
-        error.message || "Unable to save Program / Project."
+        error.message ||
+          "Unable to save Program / Project."
       );
     } finally {
       setSaving(false);
@@ -268,7 +375,9 @@ function ProgramsProjects() {
       "Are you sure you want to delete this Program / Project?"
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     setMessage("");
     setErrorMessage("");
@@ -279,22 +388,31 @@ function ProgramsProjects() {
         .delete()
         .eq("id", record.id);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      setMessage("Program / Project deleted successfully.");
+      setMessage(
+        "Program / Project deleted successfully."
+      );
 
       await loadData();
     } catch (error) {
       console.error(error);
 
       setErrorMessage(
-        error.message || "Unable to delete Program / Project."
+        error.message ||
+          "Unable to delete Program / Project."
       );
     }
   };
 
   const formatMoney = (value) => {
-    if (value === null || value === undefined || value === "") {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
       return "—";
     }
 
@@ -316,8 +434,9 @@ function ProgramsProjects() {
           <h1>Programs and Projects</h1>
 
           <p>
-            Manage programs, projects, targets, and funding
-            information for registered CADP sites.
+            Manage programs, projects, physical targets,
+            and funding information for registered CADP
+            sites.
           </p>
         </div>
 
@@ -341,11 +460,36 @@ function ProgramsProjects() {
                 setSelectedSite(event.target.value)
               }
             >
-              <option value="">All CADP Sites</option>
+              <option value="">
+                All CADP Sites
+              </option>
 
               {sites.map((site) => (
-                <option key={site.id} value={site.id}>
+                <option
+                  key={site.id}
+                  value={site.id}
+                >
                   {site.convergence_name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="programs-period-field">
+            <span>Physical Target Year</span>
+
+            <select
+              value={selectedPeriod}
+              onChange={(event) =>
+                setSelectedPeriod(event.target.value)
+              }
+            >
+              {TARGET_PERIODS.map((period) => (
+                <option
+                  key={period.field}
+                  value={period.field}
+                >
+                  {period.label}
                 </option>
               ))}
             </select>
@@ -390,9 +534,13 @@ function ProgramsProjects() {
           </div>
         ) : filteredRecords.length === 0 ? (
           <div className="programs-empty-state">
-            <h2>No Programs and Projects found</h2>
+            <h2>
+              No Programs and Projects found
+            </h2>
+
             <p>
-              Add a Program / Project to the selected CADP site.
+              Add a Program / Project to the selected
+              CADP site.
             </p>
           </div>
         ) : (
@@ -401,7 +549,8 @@ function ProgramsProjects() {
               <thead>
                 <tr>
                   <th>
-                    Proposed Inputs, Activities, Interventions
+                    Proposed Inputs, Activities,
+                    Interventions
                   </th>
 
                   <th>
@@ -412,22 +561,33 @@ function ProgramsProjects() {
 
                   <th>Status</th>
 
-                  <th>Actions</th>
-
-                  <th>Physical Target</th>
+                  <th>
+                    Physical Target
+                    <span className="programs-period-label">
+                      {selectedPeriodLabel}
+                    </span>
+                  </th>
 
                   <th>Financial Target</th>
+
+                  <th>Actions</th>
                 </tr>
               </thead>
 
               <tbody>
                 {filteredRecords.map((record) => (
                   <tr key={record.id}>
-                    <td>{record.intervention}</td>
+                    <td>
+                      {record.intervention}
+                    </td>
 
-                    <td>{record.kpi}</td>
+                    <td>
+                      {record.kpi}
+                    </td>
 
-                    <td>{record.source_of_fund}</td>
+                    <td>
+                      {record.source_of_fund}
+                    </td>
 
                     <td>
                       <span
@@ -437,6 +597,16 @@ function ProgramsProjects() {
                       >
                         {record.status}
                       </span>
+                    </td>
+
+                    <td className="programs-target">
+                      {record[selectedPeriod] || "—"}
+                    </td>
+
+                    <td className="programs-financial">
+                      {formatMoney(
+                        record.financial_target
+                      )}
                     </td>
 
                     <td>
@@ -462,16 +632,6 @@ function ProgramsProjects() {
                         </button>
                       </div>
                     </td>
-
-                    <td>
-                      {record.physical_target || "—"}
-                    </td>
-
-                    <td>
-                      {formatMoney(
-                        record.financial_target
-                      )}
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -484,7 +644,9 @@ function ProgramsProjects() {
         <div
           className="programs-modal-backdrop"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
+            if (
+              event.target === event.currentTarget
+            ) {
               closeForm();
             }
           }}
@@ -586,6 +748,7 @@ function ProgramsProjects() {
                 <span>Source of Fund *</span>
 
                 <input
+                  type="text"
                   value={form.sourceOfFund}
                   onChange={(event) =>
                     updateForm(
@@ -621,22 +784,87 @@ function ProgramsProjects() {
                 </select>
               </label>
 
-              <label>
-                <span>Physical Target</span>
+              <div className="programs-full programs-target-section">
+                <div className="programs-target-title">
+                  Physical Target
+                </div>
 
-                <input
-                  value={form.physicalTarget}
-                  onChange={(event) =>
-                    updateForm(
-                      "physicalTarget",
-                      event.target.value
-                    )
-                  }
-                  placeholder="e.g. 10 km, 50 farmers"
-                />
-              </label>
+                <div className="programs-target-inputs">
+                  <label>
+                    <span>2025–2026</span>
 
-              <label>
+                    <input
+                      type="text"
+                      value={
+                        form.physicalTarget2025_2026
+                      }
+                      onChange={(event) =>
+                        updateForm(
+                          "physicalTarget2025_2026",
+                          event.target.value
+                        )
+                      }
+                      placeholder="e.g. 10 km"
+                    />
+                  </label>
+
+                  <label>
+                    <span>2026–2027</span>
+
+                    <input
+                      type="text"
+                      value={
+                        form.physicalTarget2026_2027
+                      }
+                      onChange={(event) =>
+                        updateForm(
+                          "physicalTarget2026_2027",
+                          event.target.value
+                        )
+                      }
+                      placeholder="e.g. 15 km"
+                    />
+                  </label>
+
+                  <label>
+                    <span>2027–2028</span>
+
+                    <input
+                      type="text"
+                      value={
+                        form.physicalTarget2027_2028
+                      }
+                      onChange={(event) =>
+                        updateForm(
+                          "physicalTarget2027_2028",
+                          event.target.value
+                        )
+                      }
+                      placeholder="e.g. 20 km"
+                    />
+                  </label>
+
+                  <label>
+                    <span>2028–2029</span>
+
+                    <input
+                      type="text"
+                      value={
+                        form.physicalTarget2028_2029
+                      }
+                      onChange={(event) =>
+                        updateForm(
+                          "physicalTarget2028_2029",
+                          event.target.value
+                        )
+                      }
+                      placeholder="e.g. 25 km"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <label className="programs-full">
                 <span>Financial Target</span>
 
                 <input
