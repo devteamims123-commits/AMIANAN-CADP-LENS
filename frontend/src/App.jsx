@@ -1,4 +1,9 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import {
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
+
 import "./App.css";
 
 import Login from "./pages/auth/Login";
@@ -9,10 +14,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import RoleRoute from "./components/auth/RoleRoute";
 
 import DashboardShell from "./pages/dashboards/DashboardShell";
-import SuperAdminDashboard from "./pages/dashboards/SuperAdminDashboard";
-import AdminDashboard from "./pages/dashboards/AdminDashboard";
-import UserDashboard from "./pages/dashboards/UserDashboard";
-import ViewerDashboard from "./pages/dashboards/ViewerDashboard";
+import Dashboard from "./pages/dashboards/Dashboard";
 
 import CADPSiteRegistration from "./pages/CADPSiteRegistration";
 import ProgramsProjects from "./pages/ProgramsProjects";
@@ -23,12 +25,34 @@ function App() {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+
+      <Route
+        path="/"
+        element={
+          <Navigate
+            to="/login"
+            replace
+          />
+        }
+      />
+
+      <Route
+        path="/login"
+        element={<Login />}
+      />
+
+      <Route
+        path="/register"
+        element={<Register />}
+      />
+
+      <Route
+        path="/forgot-password"
+        element={<ForgotPassword />}
+      />
 
       {/* Protected Routes */}
+
       <Route element={<ProtectedRoute />}>
         <Route
           element={
@@ -44,62 +68,83 @@ function App() {
             </RoleRoute>
           }
         >
-          {/* Super Admin Dashboard */}
+          {/* ONE Dashboard - All Roles */}
+
+          <Route
+            path="/dashboard"
+            element={<Dashboard />}
+          />
+
+          {/* Old dashboard URLs redirect
+              to the single Dashboard */}
+
           <Route
             path="/super-admin"
             element={
-              <RoleRoute allowedRoles={["super_admin"]}>
-                <SuperAdminDashboard />
-              </RoleRoute>
+              <Navigate
+                to="/dashboard"
+                replace
+              />
             }
           />
 
-          {/* Admin Dashboard */}
           <Route
             path="/admin"
             element={
-              <RoleRoute allowedRoles={["admin"]}>
-                <AdminDashboard />
-              </RoleRoute>
+              <Navigate
+                to="/dashboard"
+                replace
+              />
             }
           />
 
-          {/* User Dashboard */}
           <Route
             path="/user"
             element={
-              <RoleRoute allowedRoles={["user"]}>
-                <UserDashboard />
-              </RoleRoute>
+              <Navigate
+                to="/dashboard"
+                replace
+              />
             }
           />
 
-          {/* Viewer Dashboard */}
           <Route
             path="/viewer"
             element={
-              <RoleRoute allowedRoles={["viewer"]}>
-                <ViewerDashboard />
-              </RoleRoute>
+              <Navigate
+                to="/dashboard"
+                replace
+              />
             }
           />
 
           {/* CADP Site Registration */}
+
           <Route
             path="/cadp-sites/register"
             element={
-              <RoleRoute allowedRoles={["super_admin", "admin"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "super_admin",
+                  "admin",
+                ]}
+              >
                 <CADPSiteRegistration />
               </RoleRoute>
             }
           />
 
           {/* Programs / Projects */}
+
           <Route
             path="/programs-projects"
             element={
               <RoleRoute
-                allowedRoles={["super_admin", "admin", "user"]}
+                allowedRoles={[
+                  "super_admin",
+                  "admin",
+                  "user",
+                ]}
               >
                 <ProgramsProjects />
               </RoleRoute>
@@ -107,20 +152,31 @@ function App() {
           />
 
           {/* User Management */}
+
           <Route
             path="/user-management"
             element={
-              <RoleRoute allowedRoles={["super_admin"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "super_admin",
+                ]}
+              >
                 <UserManagement />
               </RoleRoute>
             }
           />
 
           {/* Maintenance Logs */}
+
           <Route
             path="/maintenance-logs"
             element={
-              <RoleRoute allowedRoles={["super_admin", "admin"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "super_admin",
+                  "admin",
+                ]}
+              >
                 <MaintenanceLogs />
               </RoleRoute>
             }
@@ -129,7 +185,16 @@ function App() {
       </Route>
 
       {/* Unknown Route */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+
+      <Route
+        path="*"
+        element={
+          <Navigate
+            to="/login"
+            replace
+          />
+        }
+      />
     </Routes>
   );
 }
