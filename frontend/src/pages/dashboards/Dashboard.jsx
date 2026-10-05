@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../services/supabase";
+import { supabase } from "../../services/supabase";
 import "./Dashboard.css";
 
 const TARGET_PERIODS = [
