@@ -5,22 +5,10 @@ import { supabase } from "../../services/supabase";
 function Register() {
   const navigate = useNavigate();
 
-  const currentYear = new Date().getFullYear();
-
-  const years = Array.from(
-    { length: currentYear - 1999 },
-    (_, index) => currentYear - index
-  );
-
   const [form, setForm] = useState({
     fullName: "",
     username: "",
     email: "",
-    province: "",
-    municipalityCity: "",
-    barangay: "",
-    yearStarted: "",
-    convergenceName: "",
     password: "",
     confirmPassword: "",
   });
@@ -62,12 +50,6 @@ function Register() {
           data: {
             full_name: form.fullName.trim(),
             username: form.username.trim(),
-
-            province: form.province.trim(),
-            municipality_city: form.municipalityCity.trim(),
-            barangay: form.barangay.trim(),
-            year_started: Number(form.yearStarted),
-            convergence_name: form.convergenceName.trim(),
           },
         },
       });
@@ -81,7 +63,9 @@ function Register() {
       }
 
       setSuccess(true);
-      setMessage("Account created successfully.");
+      setMessage(
+        "Account created successfully. Please check your email for verification."
+      );
 
       setTimeout(() => {
         navigate("/login", { replace: true });
@@ -104,19 +88,23 @@ function Register() {
         </div>
 
         <form onSubmit={handleSubmit}>
+          {/* FULL NAME */}
           <div className="form-group">
             <label htmlFor="fullName">Full Name</label>
 
             <input
               id="fullName"
               name="fullName"
+              type="text"
               value={form.fullName}
               onChange={handleChange}
               placeholder="Enter your full name"
+              autoComplete="name"
               required
             />
           </div>
 
+          {/* USERNAME + EMAIL */}
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="username">Username</label>
@@ -124,6 +112,7 @@ function Register() {
               <input
                 id="username"
                 name="username"
+                type="text"
                 value={form.username}
                 onChange={handleChange}
                 placeholder="Choose a username"
@@ -148,84 +137,7 @@ function Register() {
             </div>
           </div>
 
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="province">Province</label>
-
-              <input
-                id="province"
-                name="province"
-                value={form.province}
-                onChange={handleChange}
-                placeholder="Enter province"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="municipalityCity">
-                Municipality / City
-              </label>
-
-              <input
-                id="municipalityCity"
-                name="municipalityCity"
-                value={form.municipalityCity}
-                onChange={handleChange}
-                placeholder="Enter municipality or city"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="barangay">Barangay</label>
-
-              <input
-                id="barangay"
-                name="barangay"
-                value={form.barangay}
-                onChange={handleChange}
-                placeholder="Enter barangay"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="yearStarted">Year Started</label>
-
-              <select
-                id="yearStarted"
-                name="yearStarted"
-                value={form.yearStarted}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select year</option>
-
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="convergenceName">Convergence Name</label>
-
-            <input
-              id="convergenceName"
-              name="convergenceName"
-              value={form.convergenceName}
-              onChange={handleChange}
-              placeholder="Enter convergence name"
-              required
-            />
-          </div>
-
+          {/* PASSWORD + CONFIRM PASSWORD */}
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="registerPassword">Password</label>
@@ -260,6 +172,7 @@ function Register() {
             </div>
           </div>
 
+          {/* MESSAGE */}
           {message && (
             <div
               className={`form-message ${
@@ -270,6 +183,7 @@ function Register() {
             </div>
           )}
 
+          {/* CREATE ACCOUNT */}
           <button
             className="primary-button"
             type="submit"
