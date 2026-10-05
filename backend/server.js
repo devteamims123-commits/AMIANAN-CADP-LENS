@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { supabaseAdmin } from "./config/supabase.js";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 
@@ -56,6 +57,9 @@ app.get("/api/health", async (req, res) => {
     });
   }
 });
+
+// Super Admin User Management API
+app.use("/api/users", userRoutes);
 
 // 404
 app.use((req, res) => {

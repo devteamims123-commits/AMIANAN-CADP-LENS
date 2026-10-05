@@ -15,6 +15,7 @@ import UserDashboard from "./pages/dashboards/UserDashboard";
 import ViewerDashboard from "./pages/dashboards/ViewerDashboard";
 import CADPSiteRegistration from "./pages/CADPSiteRegistration";
 import ProgramsProjects from "./pages/ProgramsProjects";
+import UserManagement from "./pages/UserManagement";
 
 function App() {
   return (
@@ -77,6 +78,17 @@ function App() {
             element={
               <RoleRoute allowedRoles={["super_admin", "admin", "user"]}>
                 <ProgramsProjects />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/user-management"
+            element={
+              <RoleRoute allowedRoles={["super_admin"]}>
+                <UserManagement />
+              </RoleRoute>
+            }
+          />
               </RoleRoute>
             }
           />
