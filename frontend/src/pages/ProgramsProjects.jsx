@@ -50,16 +50,13 @@ function ProgramsProjects() {
   const [sites, setSites] = useState([]);
 
   const [selectedSite, setSelectedSite] = useState("");
-  const [selectedPeriod, setSelectedPeriod] =
-    useState("physical_target_2025_2026");
-
+  const [selectedPeriod, setSelectedPeriod] = useState("all");
   const [search, setSearch] = useState("");
 
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
 
   const [showForm, setShowForm] = useState(false);
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -75,22 +72,21 @@ function ProgramsProjects() {
     setErrorMessage("");
 
     try {
-      const [sitesResult, recordsResult] =
-        await Promise.all([
-          supabase
-            .from("cadp_sites")
-            .select(
-              "id, convergence_name, province, municipality_city, barangay"
-            )
-            .order("convergence_name"),
+      const [sitesResult, recordsResult] = await Promise.all([
+        supabase
+          .from("cadp_sites")
+          .select(
+            "id, convergence_name, province, municipality_city, barangay"
+          )
+          .order("convergence_name"),
 
-          supabase
-            .from("programs_projects")
-            .select("*")
-            .order("created_at", {
-              ascending: false,
-            }),
-        ]);
+        supabase
+          .from("programs_projects")
+          .select("*")
+          .order("created_at", {
+            ascending: false,
+          }),
+      ]);
 
       if (sitesResult.error) {
         throw sitesResult.error;
@@ -122,54 +118,57 @@ function ProgramsProjects() {
   }
 
   const selectedPeriodLabel =
-    TARGET_PERIODS.find(
-      (period) => period.field === selectedPeriod
-    )?.label || "2025–2026";
-    const filteredRecords = useMemo(() => {
-      const query = search.trim().toLowerCase();
+    selectedPeriod === "all"
+      ? "All Years"
+      : TARGET_PERIODS.find(
+          (period) => period.field === selectedPeriod
+        )?.label || "";
 
-      return records.filter((record) => {
-        const matchesSite =
-          !selectedSite ||
-          record.cadp_site_id === selectedSite;
+  const filteredRecords = useMemo(() => {
+    const query = search.trim().toLowerCase();
 
-        // Only show records that have a Physical Target
-        // for the currently selected period.
-        const selectedTarget = record[selectedPeriod];
+    return records.filter((record) => {
+      const matchesSite =
+        !selectedSite ||
+        record.cadp_site_id === selectedSite;
 
-        const matchesPhysicalTarget =
-          selectedTarget !== null &&
-          selectedTarget !== undefined &&
-          String(selectedTarget).trim() !== "";
+      const matchesPhysicalTarget =
+        selectedPeriod === "all" ||
+        (record[selectedPeriod] !== null &&
+          record[selectedPeriod] !== undefined &&
+          String(record[selectedPeriod]).trim() !== "");
 
-        const matchesSearch =
-          !query ||
-          [
-            record.intervention,
-            record.kpi,
-            record.source_of_fund,
-            record.status,
-            selectedTarget,
-            record.financial_target,
-            record.remarks,
-          ].some((value) =>
-            String(value || "")
-              .toLowerCase()
-              .includes(query)
-          );
-
-        return (
-          matchesSite &&
-          matchesPhysicalTarget &&
-          matchesSearch
+      const matchesSearch =
+        !query ||
+        [
+          record.intervention,
+          record.kpi,
+          record.source_of_fund,
+          record.status,
+          record.physical_target_2025_2026,
+          record.physical_target_2026_2027,
+          record.physical_target_2027_2028,
+          record.physical_target_2028_2029,
+          record.financial_target,
+          record.remarks,
+        ].some((value) =>
+          String(value || "")
+            .toLowerCase()
+            .includes(query)
         );
-      });
-    }, [
-      records,
-      selectedSite,
-      selectedPeriod,
-      search,
-    ]);
+
+      return (
+        matchesSite &&
+        matchesPhysicalTarget &&
+        matchesSearch
+      );
+    });
+  }, [
+    records,
+    selectedSite,
+    selectedPeriod,
+    search,
+  ]);
 
   const updateForm = (field, value) => {
     setForm((previous) => ({
@@ -437,6 +436,18 @@ function ProgramsProjects() {
     }).format(Number(value));
   };
 
+  const hasAnyPhysicalTarget = (record) => {
+    return TARGET_PERIODS.some((period) => {
+      const value = record[period.field];
+
+      return (
+        value !== null &&
+        value !== undefined &&
+        String(value).trim() !== ""
+      );
+    });
+  };
+
   return (
     <div className="programs-page">
       <header className="module-header programs-header">
@@ -498,6 +509,10 @@ function ProgramsProjects() {
                 setSelectedPeriod(event.target.value)
               }
             >
+              <option value="all">
+                All Years
+              </option>
+
               {TARGET_PERIODS.map((period) => (
                 <option
                   key={period.field}
@@ -553,8 +568,8 @@ function ProgramsProjects() {
             </h2>
 
             <p>
-              Add a Program / Project to the selected
-              CADP site.
+              No records match the selected CADP site,
+              physical target year, or search.
             </p>
           </div>
         ) : (
@@ -571,20 +586,29 @@ function ProgramsProjects() {
                     KPI (Key Performance Indicators)
                   </th>
 
-                  <th>Source of Fund</th>
+                  <th>
+                    Source of Fund
+                  </th>
 
-                  <th>Status</th>
+                  <th>
+                    Status
+                  </th>
 
                   <th>
                     Physical Target
+
                     <span className="programs-period-label">
                       {selectedPeriodLabel}
                     </span>
                   </th>
 
-                  <th>Financial Target</th>
+                  <th>
+                    Financial Target
+                  </th>
 
-                  <th>Actions</th>
+                  <th>
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
@@ -614,7 +638,43 @@ function ProgramsProjects() {
                     </td>
 
                     <td className="programs-target">
-                      {record[selectedPeriod] || "—"}
+                      {selectedPeriod === "all" ? (
+                        <div className="programs-all-targets">
+                          {TARGET_PERIODS.map((period) => {
+                            const value =
+                              record[period.field];
+
+                            if (
+                              value === null ||
+                              value === undefined ||
+                              String(value).trim() === ""
+                            ) {
+                              return null;
+                            }
+
+                            return (
+                              <div
+                                key={period.field}
+                                className="programs-target-row"
+                              >
+                                <strong>
+                                  {period.label}:
+                                </strong>
+
+                                <span>
+                                  {value}
+                                </span>
+                              </div>
+                            );
+                          })}
+
+                          {!hasAnyPhysicalTarget(record) && (
+                            <span>—</span>
+                          )}
+                        </div>
+                      ) : (
+                        record[selectedPeriod] || "—"
+                      )}
                     </td>
 
                     <td className="programs-financial">
@@ -805,7 +865,9 @@ function ProgramsProjects() {
 
                 <div className="programs-target-inputs">
                   <label>
-                    <span>2025–2026</span>
+                    <span>
+                      2025–2026
+                    </span>
 
                     <input
                       type="text"
@@ -823,7 +885,9 @@ function ProgramsProjects() {
                   </label>
 
                   <label>
-                    <span>2026–2027</span>
+                    <span>
+                      2026–2027
+                    </span>
 
                     <input
                       type="text"
@@ -841,7 +905,9 @@ function ProgramsProjects() {
                   </label>
 
                   <label>
-                    <span>2027–2028</span>
+                    <span>
+                      2027–2028
+                    </span>
 
                     <input
                       type="text"
@@ -859,7 +925,9 @@ function ProgramsProjects() {
                   </label>
 
                   <label>
-                    <span>2028–2029</span>
+                    <span>
+                      2028–2029
+                    </span>
 
                     <input
                       type="text"
@@ -879,7 +947,9 @@ function ProgramsProjects() {
               </div>
 
               <label className="programs-full">
-                <span>Financial Target</span>
+                <span>
+                  Financial Target
+                </span>
 
                 <input
                   type="number"
@@ -897,7 +967,9 @@ function ProgramsProjects() {
               </label>
 
               <label className="programs-full">
-                <span>Remarks</span>
+                <span>
+                  Remarks
+                </span>
 
                 <textarea
                   value={form.remarks}
