@@ -125,37 +125,51 @@ function ProgramsProjects() {
     TARGET_PERIODS.find(
       (period) => period.field === selectedPeriod
     )?.label || "2025–2026";
+    const filteredRecords = useMemo(() => {
+      const query = search.trim().toLowerCase();
 
-  const filteredRecords = useMemo(() => {
-    const query = search.trim().toLowerCase();
+      return records.filter((record) => {
+        const matchesSite =
+          !selectedSite ||
+          record.cadp_site_id === selectedSite;
 
-    return records.filter((record) => {
-      const matchesSite =
-        !selectedSite ||
-        record.cadp_site_id === selectedSite;
+        // Only show records that have a Physical Target
+        // for the currently selected period.
+        const selectedTarget = record[selectedPeriod];
 
-      const matchesSearch =
-        !query ||
-        [
-          record.intervention,
-          record.kpi,
-          record.source_of_fund,
-          record.status,
-          record.physical_target_2025_2026,
-          record.physical_target_2026_2027,
-          record.physical_target_2027_2028,
-          record.physical_target_2028_2029,
-          record.financial_target,
-          record.remarks,
-        ].some((value) =>
-          String(value || "")
-            .toLowerCase()
-            .includes(query)
+        const matchesPhysicalTarget =
+          selectedTarget !== null &&
+          selectedTarget !== undefined &&
+          String(selectedTarget).trim() !== "";
+
+        const matchesSearch =
+          !query ||
+          [
+            record.intervention,
+            record.kpi,
+            record.source_of_fund,
+            record.status,
+            selectedTarget,
+            record.financial_target,
+            record.remarks,
+          ].some((value) =>
+            String(value || "")
+              .toLowerCase()
+              .includes(query)
+          );
+
+        return (
+          matchesSite &&
+          matchesPhysicalTarget &&
+          matchesSearch
         );
-
-      return matchesSite && matchesSearch;
-    });
-  }, [records, selectedSite, search]);
+      });
+    }, [
+      records,
+      selectedSite,
+      selectedPeriod,
+      search,
+    ]);
 
   const updateForm = (field, value) => {
     setForm((previous) => ({
