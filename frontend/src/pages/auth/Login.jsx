@@ -2,13 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../services/supabase";
 
-const rolePaths = {
-  super_admin: "/super-admin",
-  admin: "/admin",
-  user: "/user",
-  viewer: "/viewer",
-};
-
 function Login() {
   const navigate = useNavigate();
 
@@ -25,29 +18,52 @@ function Login() {
     setMessage("");
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      const { data, error } =
+        await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
 
       if (error) throw error;
 
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
+      const { data: profile, error: profileError } =
+        await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
 
       if (profileError || !profile) {
         await supabase.auth.signOut();
-        throw new Error("Your account profile could not be loaded.");
+
+        throw new Error(
+          "Your account profile could not be loaded."
+        );
       }
 
-      navigate(rolePaths[profile.role] || "/user", {
+      const allowedRoles = [
+        "super_admin",
+        "admin",
+        "user",
+        "viewer",
+      ];
+
+      if (!allowedRoles.includes(profile.role)) {
+        await supabase.auth.signOut();
+
+        throw new Error(
+          "Your account does not have a valid role."
+        );
+      }
+
+      // All roles now use one Dashboard.
+      navigate("/dashboard", {
         replace: true,
       });
     } catch (error) {
-      setMessage(error.message || "Unable to sign in.");
+      setMessage(
+        error.message || "Unable to sign in."
+      );
     } finally {
       setLoading(false);
     }
@@ -63,7 +79,9 @@ function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="login-field">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">
+              Email
+            </label>
 
             <input
               id="email"
@@ -71,30 +89,48 @@ function Login() {
               placeholder="Enter your email"
               autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
               required
             />
           </div>
 
           <div className="login-field">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">
+              Password
+            </label>
 
             <div className="password-field">
               <input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
                 placeholder="Enter your password"
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) =>
+                  setPassword(e.target.value)
+                }
                 required
               />
 
               <button
                 type="button"
                 className="password-toggle"
-                onClick={() => setShowPassword((current) => !current)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() =>
+                  setShowPassword(
+                    (current) => !current
+                  )
+                }
+                aria-label={
+                  showPassword
+                    ? "Hide password"
+                    : "Show password"
+                }
               >
                 {showPassword ? "◉" : "○"}
               </button>
@@ -102,7 +138,9 @@ function Login() {
           </div>
 
           <div className="forgot-row">
-            <Link to="/forgot-password">Forgot Password?</Link>
+            <Link to="/forgot-password">
+              Forgot Password?
+            </Link>
           </div>
 
           {message && (
@@ -116,13 +154,20 @@ function Login() {
             className="login-button"
             disabled={loading}
           >
-            {loading ? "Signing In..." : "Sign In"}
+            {loading
+              ? "Signing In..."
+              : "Sign In"}
           </button>
         </form>
 
         <div className="register-link">
-          <span>Don't have an account?</span>
-          <Link to="/register">Create Account</Link>
+          <span>
+            Don't have an account?
+          </span>
+
+          <Link to="/register">
+            Create Account
+          </Link>
         </div>
       </div>
     </main>
