@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../services/supabase";
 import "./UserManagement.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.DEV
+  ? "http://localhost:5000"
+  : "";
 
 const EMPTY_FORM = {
   fullName: "",
