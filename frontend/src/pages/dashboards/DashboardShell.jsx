@@ -110,7 +110,11 @@ function DashboardShell() {
           )}
 
           {role === "super_admin" && (
-            <button type="button" className="sidebar-link" disabled title="Coming next">
+            <button
+              type="button"
+              className={`sidebar-link ${isActive("/user-management") ? "active" : ""}`}
+              onClick={() => navigate("/user-management")}
+            >
               <span className="sidebar-icon">♙</span><span>User Management</span>
             </button>
           )}
