@@ -14,6 +14,7 @@ import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import UserDashboard from "./pages/dashboards/UserDashboard";
 import ViewerDashboard from "./pages/dashboards/ViewerDashboard";
 import CADPSiteRegistration from "./pages/CADPSiteRegistration";
+import ProgramsProjects from "./pages/ProgramsProjects";
 
 function App() {
   return (
@@ -68,6 +69,14 @@ function App() {
             element={
               <RoleRoute allowedRoles={["super_admin", "admin"]}>
                 <CADPSiteRegistration />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/programs-projects"
+            element={
+              <RoleRoute allowedRoles={["super_admin", "admin", "user"]}>
+                <ProgramsProjects />
               </RoleRoute>
             }
           />

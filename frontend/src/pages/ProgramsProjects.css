@@ -1,0 +1,241 @@
+.programs-page {
+  min-height: 100vh;
+  background: #f5f7f5;
+}
+
+.programs-header {
+  padding-bottom: 20px;
+}
+
+.programs-selected-site {
+  margin: 9px 0 0;
+  color: #667069;
+  font-size: 14px;
+}
+
+.programs-selected-site strong {
+  color: #174c2d;
+}
+
+.programs-content {
+  padding: 26px 34px 34px;
+}
+
+.programs-toolbar {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.programs-toolbar label {
+  display: grid;
+  gap: 6px;
+  color: #425449;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.programs-site-field {
+  width: min(220px, 100%);
+}
+
+.programs-search-field {
+  width: min(380px, 100%);
+}
+
+.programs-toolbar select,
+.programs-toolbar input {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d6dfd8;
+  border-radius: 6px;
+  background: #fff;
+  color: #273a2d;
+  font-size: 13px;
+}
+
+.programs-toolbar select:focus,
+.programs-toolbar input:focus {
+  border-color: #438050;
+  outline: 3px solid rgba(67, 128, 80, 0.16);
+}
+
+.programs-result-count {
+  margin: 0 0 11px auto;
+  color: #667069;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.programs-table-scroll {
+  width: 100%;
+  overflow: auto;
+  border: 1px solid #dfe6e0;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.programs-table {
+  width: 100%;
+  min-width: 1180px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  color: #39473d;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.programs-column-intervention {
+  width: 280px;
+}
+
+.programs-column-kpi {
+  width: 190px;
+}
+
+.programs-column-target {
+  width: 115px;
+}
+
+.programs-column-remarks {
+  width: 210px;
+}
+
+.programs-table th,
+.programs-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #e7ece8;
+  border-right: 1px solid #edf0ed;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.programs-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #edf3ee;
+  color: #234a30;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.programs-target-group > div:first-child {
+  text-align: center;
+}
+
+.programs-target-years {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: calc(100% + 24px);
+  margin: 4px -12px 0;
+  text-align: center;
+}
+
+.programs-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.programs-table th:last-child,
+.programs-table td:last-child {
+  border-right: 0;
+}
+
+.programs-table tbody tr:hover {
+  background: #fafcfb;
+}
+
+.programs-target {
+  color: #245c36;
+  font-weight: 700;
+}
+
+.programs-expandable-text summary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  cursor: pointer;
+}
+
+.programs-expandable-text[open] summary {
+  display: block;
+  overflow: visible;
+}
+
+.programs-expandable-text p {
+  margin: 9px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid #e7ece8;
+  color: #667069;
+}
+
+.programs-empty-state {
+  min-height: 270px;
+  padding: 42px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #cbd7cd;
+  border-radius: 7px;
+  background: #fff;
+  text-align: center;
+}
+
+.programs-empty-mark {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #edf3ee;
+  color: #438050;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.programs-empty-state h2 {
+  margin: 15px 0 5px;
+  color: #234a30;
+  font-size: 16px;
+}
+
+.programs-empty-state p {
+  margin: 0;
+  color: #667069;
+  font-size: 13px;
+}
+
+.programs-sample-note {
+  margin: 12px 0 0;
+  color: #7a857d;
+  font-size: 11px;
+}
+
+@media (max-width: 800px) {
+  .programs-content {
+    padding: 20px;
+  }
+
+  .programs-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .programs-site-field,
+  .programs-search-field {
+    width: 100%;
+  }
+
+  .programs-result-count {
+    margin: 0;
+    align-self: flex-start;
+  }
+}

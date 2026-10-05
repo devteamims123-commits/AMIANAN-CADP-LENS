@@ -104,7 +104,11 @@ function DashboardShell() {
           )}
 
           {canAccessPrograms && (
-            <button type="button" className="sidebar-link" disabled title="Coming next">
+            <button
+              type="button"
+              className={`sidebar-link ${isActive("/programs-projects") ? "active" : ""}`}
+              onClick={() => navigate("/programs-projects")}
+            >
               <span className="sidebar-icon">▤</span><span>Programs / Projects</span>
             </button>
           )}
