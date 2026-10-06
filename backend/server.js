@@ -1,7 +1,9 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+
 import { supabaseAdmin } from "./config/supabase.js";
+
 import userRoutes from "./routes/userRoutes.js";
 import maintenanceLogRoutes from "./routes/maintenanceLogRoutes.js";
 
@@ -10,31 +12,44 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ======================================================
 // Middleware
+// ======================================================
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin:
+      process.env.FRONTEND_URL ||
+      "http://localhost:5173",
     credentials: true,
   })
 );
 
 app.use(express.json());
 
-// Home route
+// ======================================================
+// Home Route
+// ======================================================
+
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "AMIANAN-CADP L.E.N.S. API is running.",
+    message:
+      "AMIANAN-CADP L.E.N.S. API is running.",
   });
 });
 
-// Supabase connection test
+// ======================================================
+// Supabase Connection Test
+// ======================================================
+
 app.get("/api/health", async (req, res) => {
   try {
-    const { error } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1,
-    });
+    const { error } =
+      await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1,
+      });
 
     if (error) {
       throw error;
@@ -44,30 +59,54 @@ app.get("/api/health", async (req, res) => {
       success: true,
       server: "connected",
       database: "connected",
-      message: "Backend successfully connected to Supabase.",
+      message:
+        "Backend successfully connected to Supabase.",
     });
   } catch (error) {
-    console.error("Supabase connection error:", error.message);
+    console.error(
+      "Supabase connection error:",
+      error.message
+    );
 
     res.status(500).json({
       success: false,
       server: "connected",
       database: "connection failed",
-      message: "Backend could not connect to Supabase.",
+      message:
+        "Backend could not connect to Supabase.",
       error: error.message,
     });
   }
 });
 
-// Super Admin User Management API
+// ======================================================
+// User Management
+// Super Admin only
+// ======================================================
+
 app.use("/api/users", userRoutes);
 
-// Maintenance Logs API
-// Accessible only to Super Admin and Admin
-// through requireAdminOrSuperAdmin middleware.
-app.use("/api/maintenance-logs", maintenanceLogRoutes);
+// ======================================================
+// Maintenance
+// Super Admin / Admin
+//
+// This now handles the NEW manual maintenance records.
+// GET    /api/maintenance-logs
+// POST   /api/maintenance-logs
+// PUT    /api/maintenance-logs/:id
+// DELETE /api/maintenance-logs/:id
+// ======================================================
 
-// 404 - Keep this AFTER all API routes
+app.use(
+  "/api/maintenance-logs",
+  maintenanceLogRoutes
+);
+
+// ======================================================
+// 404
+// Keep AFTER all API routes
+// ======================================================
+
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -75,7 +114,12 @@ app.use((req, res) => {
   });
 });
 
-// Start server
+// ======================================================
+// Start Server
+// ======================================================
+
 app.listen(PORT, () => {
-  console.log(`AMIANAN-CADP L.E.N.S. API running on port ${PORT}`);
+  console.log(
+    `AMIANAN-CADP L.E.N.S. API running on port ${PORT}`
+  );
 });
