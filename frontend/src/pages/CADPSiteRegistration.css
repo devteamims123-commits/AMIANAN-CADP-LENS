@@ -1,18 +1,25 @@
-/* ========================================
-   PAGE
-======================================== */
+/* =========================================================
+   CADP SITE MANAGEMENT
+========================================================= */
 
 .cadp-page {
   width: 100%;
   min-height: 100vh;
   background: #f5f8f6;
   color: #173b26;
+  box-sizing: border-box;
+}
+
+.cadp-page *,
+.cadp-page *::before,
+.cadp-page *::after {
+  box-sizing: border-box;
 }
 
 
-/* ========================================
+/* =========================================================
    HEADER
-======================================== */
+========================================================= */
 
 .cadp-header {
   display: flex;
@@ -20,13 +27,18 @@
   justify-content: space-between;
   gap: 30px;
 
+  width: 100%;
   padding: 28px 40px;
 
   background: #ffffff;
   border-bottom: 1px solid #e1e8e3;
 }
 
-.cadp-header p {
+.cadp-header-text {
+  min-width: 0;
+}
+
+.cadp-header-text p {
   margin: 0 0 6px;
 
   color: #28703c;
@@ -36,7 +48,7 @@
   letter-spacing: 0.1em;
 }
 
-.cadp-header h1 {
+.cadp-header-text h1 {
   margin: 0;
 
   color: #123c25;
@@ -46,7 +58,7 @@
   line-height: 1.2;
 }
 
-.cadp-header span {
+.cadp-header-text span {
   display: block;
 
   margin-top: 7px;
@@ -54,18 +66,18 @@
   color: #6c786f;
 
   font-size: 14px;
+  line-height: 1.5;
 }
 
 
-/* ========================================
+/* =========================================================
    REGISTER BUTTON
-======================================== */
+========================================================= */
 
 .cadp-register-button {
   flex-shrink: 0;
 
   min-height: 46px;
-
   padding: 0 20px;
 
   border: 0;
@@ -84,11 +96,14 @@
 
   transition:
     background 0.2s ease,
-    transform 0.15s ease;
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
 }
 
 .cadp-register-button:hover {
   background: #185c2e;
+
+  box-shadow: 0 8px 20px rgba(33, 107, 56, 0.2);
 }
 
 .cadp-register-button:active {
@@ -96,50 +111,61 @@
 }
 
 
-/* ========================================
-   CONTENT
-======================================== */
+/* =========================================================
+   MAIN CONTENT
+========================================================= */
 
 .cadp-content {
   width: 100%;
 
   padding: 28px 40px 50px;
-
-  box-sizing: border-box;
 }
 
 
-/* ========================================
-   SUCCESS MESSAGE
-======================================== */
+/* =========================================================
+   PAGE MESSAGES
+========================================================= */
 
-.cadp-page-message {
+.cadp-content > .cadp-message {
+  width: 100%;
   max-width: 1200px;
 
   margin: 0 auto 18px;
-  padding: 13px 16px;
-
-  border-radius: 9px;
-
-  font-size: 13px;
-  font-weight: 600;
 }
 
-.cadp-page-message.success {
+.cadp-message {
+  padding: 12px 14px;
+
+  border-radius: 8px;
+
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.cadp-message.success {
   border: 1px solid #cce5d2;
 
   background: #edf8f0;
   color: #216b38;
 }
 
+.cadp-message.error {
+  border: 1px solid #efcccc;
 
-/* ========================================
+  background: #fff2f2;
+  color: #a62e2e;
+}
+
+
+/* =========================================================
    TOOLBAR
-======================================== */
+========================================================= */
 
 .cadp-toolbar {
   display: flex;
   align-items: center;
+
   gap: 12px;
 
   width: 100%;
@@ -148,20 +174,26 @@
   margin: 0 auto 18px;
 }
 
-.cadp-search-wrapper {
+.cadp-search-box {
   position: relative;
 
+  display: flex;
+  align-items: center;
+
   flex: 1;
+  min-width: 0;
 }
 
-.cadp-search-wrapper input {
+.cadp-search-box input {
   width: 100%;
   height: 46px;
 
-  padding: 0 15px 0 42px;
+  padding: 0 16px 0 43px;
 
   border: 1px solid #d2dcd5;
   border-radius: 9px;
+
+  outline: none;
 
   background: #ffffff;
   color: #23382a;
@@ -169,13 +201,16 @@
   font: inherit;
   font-size: 13px;
 
-  box-sizing: border-box;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.cadp-search-wrapper input:focus,
-.cadp-province-filter:focus {
-  outline: none;
+.cadp-search-box input::placeholder {
+  color: #8b978f;
+}
 
+.cadp-search-box input:focus {
   border-color: #347b49;
 
   box-shadow: 0 0 0 3px rgba(52, 123, 73, 0.09);
@@ -189,14 +224,18 @@
 
   transform: translateY(-50%);
 
-  color: #708078;
+  z-index: 1;
 
-  font-size: 20px;
+  color: #718078;
+
+  font-size: 18px;
 
   pointer-events: none;
 }
 
 .cadp-province-filter {
+  flex-shrink: 0;
+
   width: 220px;
   height: 46px;
 
@@ -205,19 +244,33 @@
   border: 1px solid #d2dcd5;
   border-radius: 9px;
 
+  outline: none;
+
   background: #ffffff;
   color: #263c2e;
 
   font: inherit;
   font-size: 13px;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.cadp-province-filter:focus {
+  border-color: #347b49;
+
+  box-shadow: 0 0 0 3px rgba(52, 123, 73, 0.09);
 }
 
 
-/* ========================================
-   TABLE CARD
-======================================== */
+/* =========================================================
+   REGISTERED SITES CARD
+========================================================= */
 
-.cadp-table-card {
+.cadp-sites-card {
   width: 100%;
   max-width: 1200px;
 
@@ -233,19 +286,21 @@
   box-shadow: 0 8px 25px rgba(22, 67, 38, 0.05);
 }
 
-.cadp-table-heading {
+.cadp-sites-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 
   gap: 20px;
 
-  padding: 20px 22px;
+  min-height: 82px;
+
+  padding: 19px 22px;
 
   border-bottom: 1px solid #e8ede9;
 }
 
-.cadp-table-heading h2 {
+.cadp-sites-card-header h2 {
   margin: 0;
 
   color: #173f28;
@@ -254,8 +309,8 @@
   font-weight: 800;
 }
 
-.cadp-table-heading p {
-  margin: 4px 0 0;
+.cadp-sites-card-header p {
+  margin: 5px 0 0;
 
   color: #7b867f;
 
@@ -263,13 +318,14 @@
 }
 
 
-/* ========================================
-   REFRESH
-======================================== */
+/* =========================================================
+   REFRESH BUTTON
+========================================================= */
 
 .cadp-refresh-button {
-  min-height: 37px;
+  flex-shrink: 0;
 
+  min-height: 37px;
   padding: 0 14px;
 
   border: 1px solid #d2ddd5;
@@ -283,24 +339,32 @@
   font-weight: 700;
 
   cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .cadp-refresh-button:hover:not(:disabled) {
+  border-color: #b9cbbf;
+
   background: #f3f7f4;
 }
 
 .cadp-refresh-button:disabled {
   opacity: 0.6;
+
   cursor: not-allowed;
 }
 
 
-/* ========================================
+/* =========================================================
    TABLE
-======================================== */
+========================================================= */
 
-.cadp-table-container {
+.cadp-table-wrapper {
   width: 100%;
+
   overflow-x: auto;
 }
 
@@ -308,6 +372,9 @@
   width: 100%;
 
   border-collapse: collapse;
+  border-spacing: 0;
+
+  background: #ffffff;
 
   font-size: 13px;
 }
@@ -319,47 +386,56 @@
 .cadp-table th {
   padding: 13px 18px;
 
+  border-bottom: 1px solid #e3e9e5;
+
   color: #53645a;
 
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
+  letter-spacing: 0.035em;
 
-  letter-spacing: 0.025em;
   text-align: left;
   text-transform: uppercase;
 
-  border-bottom: 1px solid #e3e9e5;
+  white-space: nowrap;
 }
 
 .cadp-table td {
   padding: 15px 18px;
 
-  color: #34473a;
-
   border-bottom: 1px solid #edf1ee;
+
+  color: #34473a;
 
   vertical-align: middle;
 }
 
-.cadp-table tbody tr:last-child td {
-  border-bottom: 0;
+.cadp-table tbody tr {
+  transition: background 0.15s ease;
 }
 
 .cadp-table tbody tr:hover {
   background: #fafcfb;
 }
 
+.cadp-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
 .cadp-table td strong {
   color: #173e27;
+
+  font-weight: 700;
 }
 
 
-/* ========================================
+/* =========================================================
    PROVINCE BADGE
-======================================== */
+========================================================= */
 
 .cadp-province-badge {
   display: inline-flex;
+  align-items: center;
 
   padding: 5px 9px;
 
@@ -370,15 +446,17 @@
 
   font-size: 11px;
   font-weight: 700;
+
+  white-space: nowrap;
 }
 
 
-/* ========================================
-   TABLE STATE
-======================================== */
+/* =========================================================
+   EMPTY / LOADING TABLE
+========================================================= */
 
-.cadp-table-state {
-  height: 170px;
+.cadp-empty-state {
+  height: 160px;
 
   color: #89938d !important;
 
@@ -386,9 +464,89 @@
 }
 
 
-/* ========================================
+/* =========================================================
+   ACTION COLUMN
+========================================================= */
+
+.cadp-actions-column {
+  width: 170px;
+
+  text-align: center !important;
+}
+
+.cadp-row-actions {
+  width: 170px;
+
+  text-align: center;
+
+  white-space: nowrap;
+}
+
+.cadp-row-actions button {
+  min-height: 34px;
+
+  padding: 0 13px;
+
+  border-radius: 7px;
+
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+
+/* =========================================================
+   EDIT BUTTON
+========================================================= */
+
+.cadp-edit-button {
+  margin-right: 7px;
+
+  border: 1px solid #b7d5bf;
+
+  background: #edf7ef;
+  color: #216b38;
+}
+
+.cadp-edit-button:hover {
+  border-color: #216b38;
+
+  background: #dff0e3;
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   DELETE BUTTON
+========================================================= */
+
+.cadp-delete-button {
+  border: 1px solid #efcccc;
+
+  background: #fff3f3;
+  color: #b52c2c;
+}
+
+.cadp-delete-button:hover {
+  border-color: #d94b4b;
+
+  background: #ffe5e5;
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
    MODAL OVERLAY
-======================================== */
+========================================================= */
 
 .cadp-modal-overlay {
   position: fixed;
@@ -403,34 +561,31 @@
 
   padding: 25px;
 
-  background: rgba(13, 39, 23, 0.48);
+  background: rgba(13, 39, 23, 0.5);
 
   backdrop-filter: blur(3px);
 }
 
 
-/* ========================================
-   MODAL
-======================================== */
+/* =========================================================
+   REGISTER / EDIT MODAL
+========================================================= */
 
 .cadp-modal {
   width: 100%;
   max-width: 780px;
+
   max-height: calc(100vh - 50px);
 
   overflow-y: auto;
 
+  border: 1px solid #e2e9e4;
   border-radius: 15px;
 
   background: #ffffff;
 
   box-shadow: 0 25px 70px rgba(10, 35, 19, 0.25);
 }
-
-
-/* ========================================
-   MODAL HEADER
-======================================== */
 
 .cadp-modal-header {
   display: flex;
@@ -451,7 +606,6 @@
 
   font-size: 10px;
   font-weight: 800;
-
   letter-spacing: 0.1em;
 }
 
@@ -472,18 +626,20 @@
   color: #77827b;
 
   font-size: 12px;
+  line-height: 1.5;
 }
 
-
-/* ========================================
-   MODAL CLOSE
-======================================== */
-
 .cadp-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   width: 35px;
   height: 35px;
 
   flex-shrink: 0;
+
+  padding: 0;
 
   border: 1px solid #dde5df;
   border-radius: 8px;
@@ -491,6 +647,7 @@
   background: #ffffff;
   color: #637068;
 
+  font: inherit;
   font-size: 22px;
   line-height: 1;
 
@@ -502,19 +659,14 @@
   color: #1e4d30;
 }
 
-
-/* ========================================
-   MODAL FORM
-======================================== */
-
-.cadp-modal-form {
+.cadp-modal form {
   padding: 25px 27px 27px;
 }
 
 
-/* ========================================
+/* =========================================================
    FORM GRID
-======================================== */
+========================================================= */
 
 .cadp-grid {
   display: grid;
@@ -553,13 +705,17 @@
   border: 1px solid #ced9d1;
   border-radius: 8px;
 
+  outline: none;
+
   background: #ffffff;
   color: #263b2d;
 
   font: inherit;
   font-size: 13px;
 
-  box-sizing: border-box;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .cadp-grid input::placeholder {
@@ -568,8 +724,6 @@
 
 .cadp-grid select:focus,
 .cadp-grid input:focus {
-  outline: none;
-
   border-color: #317747;
 
   box-shadow: 0 0 0 3px rgba(49, 119, 71, 0.09);
@@ -587,35 +741,28 @@
 }
 
 
-/* ========================================
-   FORM MESSAGE
-======================================== */
+/* =========================================================
+   MODAL ERROR MESSAGE
+========================================================= */
 
-.cadp-message {
+.cadp-modal-message {
   margin-top: 18px;
-
-  padding: 11px 13px;
-
-  border-radius: 8px;
-
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.cadp-message.error {
-  border: 1px solid #efcccc;
-
-  background: #fff2f2;
-  color: #a62e2e;
 }
 
 
-/* ========================================
-   NOTE
-======================================== */
+/* =========================================================
+   MODAL FOOTER
+========================================================= */
+
+.cadp-modal-footer {
+  margin-top: 20px;
+  padding-top: 18px;
+
+  border-top: 1px solid #edf1ee;
+}
 
 .cadp-note {
-  margin: 18px 0 0;
+  margin: 0 0 16px;
 
   padding: 11px 13px;
 
@@ -626,23 +773,14 @@
   color: #65756b;
 
   font-size: 11px;
+  line-height: 1.5;
 }
-
-
-/* ========================================
-   MODAL ACTIONS
-======================================== */
 
 .cadp-actions {
   display: flex;
   justify-content: flex-end;
 
   gap: 10px;
-
-  margin-top: 20px;
-  padding-top: 18px;
-
-  border-top: 1px solid #edf1ee;
 }
 
 .cadp-actions button {
@@ -690,161 +828,17 @@
 .cadp-submit:disabled,
 .cadp-cancel:disabled {
   opacity: 0.6;
+
   cursor: not-allowed;
 }
 
 
-/* ========================================
-   TABLET
-======================================== */
-
-@media (max-width: 900px) {
-  .cadp-header {
-    padding: 24px;
-  }
-
-  .cadp-content {
-    padding: 24px;
-  }
-
-  .cadp-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .cadp-province-filter {
-    width: 100%;
-  }
-}
-
-
-/* ========================================
-   MOBILE
-======================================== */
-
-@media (max-width: 700px) {
-  .cadp-header {
-    flex-direction: column;
-    align-items: stretch;
-
-    padding: 20px;
-  }
-
-  .cadp-header h1 {
-    font-size: 24px;
-  }
-
-  .cadp-register-button {
-    width: 100%;
-  }
-
-  .cadp-content {
-    padding: 18px 14px 35px;
-  }
-
-  .cadp-table-heading {
-    padding: 17px;
-  }
-
-  .cadp-modal-overlay {
-    align-items: flex-start;
-
-    padding: 15px;
-  }
-
-  .cadp-modal {
-    max-height: calc(100vh - 30px);
-  }
-
-  .cadp-modal-header {
-    padding: 20px;
-  }
-
-  .cadp-modal-form {
-    padding: 20px;
-  }
-
-  .cadp-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .cadp-full {
-    grid-column: auto;
-  }
-
-  .cadp-actions {
-    flex-direction: column-reverse;
-  }
-
-  .cadp-actions button {
-    width: 100%;
-  }
-}
-
-/* ========================================
-   CADP TABLE ACTIONS
-======================================== */
-
-.cadp-actions-column {
-  width: 160px;
-  text-align: center !important;
-}
-
-.cadp-row-actions {
-  text-align: center;
-  white-space: nowrap;
-}
-
-.cadp-row-actions button {
-  min-height: 34px;
-  padding: 0 13px;
-  border-radius: 7px;
-
-  font: inherit;
-  font-size: 11px;
-  font-weight: 700;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.cadp-edit-button {
-  margin-right: 7px;
-
-  border: 1px solid #b7d5bf;
-  background: #edf7ef;
-  color: #216b38;
-}
-
-.cadp-edit-button:hover {
-  border-color: #216b38;
-  background: #dff0e3;
-  transform: translateY(-1px);
-}
-
-.cadp-delete-button {
-  border: 1px solid #efcccc;
-  background: #fff3f3;
-  color: #b52c2c;
-}
-
-.cadp-delete-button:hover {
-  border-color: #d94b4b;
-  background: #ffe5e5;
-  transform: translateY(-1px);
-}
-
-
-/* ========================================
+/* =========================================================
    DELETE CONFIRMATION MODAL
-======================================== */
+========================================================= */
 
 .cadp-delete-modal {
-  width: calc(100% - 40px);
+  width: 100%;
   max-width: 420px;
 
   padding: 30px;
@@ -856,8 +850,7 @@
 
   text-align: center;
 
-  box-shadow:
-    0 25px 70px rgba(10, 35, 19, 0.25);
+  box-shadow: 0 25px 70px rgba(10, 35, 19, 0.25);
 }
 
 .cadp-delete-icon {
@@ -928,6 +921,11 @@
   font-size: 11px;
 }
 
+
+/* =========================================================
+   DELETE MODAL BUTTONS
+========================================================= */
+
 .cadp-delete-actions {
   display: flex;
   justify-content: flex-end;
@@ -939,6 +937,7 @@
 
 .cadp-delete-actions button {
   min-height: 42px;
+
   padding: 0 18px;
 
   border-radius: 8px;
@@ -974,20 +973,117 @@
 
 .cadp-delete-confirm:hover:not(:disabled) {
   border-color: #9f2929;
+
   background: #9f2929;
 }
 
 .cadp-delete-actions button:disabled {
   opacity: 0.6;
+
   cursor: not-allowed;
 }
 
 
-/* ========================================
-   MOBILE ACTIONS
-======================================== */
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+  .cadp-header {
+    padding: 24px;
+  }
+
+  .cadp-content {
+    padding: 24px;
+  }
+
+  .cadp-table {
+    min-width: 900px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
 
 @media (max-width: 700px) {
+  .cadp-header {
+    flex-direction: column;
+    align-items: stretch;
+
+    padding: 20px;
+  }
+
+  .cadp-header-text h1 {
+    font-size: 24px;
+  }
+
+  .cadp-header-text span {
+    font-size: 13px;
+  }
+
+  .cadp-register-button {
+    width: 100%;
+  }
+
+  .cadp-content {
+    padding: 18px 14px 35px;
+  }
+
+  .cadp-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cadp-province-filter {
+    width: 100%;
+  }
+
+  .cadp-sites-card-header {
+    padding: 17px;
+  }
+
+  .cadp-table {
+    min-width: 900px;
+  }
+
+  .cadp-modal-overlay {
+    align-items: flex-start;
+
+    padding: 15px;
+
+    overflow-y: auto;
+  }
+
+  .cadp-modal {
+    max-height: none;
+  }
+
+  .cadp-modal-header {
+    padding: 20px;
+  }
+
+  .cadp-modal form {
+    padding: 20px;
+  }
+
+  .cadp-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cadp-full {
+    grid-column: auto;
+  }
+
+  .cadp-actions {
+    flex-direction: column-reverse;
+  }
+
+  .cadp-actions button {
+    width: 100%;
+  }
+
   .cadp-delete-modal {
     padding: 24px 20px;
   }
@@ -998,9 +1094,5 @@
 
   .cadp-delete-actions button {
     width: 100%;
-  }
-
-  .cadp-row-actions {
-    min-width: 150px;
   }
 }
