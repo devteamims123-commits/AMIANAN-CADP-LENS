@@ -53,7 +53,9 @@ function UserManagement() {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      throw new Error(data.message || "Request failed.");
+      throw new Error(
+        data.message || "Request failed."
+      );
     }
 
     return data;
@@ -66,7 +68,9 @@ function UserManagement() {
       const data = await apiRequest("/api/users");
 
       setUsers(data.users || []);
-      setCurrentUserId(data.currentUserId || "");
+      setCurrentUserId(
+        data.currentUserId || ""
+      );
     } catch (error) {
       setMessage(error.message);
       setMessageType("error");
@@ -80,7 +84,9 @@ function UserManagement() {
   }, []);
 
   const filteredUsers = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const term = search
+      .trim()
+      .toLowerCase();
 
     return users.filter((user) => {
       const matchesRole =
@@ -89,78 +95,148 @@ function UserManagement() {
 
       const matchesSearch =
         !term ||
-        user.full_name?.toLowerCase().includes(term) ||
-        user.username?.toLowerCase().includes(term) ||
-        user.email?.toLowerCase().includes(term);
+        user.full_name
+          ?.toLowerCase()
+          .includes(term) ||
+        user.username
+          ?.toLowerCase()
+          .includes(term) ||
+        user.email
+          ?.toLowerCase()
+          .includes(term);
 
-      return matchesRole && matchesSearch;
+      return (
+        matchesRole &&
+        matchesSearch
+      );
     });
-  }, [users, search, roleFilter]);
+  }, [
+    users,
+    search,
+    roleFilter,
+  ]);
+
+  /* =========================
+     OPEN CREATE
+  ========================= */
 
   const openCreate = () => {
     setSelectedUser(null);
 
     setForm({
-      ...EMPTY_FORM,
+      fullName: "",
+      username: "",
+      email: "",
       role: "",
+      password: "",
+      confirmPassword: "",
     });
 
     setModalMode("create");
     setMessage("");
+    setMessageType("");
   };
+
+  /* =========================
+     OPEN EDIT
+  ========================= */
 
   const openEdit = (user) => {
     setSelectedUser(user);
 
     setForm({
-      fullName: user.full_name || "",
-      username: user.username || "",
-      email: user.email || "",
-      role: user.role || "user",
+      fullName:
+        user.full_name || "",
+      username:
+        user.username || "",
+      email:
+        user.email || "",
+      role:
+        user.role || "user",
       password: "",
       confirmPassword: "",
     });
 
     setModalMode("edit");
     setMessage("");
+    setMessageType("");
   };
+
+  /* =========================
+     OPEN DELETE
+  ========================= */
 
   const openDelete = (user) => {
     setSelectedUser(user);
     setModalMode("delete");
     setMessage("");
+    setMessageType("");
   };
+
+  /* =========================
+     CLOSE MODAL
+  ========================= */
 
   const closeModal = () => {
     if (saving) return;
 
     setModalMode(null);
     setSelectedUser(null);
-    setForm(EMPTY_FORM);
+
+    setForm({
+      ...EMPTY_FORM,
+    });
   };
 
-  const handleChange = (event) => {
+  /* =========================
+     FORM CHANGE
+  ========================= */
+
+  const handleChange = (
+    event
+  ) => {
+    const {
+      name,
+      value,
+    } = event.target;
+
     setForm((current) => ({
       ...current,
-      [event.target.name]: event.target.value,
+      [name]: value,
     }));
   };
 
-  const handleSave = async (event) => {
-    event.preventDefault();
-    setMessage("");
+  /* =========================
+     CREATE / UPDATE
+  ========================= */
 
-    if (modalMode === "create" && !form.role) {
-      setMessage("Please select a role.");
+  const handleSave = async (
+    event
+  ) => {
+    event.preventDefault();
+
+    setMessage("");
+    setMessageType("");
+
+    if (
+      modalMode === "create" &&
+      !form.role
+    ) {
+      setMessage(
+        "Please select a role."
+      );
       setMessageType("error");
       return;
     }
 
     if (
       modalMode === "create" &&
-      form.password !== form.confirmPassword
+      form.password !==
+        form.confirmPassword
     ) {
-      setMessage("Passwords do not match.");
+      setMessage(
+        "Passwords do not match."
+      );
       setMessageType("error");
       return;
     }
@@ -168,78 +244,127 @@ function UserManagement() {
     setSaving(true);
 
     try {
-      if (modalMode === "create") {
-        await apiRequest("/api/users", {
-          method: "POST",
-          body: JSON.stringify({
-            fullName: form.fullName,
-            username: form.username,
-            email: form.email,
-            role: form.role,
-            password: form.password,
-          }),
-        });
+      if (
+        modalMode === "create"
+      ) {
+        await apiRequest(
+          "/api/users",
+          {
+            method: "POST",
 
-        setMessage("Account created successfully.");
+            body: JSON.stringify({
+              fullName:
+                form.fullName,
+              username:
+                form.username,
+              email:
+                form.email,
+              role:
+                form.role,
+              password:
+                form.password,
+            }),
+          }
+        );
+
+        setMessage(
+          "Account created successfully."
+        );
       } else {
         await apiRequest(
           `/api/users/${selectedUser.id}`,
           {
             method: "PUT",
+
             body: JSON.stringify({
-              fullName: form.fullName,
-              username: form.username,
-              email: form.email,
+              fullName:
+                form.fullName,
+              username:
+                form.username,
+              email:
+                form.email,
+
               role:
-                selectedUser.id === currentUserId
+                selectedUser.id ===
+                currentUserId
                   ? "super_admin"
                   : form.role,
             }),
           }
         );
 
-        setMessage("Account updated successfully.");
+        setMessage(
+          "Account updated successfully."
+        );
       }
 
       setMessageType("success");
+
       setModalMode(null);
       setSelectedUser(null);
 
+      setForm({
+        ...EMPTY_FORM,
+      });
+
       await loadUsers();
     } catch (error) {
-      setMessage(error.message);
-      setMessageType("error");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    setSaving(true);
-    setMessage("");
-
-    try {
-      await apiRequest(
-        `/api/users/${selectedUser.id}`,
-        {
-          method: "DELETE",
-        }
+      setMessage(
+        error.message
       );
 
-      setMessage("Account deleted successfully.");
-      setMessageType("success");
-
-      setModalMode(null);
-      setSelectedUser(null);
-
-      await loadUsers();
-    } catch (error) {
-      setMessage(error.message);
-      setMessageType("error");
+      setMessageType(
+        "error"
+      );
     } finally {
       setSaving(false);
     }
   };
+
+  /* =========================
+     DELETE
+  ========================= */
+
+  const handleDelete =
+    async () => {
+      setSaving(true);
+
+      setMessage("");
+      setMessageType("");
+
+      try {
+        await apiRequest(
+          `/api/users/${selectedUser.id}`,
+          {
+            method:
+              "DELETE",
+          }
+        );
+
+        setMessage(
+          "Account deleted successfully."
+        );
+
+        setMessageType(
+          "success"
+        );
+
+        setModalMode(null);
+        setSelectedUser(null);
+
+        await loadUsers();
+      } catch (error) {
+        setMessage(
+          error.message
+        );
+
+        setMessageType(
+          "error"
+        );
+      } finally {
+        setSaving(false);
+      }
+    };
 
   return (
     <section className="um-page">
@@ -249,12 +374,17 @@ function UserManagement() {
 
       <header className="um-header">
         <div>
-          <p>AMIANAN-CADP L.E.N.S.</p>
+          <p>
+            AMIANAN-CADP L.E.N.S.
+          </p>
 
-          <h1>User Management</h1>
+          <h1>
+            User Management
+          </h1>
 
           <span>
-            Manage system accounts and access roles.
+            Manage system accounts
+            and access roles.
           </span>
         </div>
 
@@ -273,7 +403,9 @@ function UserManagement() {
 
       <div className="um-content">
         {message && (
-          <div className={`um-message ${messageType}`}>
+          <div
+            className={`um-message ${messageType}`}
+          >
             {message}
           </div>
         )}
@@ -288,14 +420,18 @@ function UserManagement() {
             placeholder="Search name, username, or email..."
             value={search}
             onChange={(event) =>
-              setSearch(event.target.value)
+              setSearch(
+                event.target.value
+              )
             }
           />
 
           <select
             value={roleFilter}
             onChange={(event) =>
-              setRoleFilter(event.target.value)
+              setRoleFilter(
+                event.target.value
+              )
             }
           >
             <option value="all">
@@ -321,7 +457,7 @@ function UserManagement() {
         </div>
 
         {/* =========================
-            USERS TABLE
+            TABLE
         ========================= */}
 
         <div className="um-table-card">
@@ -329,7 +465,8 @@ function UserManagement() {
             <div className="um-state">
               Loading users...
             </div>
-          ) : filteredUsers.length === 0 ? (
+          ) : filteredUsers.length ===
+            0 ? (
             <div className="um-state">
               No users found.
             </div>
@@ -338,86 +475,115 @@ function UserManagement() {
               <table className="um-table">
                 <thead>
                   <tr>
-                    <th>Full Name</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Actions</th>
+                    <th>
+                      Full Name
+                    </th>
+
+                    <th>
+                      Username
+                    </th>
+
+                    <th>
+                      Email
+                    </th>
+
+                    <th>
+                      Role
+                    </th>
+
+                    <th>
+                      Actions
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {filteredUsers.map((user) => {
-                    const isSelf =
-                      user.id === currentUserId;
+                  {filteredUsers.map(
+                    (user) => {
+                      const isSelf =
+                        user.id ===
+                        currentUserId;
 
-                    const protectedSuperAdmin =
-                      user.role === "super_admin" &&
-                      !isSelf;
+                      const protectedSuperAdmin =
+                        user.role ===
+                          "super_admin" &&
+                        !isSelf;
 
-                    return (
-                      <tr key={user.id}>
-                        <td>
-                          <strong>
-                            {user.full_name || "—"}
-                          </strong>
+                      return (
+                        <tr
+                          key={
+                            user.id
+                          }
+                        >
+                          <td>
+                            <strong>
+                              {user.full_name ||
+                                "—"}
+                            </strong>
 
-                          {isSelf && (
-                            <small className="um-you">
-                              You
-                            </small>
-                          )}
-                        </td>
-
-                        <td>
-                          {user.username || "—"}
-                        </td>
-
-                        <td>
-                          {user.email || "—"}
-                        </td>
-
-                        <td>
-                          <span
-                            className={`um-role ${user.role}`}
-                          >
-                            {user.role?.replace(
-                              "_",
-                              " "
+                            {isSelf && (
+                              <small className="um-you">
+                                You
+                              </small>
                             )}
-                          </span>
-                        </td>
+                          </td>
 
-                        <td>
-                          <div className="um-actions">
-                            <button
-                              type="button"
-                              className="um-edit"
-                              onClick={() =>
-                                openEdit(user)
-                              }
-                            >
-                              Edit
-                            </button>
+                          <td>
+                            {user.username ||
+                              "—"}
+                          </td>
 
-                            <button
-                              type="button"
-                              className="um-delete"
-                              disabled={
-                                isSelf ||
-                                protectedSuperAdmin
-                              }
-                              onClick={() =>
-                                openDelete(user)
-                              }
+                          <td>
+                            {user.email ||
+                              "—"}
+                          </td>
+
+                          <td>
+                            <span
+                              className={`um-role ${user.role}`}
                             >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                              {user.role?.replace(
+                                "_",
+                                " "
+                              )}
+                            </span>
+                          </td>
+
+                          <td>
+                            <div className="um-actions">
+                              <button
+                                type="button"
+                                className="um-edit"
+                                onClick={() =>
+                                  openEdit(
+                                    user
+                                  )
+                                }
+                              >
+                                Edit
+                              </button>
+
+                              <button
+                                type="button"
+                                className="um-delete"
+                                disabled={
+                                  isSelf ||
+                                  protectedSuperAdmin
+                                }
+                                onClick={() =>
+                                  openDelete(
+                                    user
+                                  )
+                                }
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    }
+                  )}
                 </tbody>
               </table>
             </div>
@@ -433,20 +599,27 @@ function UserManagement() {
         modalMode === "edit") && (
         <div
           className="um-modal-backdrop"
-          onMouseDown={closeModal}
+          onMouseDown={
+            closeModal
+          }
         >
           <div
             className="um-modal"
-            onMouseDown={(event) =>
+            onMouseDown={(
+              event
+            ) =>
               event.stopPropagation()
             }
           >
             <div className="um-modal-head">
               <div>
-                <p>USER MANAGEMENT</p>
+                <p>
+                  USER MANAGEMENT
+                </p>
 
                 <h2>
-                  {modalMode === "create"
+                  {modalMode ===
+                  "create"
                     ? "Create New Account"
                     : "Edit Account"}
                 </h2>
@@ -454,23 +627,38 @@ function UserManagement() {
 
               <button
                 type="button"
-                onClick={closeModal}
+                onClick={
+                  closeModal
+                }
               >
                 ×
               </button>
             </div>
 
-            <form onSubmit={handleSave}>
+            <form
+              onSubmit={
+                handleSave
+              }
+              autoComplete="off"
+            >
               <div className="um-form-grid">
                 {/* FULL NAME */}
 
                 <label>
-                  <span>Full Name</span>
+                  <span>
+                    Full Name
+                  </span>
 
                   <input
                     name="fullName"
-                    value={form.fullName}
-                    onChange={handleChange}
+                    type="text"
+                    value={
+                      form.fullName
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    autoComplete="off"
                     required
                   />
                 </label>
@@ -478,12 +666,20 @@ function UserManagement() {
                 {/* USERNAME */}
 
                 <label>
-                  <span>Username</span>
+                  <span>
+                    Username
+                  </span>
 
                   <input
                     name="username"
-                    value={form.username}
-                    onChange={handleChange}
+                    type="text"
+                    value={
+                      form.username
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    autoComplete="off"
                     required
                   />
                 </label>
@@ -491,13 +687,20 @@ function UserManagement() {
                 {/* EMAIL */}
 
                 <label className="um-full">
-                  <span>Email</span>
+                  <span>
+                    Email
+                  </span>
 
                   <input
                     name="email"
                     type="email"
-                    value={form.email}
-                    onChange={handleChange}
+                    value={
+                      form.email
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    autoComplete="off"
                     required
                   />
                 </label>
@@ -505,7 +708,9 @@ function UserManagement() {
                 {/* ROLE */}
 
                 <label className="um-full">
-                  <span>Role</span>
+                  <span>
+                    Role
+                  </span>
 
                   {selectedUser?.id ===
                   currentUserId ? (
@@ -516,11 +721,16 @@ function UserManagement() {
                   ) : (
                     <select
                       name="role"
-                      value={form.role}
-                      onChange={handleChange}
+                      value={
+                        form.role
+                      }
+                      onChange={
+                        handleChange
+                      }
                       required
                     >
-                      {modalMode === "create" && (
+                      {modalMode ===
+                        "create" && (
                         <option
                           value=""
                           disabled
@@ -544,18 +754,26 @@ function UserManagement() {
                   )}
                 </label>
 
-                {/* CREATE ACCOUNT PASSWORDS */}
+                {/* PASSWORDS */}
 
-                {modalMode === "create" && (
+                {modalMode ===
+                  "create" && (
                   <>
                     <label>
-                      <span>Password</span>
+                      <span>
+                        Password
+                      </span>
 
                       <input
                         name="password"
                         type="password"
-                        value={form.password}
-                        onChange={handleChange}
+                        value={
+                          form.password
+                        }
+                        onChange={
+                          handleChange
+                        }
+                        autoComplete="new-password"
                         minLength="6"
                         required
                       />
@@ -572,7 +790,10 @@ function UserManagement() {
                         value={
                           form.confirmPassword
                         }
-                        onChange={handleChange}
+                        onChange={
+                          handleChange
+                        }
+                        autoComplete="new-password"
                         minLength="6"
                         required
                       />
@@ -582,14 +803,16 @@ function UserManagement() {
               </div>
 
               {/* =========================
-                  MODAL ACTIONS
+                  ACTIONS
               ========================= */}
 
               <div className="um-modal-actions">
                 <button
                   type="button"
                   className="um-cancel"
-                  onClick={closeModal}
+                  onClick={
+                    closeModal
+                  }
                 >
                   Cancel
                 </button>
@@ -597,11 +820,14 @@ function UserManagement() {
                 <button
                   type="submit"
                   className="um-save"
-                  disabled={saving}
+                  disabled={
+                    saving
+                  }
                 >
                   {saving
                     ? "Saving..."
-                    : modalMode === "create"
+                    : modalMode ===
+                        "create"
                       ? "Create Account"
                       : "Save Changes"}
                 </button>
@@ -619,11 +845,15 @@ function UserManagement() {
         selectedUser && (
           <div
             className="um-modal-backdrop"
-            onMouseDown={closeModal}
+            onMouseDown={
+              closeModal
+            }
           >
             <div
               className="um-modal um-delete-modal"
-              onMouseDown={(event) =>
+              onMouseDown={(
+                event
+              ) =>
                 event.stopPropagation()
               }
             >
@@ -631,22 +861,30 @@ function UserManagement() {
                 !
               </div>
 
-              <h2>Delete account?</h2>
+              <h2>
+                Delete account?
+              </h2>
 
               <p>
-                This will permanently delete{" "}
+                This will
+                permanently delete{" "}
                 <strong>
-                  {selectedUser.full_name}
+                  {
+                    selectedUser.full_name
+                  }
                 </strong>
-                's account. This action cannot
-                be undone.
+                's account. This
+                action cannot be
+                undone.
               </p>
 
               <div className="um-modal-actions">
                 <button
                   type="button"
                   className="um-cancel"
-                  onClick={closeModal}
+                  onClick={
+                    closeModal
+                  }
                 >
                   Cancel
                 </button>
@@ -654,8 +892,12 @@ function UserManagement() {
                 <button
                   type="button"
                   className="um-confirm-delete"
-                  onClick={handleDelete}
-                  disabled={saving}
+                  onClick={
+                    handleDelete
+                  }
+                  disabled={
+                    saving
+                  }
                 >
                   {saving
                     ? "Deleting..."
