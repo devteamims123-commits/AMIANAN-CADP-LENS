@@ -102,9 +102,7 @@ function ProgramsProjects() {
       setSites(siteData);
       setRecords(recordData);
 
-      if (!selectedSite && siteData.length > 0) {
-        setSelectedSite(siteData[0].id);
-      }
+     
     } catch (error) {
       console.error(error);
 
@@ -179,19 +177,18 @@ function ProgramsProjects() {
     setErrorMessage("");
   };
 
-  const openAddForm = () => {
-    setEditingId(null);
+ const openAddForm = () => {
+  setEditingId(null);
 
-    setForm({
-      ...initialForm,
-      cadpSiteId:
-        selectedSite || sites[0]?.id || "",
-    });
+  setForm({
+    ...initialForm,
+    cadpSiteId: "",
+  });
 
-    setMessage("");
-    setErrorMessage("");
-    setShowForm(true);
-  };
+  setMessage("");
+  setErrorMessage("");
+  setShowForm(true);
+};
 
   const openEditForm = (record) => {
     setEditingId(record.id);
