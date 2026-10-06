@@ -1,1044 +1,3070 @@
 /* =========================================================
+
    PROGRAMS & PROJECTS
-========================================================= */
+
+\========================================================= */
+
+
 
 .programs-page {
+
   width: 100%;
+
   min-height: 100vh;
+
   background: #f5f7f5;
+
   color: #1f3526;
+
   box-sizing: border-box;
+
 }
 
+
+
 /* =========================================================
+
    HEADER
+
    Same sizing/style as CADP Sites
-========================================================= */
+
+\========================================================= */
+
+
 
 .programs-header {
+
   display: flex;
+
   min-height: 154.6px;
+
   align-items: center;
+
   justify-content: space-between;
+
   gap: 24px;
+
+
 
   padding: 24px;
 
+
+
   box-sizing: border-box;
+
+
 
   background: #ffffff;
 
+
+
   border-bottom: 1px solid #dfe7e1;
+
 }
+
+
 
 .programs-header > div {
+
   min-width: 0;
+
 }
 
+
+
 .programs-header .module-eyebrow {
+
   margin: 0 0 10px;
+
+
 
   color: #176c3a;
 
+
+
   font-size: 11px;
+
   font-weight: 800;
+
   line-height: 1.2;
+
   letter-spacing: 0.12em;
+
   text-transform: uppercase;
+
 }
 
+
+
 .programs-header h1 {
+
   margin: 0;
+
+
 
   color: #073d29;
 
+
+
   font-size: 34px;
+
   font-weight: 800;
+
   line-height: 1.15;
+
   letter-spacing: -0.02em;
+
 }
 
+
+
 .programs-header > div > p:last-child {
+
   margin: 9px 0 0;
+
+
 
   color: #69766d;
 
+
+
   font-size: 14px;
+
   font-weight: 400;
+
   line-height: 1.5;
+
 }
 
+
+
 /* =========================================================
+
    ADD BUTTON
-========================================================= */
+
+\========================================================= */
+
+
 
 .programs-add-button {
+
   display: inline-flex;
+
   flex-shrink: 0;
+
   align-items: center;
+
   justify-content: center;
 
+
+
   min-height: 46px;
+
   padding: 0 20px;
 
+
+
   border: 1px solid #1f6a3c;
+
   border-radius: 10px;
 
+
+
   background: #1f6a3c;
+
   color: #ffffff;
+
+
 
   box-shadow: 0 8px 20px rgba(31, 106, 60, 0.15);
 
+
+
   font-family: inherit;
+
   font-size: 12px;
+
   font-weight: 700;
+
+
 
   cursor: pointer;
 
+
+
   transition:
+
     background 0.18s ease,
+
     border-color 0.18s ease,
+
     box-shadow 0.18s ease,
+
     transform 0.18s ease;
+
 }
 
+
+
 .programs-add-button:hover {
+
   border-color: #185a32;
+
   background: #185a32;
+
+
 
   box-shadow: 0 10px 24px rgba(31, 106, 60, 0.2);
 
+
+
   transform: translateY(-1px);
+
 }
+
+
 
 .programs-add-button:active {
+
   transform: translateY(0);
+
 }
 
+
+
 /* =========================================================
+
    CONTENT
-========================================================= */
+
+\========================================================= */
+
+
 
 .programs-content {
+
   width: 100%;
+
+
 
   padding: 24px;
 
+
+
   box-sizing: border-box;
+
 }
 
+
+
 /* =========================================================
+
    TOOLBAR / FILTERS
-========================================================= */
+
+\========================================================= */
+
+
 
 .programs-toolbar {
+
   display: grid;
 
+
+
   grid-template-columns:
+
     minmax(210px, 1.25fr)
+
     minmax(160px, 0.65fr)
+
     minmax(260px, 1.7fr)
+
     auto;
+
+
 
   align-items: end;
 
+
+
   gap: 14px;
 
+
+
   margin-bottom: 18px;
+
   padding: 18px;
 
+
+
   border: 1px solid #e0e7e1;
+
   border-radius: 12px;
+
+
 
   background: #ffffff;
 
+
+
   box-shadow: 0 3px 14px rgba(25, 62, 36, 0.035);
+
 }
 
+
+
 .programs-toolbar label {
+
   display: grid;
 
+
+
   min-width: 0;
+
+
 
   gap: 7px;
 
+
+
   color: #425449;
 
+
+
   font-size: 10px;
+
   font-weight: 800;
+
   letter-spacing: 0.03em;
+
   text-transform: uppercase;
+
 }
+
+
 
 .programs-site-field,
+
 .programs-period-field,
+
 .programs-search-field {
+
   width: 100%;
+
   min-width: 0;
+
 }
 
+
+
 .programs-toolbar select,
+
 .programs-toolbar input {
+
   width: 100%;
+
   height: 42px;
+
+
 
   padding: 0 12px;
 
+
+
   box-sizing: border-box;
 
+
+
   border: 1px solid #d2dcd4;
+
   border-radius: 8px;
+
   outline: none;
 
+
+
   background: #fbfcfb;
+
   color: #2b4031;
 
+
+
   font-family: inherit;
+
   font-size: 12px;
 
+
+
   transition:
+
     border-color 0.18s ease,
+
     background 0.18s ease,
+
     box-shadow 0.18s ease;
+
 }
+
+
 
 .programs-toolbar select {
+
   cursor: pointer;
+
 }
+
+
 
 .programs-toolbar input::placeholder {
+
   color: #939d96;
+
 }
+
+
 
 .programs-toolbar select:hover,
+
 .programs-toolbar input:hover {
+
   border-color: #aec2b3;
+
   background: #ffffff;
+
 }
+
+
 
 .programs-toolbar select:focus,
+
 .programs-toolbar input:focus {
+
   border-color: #4e815c;
+
   background: #ffffff;
 
+
+
   box-shadow:
+
     0 0 0 3px rgba(57, 115, 74, 0.09);
+
 }
 
+
+
 .programs-result-count {
+
   align-self: center;
+
+
 
   margin: 18px 0 0;
 
+
+
   color: #7c887f;
 
+
+
   font-size: 11px;
+
   white-space: nowrap;
+
 }
 
+
+
 /* =========================================================
+
    MESSAGES
-========================================================= */
+
+\========================================================= */
+
+
 
 .programs-message {
+
   margin-bottom: 16px;
+
   padding: 12px 14px;
+
+
 
   border-radius: 8px;
 
+
+
   font-size: 12px;
+
   font-weight: 600;
+
 }
+
+
 
 .programs-message.success {
+
   border: 1px solid #b9d8c1;
 
+
+
   background: #edf7ef;
+
   color: #235e26;
+
 }
 
+
+
 .programs-message.error {
+
   border: 1px solid #e6baba;
 
+
+
   background: #fff1f1;
+
   color: #a12828;
+
+}
+
+
+
+/* =========================================================
+
+   TABLE CARD
+
+\========================================================= */
+
+
+
+.programs-table-scroll {
+
+  width: 100%;
+
+
+
+  overflow-x: auto;
+
+  overflow-y: hidden;
+
+
+
+  border: 1px solid #dfe6e0;
+
+  border-radius: 12px;
+
+
+
+  background: #ffffff;
+
+
+
+  box-shadow: 0 4px 16px rgba(25, 62, 36, 0.04);
+
+}
+
+
+
+/*
+
+   IMPORTANT:
+
+   Old CSS forced 1250px.
+
+   This table is now allowed to fit normal desktop widths.
+
+*/
+
+
+
+.programs-table {
+
+  width: 100%;
+
+  min-width: 980px;
+
+
+
+  border-collapse: separate;
+
+  border-spacing: 0;
+
+
+
+  table-layout: fixed;
+
+
+
+  color: #39473d;
+
+
+
+  font-size: 11px;
+
+  line-height: 1.45;
+
+}
+
+
+
+.programs-table th,
+
+.programs-table td {
+
+  padding: 13px 11px;
+
+
+
+  border-right: 1px solid #edf0ed;
+
+  border-bottom: 1px solid #e7ece8;
+
+
+
+  text-align: left;
+
+  vertical-align: top;
+
+
+
+  overflow-wrap: break-word;
+
+  word-break: normal;
+
+}
+
+
+
+.programs-table th {
+
+  position: sticky;
+
+  top: 0;
+
+  z-index: 2;
+
+
+
+  background: #edf3ee;
+
+  color: #234a30;
+
+
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+  line-height: 1.35;
+
+}
+
+
+
+/* Program / Project */
+
+.programs-table th:nth-child(1) {
+
+  width: 22%;
+
+}
+
+
+
+/* KPI */
+
+.programs-table th:nth-child(2) {
+
+  width: 18%;
+
+}
+
+
+
+/* Source */
+
+.programs-table th:nth-child(3) {
+
+  width: 12%;
+
+}
+
+
+
+/* Status */
+
+.programs-table th:nth-child(4) {
+
+  width: 10%;
+
+}
+
+
+
+/* Physical Target */
+
+.programs-table th:nth-child(5) {
+
+  width: 13%;
+
+}
+
+
+
+/* Financial */
+
+.programs-table th:nth-child(6) {
+
+  width: 12%;
+
+}
+
+
+
+/* Actions */
+
+.programs-table th:nth-child(7) {
+
+  width: 13%;
+
+}
+
+
+
+.programs-table tbody tr {
+
+  background: #ffffff;
+
+
+
+  transition: background 0.15s ease;
+
+}
+
+
+
+.programs-table tbody tr:hover {
+
+  background: #fafcfa;
+
+}
+
+
+
+.programs-table tbody tr:last-child td {
+
+  border-bottom: 0;
+
+}
+
+
+
+.programs-table th:last-child,
+
+.programs-table td:last-child {
+
+  border-right: 0;
+
+}
+
+
+
+/* =========================================================
+
+   STATUS
+
+\========================================================= */
+
+
+
+.programs-status {
+
+  display: inline-flex;
+
+
+
+  min-width: 68px;
+
+
+
+  align-items: center;
+
+  justify-content: center;
+
+
+
+  padding: 5px 8px;
+
+
+
+  border-radius: 999px;
+
+
+
+  background: #eef1ef;
+
+  color: #526158;
+
+
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+
+
+  text-transform: uppercase;
+
+
+
+  white-space: nowrap;
+
+}
+
+
+
+.programs-status.proposed {
+
+  background: #f3f1e5;
+
+  color: #6d5d1c;
+
+}
+
+
+
+.programs-status.ongoing {
+
+  background: #e9f2ff;
+
+  color: #275c96;
+
+}
+
+
+
+.programs-status.completed {
+
+  background: #e7f4e9;
+
+  color: #235e26;
+
+}
+
+
+
+.programs-status.on-hold {
+
+  background: #fff1dc;
+
+  color: #8a5a10;
+
+}
+
+
+
+.programs-status.cancelled {
+
+  background: #f8e7e7;
+
+  color: #9d3030;
+
+}
+
+
+
+/* =========================================================
+
+   PHYSICAL TARGET
+
+\========================================================= */
+
+
+
+.programs-target {
+
+  color: #245c36;
+
+  font-weight: 700;
+
+}
+
+
+
+.programs-all-targets {
+
+  display: flex;
+
+
+
+  flex-direction: column;
+
+
+
+  gap: 5px;
+
+}
+
+
+
+.programs-target-row {
+
+  display: grid;
+
+
+
+  grid-template-columns: auto minmax(0, 1fr);
+
+
+
+  align-items: start;
+
+
+
+  gap: 4px;
+
+
+
+  line-height: 1.35;
+
+}
+
+
+
+.programs-target-row strong {
+
+  color: #315f3d;
+
+
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+
+
+  white-space: nowrap;
+
+}
+
+
+
+.programs-target-row span {
+
+  min-width: 0;
+
+
+
+  color: #526158;
+
+
+
+  font-size: 10px;
+
+  font-weight: 600;
+
+
+
+  overflow-wrap: anywhere;
+
+}
+
+
+
+.programs-period-label {
+
+  display: block;
+
+
+
+  margin-top: 3px;
+
+
+
+  color: #438050;
+
+
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+}
+
+
+
+/* =========================================================
+
+   FINANCIAL TARGET
+
+\========================================================= */
+
+
+
+.programs-financial {
+
+  color: #174c2d;
+
+
+
+  font-weight: 700;
+
+
+
+  white-space: nowrap;
+
+}
+
+
+
+/* =========================================================
+
+   ACTION BUTTONS
+
+\========================================================= */
+
+
+
+.programs-actions {
+
+  display: flex;
+
+
+
+  align-items: center;
+
+
+
+  gap: 6px;
+
+
+
+  white-space: nowrap;
+
+}
+
+
+
+.programs-actions button {
+
+  display: inline-flex;
+
+
+
+  min-height: 30px;
+
+
+
+  align-items: center;
+
+  justify-content: center;
+
+
+
+  padding: 0 9px;
+
+
+
+  border-radius: 6px;
+
+
+
+  background: #ffffff;
+
+
+
+  font-family: inherit;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+
+
+  cursor: pointer;
+
+
+
+  transition:
+
+    background 0.15s ease,
+
+    border-color 0.15s ease;
+
+}
+
+
+
+.programs-edit {
+
+  border: 1px solid #b9ccbd;
+
+
+
+  color: #235e26;
+
+}
+
+
+
+.programs-edit:hover {
+
+  border-color: #8fb098;
+
+
+
+  background: #edf5ef;
+
+}
+
+
+
+.programs-delete {
+
+  border: 1px solid #e0bebe;
+
+
+
+  color: #a12c2c;
+
+}
+
+
+
+.programs-delete:hover {
+
+  border-color: #d69c9c;
+
+
+
+  background: #fff0f0;
+
+}
+
+
+
+/* =========================================================
+
+   EMPTY / LOADING
+
+\========================================================= */
+
+
+
+.programs-empty-state {
+
+  display: flex;
+
+
+
+  min-height: 270px;
+
+
+
+  flex-direction: column;
+
+
+
+  align-items: center;
+
+  justify-content: center;
+
+
+
+  padding: 42px 20px;
+
+
+
+  border: 1px dashed #cbd7cd;
+
+  border-radius: 12px;
+
+
+
+  background: #ffffff;
+
+
+
+  color: #667069;
+
+
+
+  text-align: center;
+
+}
+
+
+
+.programs-empty-state h2 {
+
+  margin: 0 0 6px;
+
+
+
+  color: #234a30;
+
+
+
+  font-size: 16px;
+
+}
+
+
+
+.programs-empty-state p {
+
+  margin: 0;
+
+
+
+  color: #667069;
+
+
+
+  font-size: 12px;
+
+}
+
+
+
+/* =========================================================
+
+   MODAL BACKDROP
+
+\========================================================= */
+
+
+
+.programs-modal-backdrop {
+
+  position: fixed;
+
+
+
+  inset: 0;
+
+  z-index: 1000;
+
+
+
+  display: flex;
+
+
+
+  align-items: center;
+
+  justify-content: center;
+
+
+
+  padding: 24px;
+
+
+
+  overflow-y: auto;
+
+
+
+  background: rgba(16, 35, 23, 0.52);
+
+  backdrop-filter: blur(2px);
+
+}
+
+
+
+/* =========================================================
+
+   MODAL
+
+\========================================================= */
+
+
+
+.programs-modal {
+
+  width: min(760px, 100%);
+
+  max-height: calc(100vh - 48px);
+
+
+
+  overflow-y: auto;
+
+
+
+  border-radius: 12px;
+
+
+
+  background: #ffffff;
+
+
+
+  box-shadow:
+
+    0 18px 50px rgba(20, 45, 29, 0.22);
+
+}
+
+
+
+.programs-modal-header {
+
+  position: sticky;
+
+
+
+  top: 0;
+
+  z-index: 3;
+
+
+
+  display: flex;
+
+
+
+  align-items: flex-start;
+
+  justify-content: space-between;
+
+
+
+  gap: 20px;
+
+
+
+  padding: 22px 24px 18px;
+
+
+
+  border-bottom: 1px solid #e4e9e5;
+
+
+
+  background: #ffffff;
+
+}
+
+
+
+.programs-modal-header h2 {
+
+  margin: 3px 0 0;
+
+
+
+  color: #174c2d;
+
+
+
+  font-size: 21px;
+
+}
+
+
+
+.programs-modal-header .module-eyebrow {
+
+  margin: 0;
+
+
+
+  color: #438050;
+
+
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+
+
+  letter-spacing: 0.08em;
+
+  text-transform: uppercase;
+
+}
+
+
+
+.programs-modal-close {
+
+  display: grid;
+
+
+
+  width: 34px;
+
+  height: 34px;
+
+
+
+  flex-shrink: 0;
+
+
+
+  place-items: center;
+
+
+
+  padding: 0;
+
+
+
+  border: 1px solid #d8dfda;
+
+  border-radius: 7px;
+
+
+
+  background: #ffffff;
+
+  color: #526158;
+
+
+
+  font-size: 22px;
+
+  line-height: 1;
+
+
+
+  cursor: pointer;
+
+}
+
+
+
+.programs-modal-close:hover {
+
+  background: #f3f6f4;
+
+}
+
+
+
+.programs-modal-close:disabled {
+
+  cursor: not-allowed;
+
+  opacity: 0.6;
+
+}
+
+
+
+/* =========================================================
+
+   FORM
+
+\========================================================= */
+
+
+
+.programs-form-grid {
+
+  display: grid;
+
+
+
+  grid-template-columns:
+
+    repeat(2, minmax(0, 1fr));
+
+
+
+  gap: 17px;
+
+
+
+  padding: 22px 24px;
+
+}
+
+
+
+.programs-form-grid label {
+
+  display: grid;
+
+
+
+  align-content: start;
+
+
+
+  gap: 7px;
+
+}
+
+
+
+.programs-form-grid label > span {
+
+  color: #425449;
+
+
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+}
+
+
+
+.programs-full {
+
+  grid-column: 1 / -1;
+
+}
+
+
+
+.programs-form-grid input,
+
+.programs-form-grid select,
+
+.programs-form-grid textarea {
+
+  width: 100%;
+
+
+
+  box-sizing: border-box;
+
+
+
+  border: 1px solid #d6dfd8;
+
+  border-radius: 7px;
+
+  outline: none;
+
+
+
+  background: #ffffff;
+
+  color: #273a2d;
+
+
+
+  font-family: inherit;
+
+  font-size: 13px;
+
+
+
+  transition:
+
+    border-color 0.2s ease,
+
+    box-shadow 0.2s ease;
+
+}
+
+
+
+.programs-form-grid input,
+
+.programs-form-grid select {
+
+  height: 43px;
+
+
+
+  padding: 0 12px;
+
+}
+
+
+
+.programs-form-grid textarea {
+
+  min-height: 90px;
+
+
+
+  padding: 11px 12px;
+
+
+
+  resize: vertical;
+
+
+
+  line-height: 1.5;
+
+}
+
+
+
+.programs-form-grid input:focus,
+
+.programs-form-grid select:focus,
+
+.programs-form-grid textarea:focus {
+
+  border-color: #438050;
+
+
+
+  box-shadow:
+
+    0 0 0 3px rgba(67, 128, 80, 0.14);
+
+}
+
+
+
+/* =========================================================
+
+   PHYSICAL TARGET SECTION IN MODAL
+
+\========================================================= */
+
+
+
+.programs-target-section {
+
+  padding: 16px;
+
+
+
+  border: 1px solid #d6dfd8;
+
+  border-radius: 8px;
+
+
+
+  background: #f8faf8;
+
+}
+
+
+
+.programs-target-title {
+
+  margin-bottom: 12px;
+
+
+
+  color: #234a30;
+
+
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+}
+
+
+
+.programs-target-inputs {
+
+  display: grid;
+
+
+
+  grid-template-columns:
+
+    repeat(4, minmax(0, 1fr));
+
+
+
+  gap: 10px;
+
+}
+
+
+
+.programs-target-inputs label {
+
+  display: grid;
+
+
+
+  gap: 6px;
+
+}
+
+
+
+.programs-target-inputs label span {
+
+  color: #425449;
+
+
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+
+
+  text-align: center;
+
+}
+
+
+
+.programs-target-inputs input {
+
+  text-align: center;
+
+}
+
+
+
+/* =========================================================
+
+   MODAL ACTIONS
+
+\========================================================= */
+
+
+
+.programs-modal-actions {
+
+  position: sticky;
+
+
+
+  bottom: 0;
+
+
+
+  display: flex;
+
+
+
+  justify-content: flex-end;
+
+
+
+  gap: 10px;
+
+
+
+  padding: 16px 24px;
+
+
+
+  border-top: 1px solid #e4e9e5;
+
+
+
+  background: #ffffff;
+
+}
+
+
+
+.programs-modal-actions button {
+
+  min-height: 40px;
+
+
+
+  padding: 0 17px;
+
+
+
+  border-radius: 7px;
+
+
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+
+
+  cursor: pointer;
+
+}
+
+
+
+.programs-cancel {
+
+  border: 1px solid #ccd6cf;
+
+
+
+  background: #ffffff;
+
+  color: #526158;
+
+}
+
+
+
+.programs-cancel:hover {
+
+  background: #f3f6f4;
+
+}
+
+
+
+.programs-save {
+
+  border: 1px solid #174c2d;
+
+
+
+  background: #174c2d;
+
+  color: #ffffff;
+
+}
+
+
+
+.programs-save:hover {
+
+  background: #23633c;
+
+}
+
+
+
+.programs-modal-actions button:disabled {
+
+  cursor: not-allowed;
+
+
+
+  opacity: 0.65;
+
+}
+
+
+
+/* =========================================================
+
+   RESPONSIVE
+
+\========================================================= */
+
+
+
+@media (max-width: 1100px) {
+
+  .programs-toolbar {
+
+    grid-template-columns:
+
+      repeat(2, minmax(0, 1fr));
+
+  }
+
+
+
+  .programs-result-count {
+
+    margin: 0;
+
+
+
+    align-self: end;
+
+  }
+
+
+
+  .programs-target-inputs {
+
+    grid-template-columns:
+
+      repeat(2, minmax(0, 1fr));
+
+  }
+
+}
+
+
+
+@media (max-width: 800px) {
+
+  .programs-header {
+
+    min-height: auto;
+
+
+
+    align-items: stretch;
+
+    flex-direction: column;
+
+
+
+    padding: 24px;
+
+  }
+
+
+
+  .programs-header h1 {
+
+    font-size: 28px;
+
+  }
+
+
+
+  .programs-add-button {
+
+    width: 100%;
+
+  }
+
+
+
+  .programs-content {
+
+    padding: 20px;
+
+  }
+
+
+
+  .programs-toolbar {
+
+    grid-template-columns: 1fr;
+
+
+
+    gap: 12px;
+
+  }
+
+
+
+  .programs-result-count {
+
+    margin: 0;
+
+
+
+    align-self: flex-start;
+
+  }
+
+
+
+  .programs-modal-backdrop {
+
+    align-items: flex-start;
+
+
+
+    padding: 14px;
+
+  }
+
+
+
+  .programs-modal {
+
+    max-height: calc(100vh - 28px);
+
+  }
+
+
+
+  .programs-form-grid {
+
+    grid-template-columns: 1fr;
+
+
+
+    padding: 18px;
+
+  }
+
+
+
+  .programs-full {
+
+    grid-column: auto;
+
+  }
+
+
+
+  .programs-modal-header {
+
+    padding: 18px;
+
+  }
+
+
+
+  .programs-modal-actions {
+
+    padding: 14px 18px;
+
+  }
+
+}
+
+
+
+@media (max-width: 520px) {
+
+  .programs-header {
+
+    padding: 20px;
+
+  }
+
+
+
+  .programs-content {
+
+    padding: 14px;
+
+  }
+
+
+
+  .programs-toolbar {
+
+    padding: 15px;
+
+  }
+
+
+
+  .programs-target-inputs {
+
+    grid-template-columns: 1fr;
+
+  }
+
+
+
+  .programs-actions {
+
+    align-items: stretch;
+
+    flex-direction: column;
+
+  }
+
+
+
+  .programs-actions button {
+
+    width: 100%;
+
+  }
+
+
+
+  .programs-modal-actions {
+
+    flex-direction: column-reverse;
+
+  }
+
+
+
+  .programs-modal-actions button {
+
+    width: 100%;
+
+  }
+
+}
+
+
+
+
+
+
+
+/* =========================================================
+
+   YEARLY PHYSICAL + FINANCIAL TARGETS
+
+\========================================================= */
+
+
+
+.programs-target-help {
+
+  margin: -5px 0 15px;
+
+  color: #748078;
+
+  font-size: 11px;
+
+  line-height: 1.5;
+
+}
+
+
+
+.programs-year-targets {
+
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+
+}
+
+
+
+.programs-year-target-card {
+
+  padding: 14px;
+
+  border: 1px solid #dbe4dd;
+
+  border-radius: 9px;
+
+  background: #ffffff;
+
+}
+
+
+
+.programs-year-heading {
+
+  margin-bottom: 12px;
+
+  padding-bottom: 9px;
+
+  border-bottom: 1px solid #edf1ed;
+
+  color: #174c2d;
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+}
+
+
+
+.programs-year-target-card label + label {
+
+  margin-top: 12px;
+
+}
+
+
+
+.programs-year-target-card label span {
+
+  text-align: left;
+
+  color: #536159;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+}
+
+
+
+.programs-year-target-card input {
+
+  text-align: left;
+
+}
+
+
+
+/* =========================================================
+
+   MONEY INPUT
+
+\========================================================= */
+
+
+
+.programs-money-input {
+
+  position: relative;
+
+}
+
+
+
+.programs-money-input > span {
+
+  position: absolute;
+
+  top: 50%;
+
+  left: 12px;
+
+  z-index: 1;
+
+  transform: translateY(-50%);
+
+  color: #536159;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  pointer-events: none;
+
+}
+
+
+
+.programs-money-input input {
+
+  padding-left: 30px !important;
+
+}
+
+
+
+/* =========================================================
+
+   FINANCIAL TARGET TABLE
+
+\========================================================= */
+
+
+
+.programs-all-financial {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+
+}
+
+
+
+.programs-financial-row {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+
+}
+
+
+
+.programs-financial-row strong {
+
+  color: #438050;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+}
+
+
+
+.programs-financial-row span {
+
+  color: #174c2d;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+}
+
+
+
+/* =========================================================
+
+   FUNDING PROGRESS
+
+\========================================================= */
+
+
+
+.programs-funding-cell {
+
+  min-width: 170px;
+
+}
+
+
+
+.programs-funding-progress {
+
+  width: 100%;
+
+  min-width: 150px;
+
+}
+
+
+
+.programs-funding-numbers {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+
+  margin-bottom: 7px;
+
+  color: #69766d;
+
+  font-size: 9px;
+
+}
+
+
+
+.programs-funding-numbers strong {
+
+  color: #31473a;
+
+  font-weight: 800;
+
+}
+
+
+
+.programs-progress-line {
+
+  width: 100%;
+
+  height: 7px;
+
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: #e7ece8;
+
+}
+
+
+
+.programs-progress-fill {
+
+  height: 100%;
+
+  border-radius: inherit;
+
+  transition: width 0.3s ease;
+
+}
+
+
+
+.programs-progress-fill.not-funded {
+
+  background: #b6bdb8;
+
+}
+
+
+
+.programs-progress-fill.partially-funded {
+
+  background: #d2a52c;
+
+}
+
+
+
+.programs-progress-fill.fully-funded {
+
+  background: #237a3b;
+
+}
+
+
+
+.programs-funding-status-row {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 7px;
+
+  margin-top: 6px;
+
+}
+
+
+
+.programs-funding-status {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  padding: 4px 7px;
+
+  border-radius: 999px;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  white-space: nowrap;
+
+}
+
+
+
+.programs-funding-status.not-funded {
+
+  background: #f0f2f0;
+
+  color: #667069;
+
+}
+
+
+
+.programs-funding-status.partially-funded {
+
+  background: #fff4d8;
+
+  color: #8a6413;
+
+}
+
+
+
+.programs-funding-status.fully-funded {
+
+  background: #e5f4e9;
+
+  color: #237a3b;
+
+}
+
+
+
+.programs-percentage {
+
+  color: #174c2d;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+}
+
+
+
+.programs-no-funding {
+
+  color: #929b95;
+
+  font-size: 10px;
+
+}
+
+
+
+/* =========================================================
+
+   ALL YEARS FUNDING
+
+\========================================================= */
+
+
+
+.programs-all-funding {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 12px;
+
+}
+
+
+
+.programs-year-funding {
+
+  padding-bottom: 10px;
+
+  border-bottom: 1px solid #edf0ed;
+
+}
+
+
+
+.programs-year-funding:last-child {
+
+  padding-bottom: 0;
+
+  border-bottom: 0;
+
+}
+
+
+
+.programs-year-funding > strong {
+
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #315f3d;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+}
+
+
+
+.programs-funding-progress.compact
+
+  .programs-funding-numbers {
+
+  display: none;
+
+}
+
+
+
+/* =========================================================
+
+   FUND BUTTON
+
+\========================================================= */
+
+
+
+.programs-fund {
+
+  border: 1px solid #b6d4bd !important;
+
+  background: #edf7ef !important;
+
+  color: #1f6a3c !important;
+
+}
+
+
+
+.programs-fund:hover {
+
+  border-color: #83ad8d !important;
+
+  background: #e1f1e5 !important;
+
+}
+
+
+
+/* =========================================================
+
+   TABLE WIDTHS - 8 COLUMNS
+
+\========================================================= */
+
+
+
+.programs-table {
+
+  min-width: 1250px;
+
+}
+
+
+
+.programs-table th:nth-child(1) {
+
+  width: 18%;
+
+}
+
+
+
+.programs-table th:nth-child(2) {
+
+  width: 14%;
+
+}
+
+
+
+.programs-table th:nth-child(3) {
+
+  width: 9%;
+
+}
+
+
+
+.programs-table th:nth-child(4) {
+
+  width: 8%;
+
+}
+
+
+
+.programs-table th:nth-child(5) {
+
+  width: 12%;
+
+}
+
+
+
+.programs-table th:nth-child(6) {
+
+  width: 12%;
+
+}
+
+
+
+.programs-table th:nth-child(7) {
+
+  width: 16%;
+
+}
+
+
+
+.programs-table th:nth-child(8) {
+
+  width: 11%;
+
+}
+
+
+
+/* =========================================================
+
+   FUNDING MODAL
+
+\========================================================= */
+
+
+
+.programs-funding-modal {
+
+  width: min(650px, 100%);
+
+}
+
+
+
+.programs-funding-body {
+
+  padding: 22px 24px;
+
+}
+
+
+
+.programs-funding-project {
+
+  margin-bottom: 18px;
+
+  padding: 14px;
+
+  border: 1px solid #dce5de;
+
+  border-radius: 8px;
+
+  background: #f8faf8;
+
+}
+
+
+
+.programs-funding-project span {
+
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #738078;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  text-transform: uppercase;
+
+}
+
+
+
+.programs-funding-project strong {
+
+  color: #24432e;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+
+}
+
+
+
+.programs-funding-field {
+
+  display: grid;
+
+  gap: 7px;
+
+  margin-bottom: 17px;
+
+}
+
+
+
+.programs-funding-field > span {
+
+  color: #425449;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+}
+
+
+
+.programs-funding-field input,
+
+.programs-funding-field select {
+
+  width: 100%;
+
+  height: 43px;
+
+  box-sizing: border-box;
+
+  padding: 0 12px;
+
+  border: 1px solid #d6dfd8;
+
+  border-radius: 7px;
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #273a2d;
+
+  font-family: inherit;
+
+  font-size: 12px;
+
+}
+
+
+
+.programs-funding-field input:focus,
+
+.programs-funding-field select:focus {
+
+  border-color: #438050;
+
+  box-shadow: 0 0 0 3px rgba(67, 128, 80, 0.12);
+
+}
+
+
+
+/* =========================================================
+
+   FUNDING SUMMARY
+
+\========================================================= */
+
+
+
+.programs-funding-summary {
+
+  display: grid;
+
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  gap: 8px;
+
+  margin-bottom: 17px;
+
+}
+
+
+
+.programs-funding-summary > div {
+
+  padding: 12px 10px;
+
+  border: 1px solid #e0e7e1;
+
+  border-radius: 8px;
+
+  background: #fafcfa;
+
+}
+
+
+
+.programs-funding-summary span {
+
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #78847c;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  text-transform: uppercase;
+
+}
+
+
+
+.programs-funding-summary strong {
+
+  display: block;
+
+  color: #174c2d;
+
+  font-size: 11px;
+
+  font-weight: 800;
+
+  overflow-wrap: anywhere;
+
+}
+
+
+
+.programs-funding-body
+
+  > .programs-funding-progress {
+
+  margin-bottom: 20px;
+
+}
+
+
+
+/* Error inside modal */
+
+
+
+.programs-modal-message {
+
+  padding: 0 24px;
+
+}
+
+
+
+/* =========================================================
+
+   RESPONSIVE
+
+\========================================================= */
+
+
+
+@media (max-width: 800px) {
+
+  .programs-year-targets {
+
+    grid-template-columns: 1fr;
+
+  }
+
+
+
+  .programs-funding-summary {
+
+    grid-template-columns: repeat(2, 1fr);
+
+  }
+
+
+
+  .programs-actions {
+
+    flex-wrap: wrap;
+
+    white-space: normal;
+
+  }
+
+}
+
+
+
+@media (max-width: 480px) {
+
+  .programs-funding-summary {
+
+    grid-template-columns: 1fr;
+
+  }
+
 }
 
 /* =========================================================
-   TABLE CARD
+   TABLE LAYOUT FIX - 9 COLUMNS
 ========================================================= */
 
 .programs-table-scroll {
   width: 100%;
-
   overflow-x: auto;
   overflow-y: hidden;
-
-  border: 1px solid #dfe6e0;
-  border-radius: 12px;
-
-  background: #ffffff;
-
-  box-shadow: 0 4px 16px rgba(25, 62, 36, 0.04);
+  scrollbar-gutter: stable;
 }
-
-/*
-   IMPORTANT:
-   Old CSS forced 1250px.
-   This table is now allowed to fit normal desktop widths.
-*/
 
 .programs-table {
   width: 100%;
-  min-width: 980px;
-
-  border-collapse: separate;
-  border-spacing: 0;
-
+  min-width: 1500px;
   table-layout: fixed;
-
-  color: #39473d;
-
-  font-size: 11px;
-  line-height: 1.45;
 }
 
-.programs-table th,
-.programs-table td {
-  padding: 13px 11px;
-
-  border-right: 1px solid #edf0ed;
-  border-bottom: 1px solid #e7ece8;
-
-  text-align: left;
-  vertical-align: top;
-
-  overflow-wrap: break-word;
-  word-break: normal;
+.programs-table th:nth-child(1),
+.programs-table td:nth-child(1) {
+  width: 230px;
 }
 
-.programs-table th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-
-  background: #edf3ee;
-  color: #234a30;
-
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 1.35;
+.programs-table th:nth-child(2),
+.programs-table td:nth-child(2) {
+  width: 220px;
 }
 
-/* Program / Project */
-.programs-table th:nth-child(1) {
-  width: 22%;
+.programs-table th:nth-child(3),
+.programs-table td:nth-child(3) {
+  width: 140px;
 }
 
-/* KPI */
-.programs-table th:nth-child(2) {
-  width: 18%;
+.programs-table th:nth-child(4),
+.programs-table td:nth-child(4) {
+  width: 110px;
 }
 
-/* Source */
-.programs-table th:nth-child(3) {
-  width: 12%;
+.programs-table th:nth-child(5),
+.programs-table td:nth-child(5) {
+  width: 170px;
 }
 
-/* Status */
-.programs-table th:nth-child(4) {
-  width: 10%;
+.programs-table th:nth-child(6),
+.programs-table td:nth-child(6) {
+  width: 180px;
 }
 
-/* Physical Target */
-.programs-table th:nth-child(5) {
-  width: 13%;
+.programs-table th:nth-child(7),
+.programs-table td:nth-child(7) {
+  width: 180px;
 }
 
-/* Financial */
-.programs-table th:nth-child(6) {
-  width: 12%;
+.programs-table th:nth-child(8),
+.programs-table td:nth-child(8) {
+  width: 260px;
 }
 
-/* Actions */
-.programs-table th:nth-child(7) {
-  width: 13%;
-}
-
-.programs-table tbody tr {
-  background: #ffffff;
-
-  transition: background 0.15s ease;
-}
-
-.programs-table tbody tr:hover {
-  background: #fafcfa;
-}
-
-.programs-table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.programs-table th:last-child,
-.programs-table td:last-child {
-  border-right: 0;
-}
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-.programs-status {
-  display: inline-flex;
-
-  min-width: 68px;
-
-  align-items: center;
-  justify-content: center;
-
-  padding: 5px 8px;
-
-  border-radius: 999px;
-
-  background: #eef1ef;
-  color: #526158;
-
-  font-size: 9px;
-  font-weight: 800;
-
-  text-transform: uppercase;
-
+.programs-table th:nth-child(9),
+.programs-table td:nth-child(9) {
+  width: 210px;
+  min-width: 210px;
   white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
 
-.programs-status.proposed {
-  background: #f3f1e5;
-  color: #6d5d1c;
+.programs-table th:nth-child(9) {
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
 }
-
-.programs-status.ongoing {
-  background: #e9f2ff;
-  color: #275c96;
-}
-
-.programs-status.completed {
-  background: #e7f4e9;
-  color: #235e26;
-}
-
-.programs-status.on-hold {
-  background: #fff1dc;
-  color: #8a5a10;
-}
-
-.programs-status.cancelled {
-  background: #f8e7e7;
-  color: #9d3030;
-}
-
-/* =========================================================
-   PHYSICAL TARGET
-========================================================= */
-
-.programs-target {
-  color: #245c36;
-  font-weight: 700;
-}
-
-.programs-all-targets {
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 5px;
-}
-
-.programs-target-row {
-  display: grid;
-
-  grid-template-columns: auto minmax(0, 1fr);
-
-  align-items: start;
-
-  gap: 4px;
-
-  line-height: 1.35;
-}
-
-.programs-target-row strong {
-  color: #315f3d;
-
-  font-size: 10px;
-  font-weight: 800;
-
-  white-space: nowrap;
-}
-
-.programs-target-row span {
-  min-width: 0;
-
-  color: #526158;
-
-  font-size: 10px;
-  font-weight: 600;
-
-  overflow-wrap: anywhere;
-}
-
-.programs-period-label {
-  display: block;
-
-  margin-top: 3px;
-
-  color: #438050;
-
-  font-size: 9px;
-  font-weight: 800;
-}
-
-/* =========================================================
-   FINANCIAL TARGET
-========================================================= */
-
-.programs-financial {
-  color: #174c2d;
-
-  font-weight: 700;
-
-  white-space: nowrap;
-}
-
-/* =========================================================
-   ACTION BUTTONS
-========================================================= */
 
 .programs-actions {
   display: flex;
-
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
-
-  gap: 6px;
-
+  gap: 8px;
   white-space: nowrap;
 }
 
 .programs-actions button {
-  display: inline-flex;
-
-  min-height: 30px;
-
-  align-items: center;
-  justify-content: center;
-
-  padding: 0 9px;
-
-  border-radius: 6px;
-
-  background: #ffffff;
-
-  font-family: inherit;
-  font-size: 10px;
-  font-weight: 700;
-
-  cursor: pointer;
-
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 54px;
 }
 
-.programs-edit {
-  border: 1px solid #b9ccbd;
-
-  color: #235e26;
+.programs-funding-cell {
+  min-width: 0;
 }
 
-.programs-edit:hover {
-  border-color: #8fb098;
-
-  background: #edf5ef;
-}
-
-.programs-delete {
-  border: 1px solid #e0bebe;
-
-  color: #a12c2c;
-}
-
-.programs-delete:hover {
-  border-color: #d69c9c;
-
-  background: #fff0f0;
-}
-
-/* =========================================================
-   EMPTY / LOADING
-========================================================= */
-
-.programs-empty-state {
-  display: flex;
-
-  min-height: 270px;
-
-  flex-direction: column;
-
-  align-items: center;
-  justify-content: center;
-
-  padding: 42px 20px;
-
-  border: 1px dashed #cbd7cd;
-  border-radius: 12px;
-
-  background: #ffffff;
-
-  color: #667069;
-
-  text-align: center;
-}
-
-.programs-empty-state h2 {
-  margin: 0 0 6px;
-
-  color: #234a30;
-
-  font-size: 16px;
-}
-
-.programs-empty-state p {
-  margin: 0;
-
-  color: #667069;
-
-  font-size: 12px;
-}
-
-/* =========================================================
-   MODAL BACKDROP
-========================================================= */
-
-.programs-modal-backdrop {
-  position: fixed;
-
-  inset: 0;
-  z-index: 1000;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  padding: 24px;
-
-  overflow-y: auto;
-
-  background: rgba(16, 35, 23, 0.52);
-  backdrop-filter: blur(2px);
-}
-
-/* =========================================================
-   MODAL
-========================================================= */
-
-.programs-modal {
-  width: min(760px, 100%);
-  max-height: calc(100vh - 48px);
-
-  overflow-y: auto;
-
-  border-radius: 12px;
-
-  background: #ffffff;
-
-  box-shadow:
-    0 18px 50px rgba(20, 45, 29, 0.22);
-}
-
-.programs-modal-header {
-  position: sticky;
-
-  top: 0;
-  z-index: 3;
-
-  display: flex;
-
-  align-items: flex-start;
-  justify-content: space-between;
-
-  gap: 20px;
-
-  padding: 22px 24px 18px;
-
-  border-bottom: 1px solid #e4e9e5;
-
-  background: #ffffff;
-}
-
-.programs-modal-header h2 {
-  margin: 3px 0 0;
-
-  color: #174c2d;
-
-  font-size: 21px;
-}
-
-.programs-modal-header .module-eyebrow {
-  margin: 0;
-
-  color: #438050;
-
-  font-size: 10px;
-  font-weight: 800;
-
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.programs-modal-close {
-  display: grid;
-
-  width: 34px;
-  height: 34px;
-
-  flex-shrink: 0;
-
-  place-items: center;
-
-  padding: 0;
-
-  border: 1px solid #d8dfda;
-  border-radius: 7px;
-
-  background: #ffffff;
-  color: #526158;
-
-  font-size: 22px;
-  line-height: 1;
-
-  cursor: pointer;
-}
-
-.programs-modal-close:hover {
-  background: #f3f6f4;
-}
-
-.programs-modal-close:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-/* =========================================================
-   FORM
-========================================================= */
-
-.programs-form-grid {
-  display: grid;
-
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-
-  gap: 17px;
-
-  padding: 22px 24px;
-}
-
-.programs-form-grid label {
-  display: grid;
-
-  align-content: start;
-
-  gap: 7px;
-}
-
-.programs-form-grid label > span {
-  color: #425449;
-
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.programs-full {
-  grid-column: 1 / -1;
-}
-
-.programs-form-grid input,
-.programs-form-grid select,
-.programs-form-grid textarea {
+.programs-funding-progress {
   width: 100%;
-
-  box-sizing: border-box;
-
-  border: 1px solid #d6dfd8;
-  border-radius: 7px;
-  outline: none;
-
-  background: #ffffff;
-  color: #273a2d;
-
-  font-family: inherit;
-  font-size: 13px;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  min-width: 0;
 }
 
-.programs-form-grid input,
-.programs-form-grid select {
-  height: 43px;
-
-  padding: 0 12px;
+.programs-current-fund {
+  white-space: normal;
 }
 
-.programs-form-grid textarea {
-  min-height: 90px;
-
-  padding: 11px 12px;
-
-  resize: vertical;
-
-  line-height: 1.5;
-}
-
-.programs-form-grid input:focus,
-.programs-form-grid select:focus,
-.programs-form-grid textarea:focus {
-  border-color: #438050;
-
-  box-shadow:
-    0 0 0 3px rgba(67, 128, 80, 0.14);
-}
-
-/* =========================================================
-   PHYSICAL TARGET SECTION IN MODAL
-========================================================= */
-
-.programs-target-section {
-  padding: 16px;
-
-  border: 1px solid #d6dfd8;
-  border-radius: 8px;
-
-  background: #f8faf8;
-}
-
-.programs-target-title {
-  margin-bottom: 12px;
-
-  color: #234a30;
-
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.programs-target-inputs {
-  display: grid;
-
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-
-  gap: 10px;
-}
-
-.programs-target-inputs label {
-  display: grid;
-
-  gap: 6px;
-}
-
-.programs-target-inputs label span {
-  color: #425449;
-
-  font-size: 10px;
-  font-weight: 700;
-
-  text-align: center;
-}
-
-.programs-target-inputs input {
-  text-align: center;
-}
-
-/* =========================================================
-   MODAL ACTIONS
-========================================================= */
-
-.programs-modal-actions {
-  position: sticky;
-
-  bottom: 0;
-
-  display: flex;
-
-  justify-content: flex-end;
-
-  gap: 10px;
-
-  padding: 16px 24px;
-
-  border-top: 1px solid #e4e9e5;
-
-  background: #ffffff;
-}
-
-.programs-modal-actions button {
-  min-height: 40px;
-
-  padding: 0 17px;
-
-  border-radius: 7px;
-
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
-
-  cursor: pointer;
-}
-
-.programs-cancel {
-  border: 1px solid #ccd6cf;
-
-  background: #ffffff;
-  color: #526158;
-}
-
-.programs-cancel:hover {
-  background: #f3f6f4;
-}
-
-.programs-save {
-  border: 1px solid #174c2d;
-
-  background: #174c2d;
-  color: #ffffff;
-}
-
-.programs-save:hover {
-  background: #23633c;
-}
-
-.programs-modal-actions button:disabled {
-  cursor: not-allowed;
-
-  opacity: 0.65;
-}
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 1100px) {
-  .programs-toolbar {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-  .programs-result-count {
-    margin: 0;
-
-    align-self: end;
-  }
-
-  .programs-target-inputs {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
+.programs-current-fund .programs-financial-row span {
+  white-space: nowrap;
 }
 
 @media (max-width: 800px) {
-  .programs-header {
-    min-height: auto;
-
-    align-items: stretch;
-    flex-direction: column;
-
-    padding: 24px;
+  .programs-table {
+    min-width: 1500px;
   }
 
-  .programs-header h1 {
-    font-size: 28px;
+  .programs-actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    white-space: nowrap;
   }
 
-  .programs-add-button {
-    width: 100%;
-  }
-
-  .programs-content {
-    padding: 20px;
-  }
-
-  .programs-toolbar {
-    grid-template-columns: 1fr;
-
-    gap: 12px;
-  }
-
-  .programs-result-count {
-    margin: 0;
-
-    align-self: flex-start;
-  }
-
-  .programs-modal-backdrop {
-    align-items: flex-start;
-
-    padding: 14px;
-  }
-
-  .programs-modal {
-    max-height: calc(100vh - 28px);
-  }
-
-  .programs-form-grid {
-    grid-template-columns: 1fr;
-
-    padding: 18px;
-  }
-
-  .programs-full {
-    grid-column: auto;
-  }
-
-  .programs-modal-header {
-    padding: 18px;
-  }
-
-  .programs-modal-actions {
-    padding: 14px 18px;
+  .programs-actions button {
+    width: auto;
   }
 }
 
 @media (max-width: 520px) {
-  .programs-header {
-    padding: 20px;
-  }
-
-  .programs-content {
-    padding: 14px;
-  }
-
-  .programs-toolbar {
-    padding: 15px;
-  }
-
-  .programs-target-inputs {
-    grid-template-columns: 1fr;
-  }
-
   .programs-actions {
-    align-items: stretch;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
   }
 
   .programs-actions button {
-    width: 100%;
-  }
-
-  .programs-modal-actions {
-    flex-direction: column-reverse;
-  }
-
-  .programs-modal-actions button {
-    width: 100%;
+    width: auto;
   }
 }
