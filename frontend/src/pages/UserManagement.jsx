@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-
 import { supabase } from "../services/supabase";
-
 import "./UserManagement.css";
 
 const API_URL = import.meta.env.DEV
@@ -17,20 +15,118 @@ const EMPTY_FORM = {
   confirmPassword: "",
 };
 
+function EyeIcon({ visible }) {
+  if (visible) {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        <circle
+          cx="12"
+          cy="12"
+          r="3"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        d="M3 3l18 18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M10.6 6.2A10.4 10.4 0 0 1 12 6c6 0 9.5 6 9.5 6a15.7 15.7 0 0 1-3 3.7M6.2 6.3C3.8 8 2.5 12 2.5 12s3.5 6 9.5 6c1.6 0 3-.4 4.2-1"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      <path
+        d="M9.9 9.9A3 3 0 0 0 14.1 14.1"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function UserManagement() {
   const [users, setUsers] = useState([]);
-  const [currentUserId, setCurrentUserId] = useState("");
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("");
-  const [modalMode, setModalMode] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
+  const [currentUserId, setCurrentUserId] =
+    useState("");
 
-  const apiRequest = async (path, options = {}) => {
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] =
+    useState("all");
+
+  const [loading, setLoading] = useState(true);
+
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] =
+    useState("");
+
+  const [modalError, setModalError] =
+    useState("");
+
+  const [modalMode, setModalMode] =
+    useState(null);
+
+  const [selectedUser, setSelectedUser] =
+    useState(null);
+
+  const [form, setForm] =
+    useState(EMPTY_FORM);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [
+    showConfirmPassword,
+    setShowConfirmPassword,
+  ] = useState(false);
+
+  const [
+    changingPassword,
+    setChangingPassword,
+  ] = useState(false);
+
+  /* =========================================
+     API
+  ========================================= */
+
+  const apiRequest = async (
+    path,
+    options = {}
+  ) => {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -41,39 +137,65 @@ function UserManagement() {
       );
     }
 
-    const response = await fetch(`${API_URL}${path}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-        ...(options.headers || {}),
-      },
-    });
+    const response = await fetch(
+      `${API_URL}${path}`,
+      {
+        ...options,
 
-    const data = await response.json().catch(() => ({}));
+        headers: {
+          "Content-Type": "application/json",
+
+          Authorization:
+            `Bearer ${session.access_token}`,
+
+          ...(options.headers || {}),
+        },
+      }
+    );
+
+    const data =
+      await response
+        .json()
+        .catch(() => ({}));
 
     if (!response.ok) {
       throw new Error(
-        data.message || "Request failed."
+        data.message ||
+          "Request failed."
       );
     }
 
     return data;
   };
 
+  /* =========================================
+     LOAD USERS
+  ========================================= */
+
   const loadUsers = async () => {
     setLoading(true);
 
     try {
-      const data = await apiRequest("/api/users");
+      const data =
+        await apiRequest(
+          "/api/users"
+        );
 
-      setUsers(data.users || []);
+      setUsers(
+        data.users || []
+      );
+
       setCurrentUserId(
         data.currentUserId || ""
       );
     } catch (error) {
-      setMessage(error.message);
-      setMessageType("error");
+      setMessage(
+        error.message
+      );
+
+      setMessageType(
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -83,63 +205,80 @@ function UserManagement() {
     loadUsers();
   }, []);
 
-  const filteredUsers = useMemo(() => {
-    const term = search
-      .trim()
-      .toLowerCase();
+  /* =========================================
+     FILTER USERS
+  ========================================= */
 
-    return users.filter((user) => {
-      const matchesRole =
-        roleFilter === "all" ||
-        user.role === roleFilter;
+  const filteredUsers =
+    useMemo(() => {
+      const term =
+        search
+          .trim()
+          .toLowerCase();
 
-      const matchesSearch =
-        !term ||
-        user.full_name
-          ?.toLowerCase()
-          .includes(term) ||
-        user.username
-          ?.toLowerCase()
-          .includes(term) ||
-        user.email
-          ?.toLowerCase()
-          .includes(term);
+      return users.filter(
+        (user) => {
+          const matchesRole =
+            roleFilter === "all" ||
+            user.role ===
+              roleFilter;
 
-      return (
-        matchesRole &&
-        matchesSearch
+          const matchesSearch =
+            !term ||
+            user.full_name
+              ?.toLowerCase()
+              .includes(term) ||
+            user.username
+              ?.toLowerCase()
+              .includes(term) ||
+            user.email
+              ?.toLowerCase()
+              .includes(term);
+
+          return (
+            matchesRole &&
+            matchesSearch
+          );
+        }
       );
-    });
-  }, [
-    users,
-    search,
-    roleFilter,
-  ]);
+    }, [
+      users,
+      search,
+      roleFilter,
+    ]);
 
-  /* =========================
-     OPEN CREATE
-  ========================= */
+  /* =========================================
+     RESET MODAL STATE
+  ========================================= */
+
+  const resetModalState = () => {
+    setModalError("");
+
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+
+    setChangingPassword(false);
+  };
+
+  /* =========================================
+     CREATE
+  ========================================= */
 
   const openCreate = () => {
     setSelectedUser(null);
 
     setForm({
-      fullName: "",
-      username: "",
-      email: "",
-      role: "",
-      password: "",
-      confirmPassword: "",
+      ...EMPTY_FORM,
     });
 
+    resetModalState();
+
     setModalMode("create");
-    setMessage("");
-    setMessageType("");
   };
 
-  /* =========================
-     OPEN EDIT
-  ========================= */
+  /* =========================================
+     EDIT
+  ========================================= */
 
   const openEdit = (user) => {
     setSelectedUser(user);
@@ -147,50 +286,59 @@ function UserManagement() {
     setForm({
       fullName:
         user.full_name || "",
+
       username:
         user.username || "",
+
       email:
         user.email || "",
+
       role:
         user.role || "user",
+
       password: "",
+
       confirmPassword: "",
     });
 
+    resetModalState();
+
     setModalMode("edit");
-    setMessage("");
-    setMessageType("");
   };
 
-  /* =========================
-     OPEN DELETE
-  ========================= */
+  /* =========================================
+     DELETE
+  ========================================= */
 
   const openDelete = (user) => {
     setSelectedUser(user);
+
+    resetModalState();
+
     setModalMode("delete");
-    setMessage("");
-    setMessageType("");
   };
 
-  /* =========================
-     CLOSE MODAL
-  ========================= */
+  /* =========================================
+     CLOSE
+  ========================================= */
 
   const closeModal = () => {
     if (saving) return;
 
     setModalMode(null);
+
     setSelectedUser(null);
 
     setForm({
       ...EMPTY_FORM,
     });
+
+    resetModalState();
   };
 
-  /* =========================
-     FORM CHANGE
-  ========================= */
+  /* =========================================
+     CHANGE INPUT
+  ========================================= */
 
   const handleChange = (
     event
@@ -204,40 +352,101 @@ function UserManagement() {
       ...current,
       [name]: value,
     }));
+
+    if (modalError) {
+      setModalError("");
+    }
   };
 
-  /* =========================
-     CREATE / UPDATE
-  ========================= */
+  /* =========================================
+     CHANGE PASSWORD BUTTON
+  ========================================= */
+
+  const enablePasswordChange = () => {
+    setChangingPassword(true);
+
+    setForm((current) => ({
+      ...current,
+      password: "",
+      confirmPassword: "",
+    }));
+
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setModalError("");
+  };
+
+  const cancelPasswordChange = () => {
+    setChangingPassword(false);
+
+    setForm((current) => ({
+      ...current,
+      password: "",
+      confirmPassword: "",
+    }));
+
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setModalError("");
+  };
+
+  /* =========================================
+     SAVE
+  ========================================= */
 
   const handleSave = async (
     event
   ) => {
     event.preventDefault();
 
-    setMessage("");
-    setMessageType("");
+    setModalError("");
 
     if (
       modalMode === "create" &&
       !form.role
     ) {
-      setMessage(
+      setModalError(
         "Please select a role."
       );
-      setMessageType("error");
+
+      return;
+    }
+
+    const passwordRequired =
+      modalMode === "create" ||
+      changingPassword;
+
+    if (
+      passwordRequired &&
+      !form.password
+    ) {
+      setModalError(
+        "Please enter a password."
+      );
+
       return;
     }
 
     if (
-      modalMode === "create" &&
+      passwordRequired &&
+      form.password.length < 6
+    ) {
+      setModalError(
+        "Password must contain at least 6 characters."
+      );
+
+      return;
+    }
+
+    if (
+      passwordRequired &&
       form.password !==
         form.confirmPassword
     ) {
-      setMessage(
+      setModalError(
         "Passwords do not match."
       );
-      setMessageType("error");
+
       return;
     }
 
@@ -255,12 +464,16 @@ function UserManagement() {
             body: JSON.stringify({
               fullName:
                 form.fullName,
+
               username:
                 form.username,
+
               email:
                 form.email,
+
               role:
                 form.role,
+
               password:
                 form.password,
             }),
@@ -271,34 +484,57 @@ function UserManagement() {
           "Account created successfully."
         );
       } else {
+        const updatePayload = {
+          fullName:
+            form.fullName,
+
+          username:
+            form.username,
+
+          email:
+            form.email,
+
+          role:
+            selectedUser.id ===
+            currentUserId
+              ? "super_admin"
+              : form.role,
+        };
+
+        /*
+          This sends password only when
+          Change Password is enabled.
+
+          Your backend PUT /api/users/:id
+          must support password updates.
+        */
+        if (changingPassword) {
+          updatePayload.password =
+            form.password;
+        }
+
         await apiRequest(
           `/api/users/${selectedUser.id}`,
           {
             method: "PUT",
 
-            body: JSON.stringify({
-              fullName:
-                form.fullName,
-              username:
-                form.username,
-              email:
-                form.email,
-
-              role:
-                selectedUser.id ===
-                currentUserId
-                  ? "super_admin"
-                  : form.role,
-            }),
+            body:
+              JSON.stringify(
+                updatePayload
+              ),
           }
         );
 
         setMessage(
-          "Account updated successfully."
+          changingPassword
+            ? "Account and password updated successfully."
+            : "Account updated successfully."
         );
       }
 
-      setMessageType("success");
+      setMessageType(
+        "success"
+      );
 
       setModalMode(null);
       setSelectedUser(null);
@@ -307,37 +543,36 @@ function UserManagement() {
         ...EMPTY_FORM,
       });
 
+      resetModalState();
+
       await loadUsers();
     } catch (error) {
-      setMessage(
+      /*
+        API errors while modal is open
+        now appear INSIDE the modal.
+      */
+      setModalError(
         error.message
-      );
-
-      setMessageType(
-        "error"
       );
     } finally {
       setSaving(false);
     }
   };
 
-  /* =========================
+  /* =========================================
      DELETE
-  ========================= */
+  ========================================= */
 
   const handleDelete =
     async () => {
       setSaving(true);
-
-      setMessage("");
-      setMessageType("");
+      setModalError("");
 
       try {
         await apiRequest(
           `/api/users/${selectedUser.id}`,
           {
-            method:
-              "DELETE",
+            method: "DELETE",
           }
         );
 
@@ -354,12 +589,8 @@ function UserManagement() {
 
         await loadUsers();
       } catch (error) {
-        setMessage(
+        setModalError(
           error.message
-        );
-
-        setMessageType(
-          "error"
         );
       } finally {
         setSaving(false);
@@ -368,9 +599,9 @@ function UserManagement() {
 
   return (
     <section className="um-page">
-      {/* =========================
+      {/* =================================
           HEADER
-      ========================= */}
+      ================================= */}
 
       <header className="um-header">
         <div>
@@ -397,9 +628,9 @@ function UserManagement() {
         </button>
       </header>
 
-      {/* =========================
-          CONTENT
-      ========================= */}
+      {/* =================================
+          PAGE CONTENT
+      ================================= */}
 
       <div className="um-content">
         {message && (
@@ -409,10 +640,6 @@ function UserManagement() {
             {message}
           </div>
         )}
-
-        {/* =========================
-            FILTERS
-        ========================= */}
 
         <div className="um-toolbar">
           <input
@@ -456,9 +683,9 @@ function UserManagement() {
           </select>
         </div>
 
-        {/* =========================
+        {/* =================================
             TABLE
-        ========================= */}
+        ================================= */}
 
         <div className="um-table-card">
           {loading ? (
@@ -591,9 +818,9 @@ function UserManagement() {
         </div>
       </div>
 
-      {/* =========================
+      {/* =================================
           CREATE / EDIT MODAL
-      ========================= */}
+      ================================= */}
 
       {(modalMode === "create" ||
         modalMode === "edit") && (
@@ -627,13 +854,32 @@ function UserManagement() {
 
               <button
                 type="button"
+                className="um-modal-close"
                 onClick={
                   closeModal
                 }
+                aria-label="Close"
               >
                 ×
               </button>
             </div>
+
+            {/* ERROR NOW INSIDE MODAL */}
+
+            {modalError && (
+              <div
+                className="um-modal-error"
+                role="alert"
+              >
+                <span className="um-modal-error-icon">
+                  !
+                </span>
+
+                <span>
+                  {modalError}
+                </span>
+              </div>
+            )}
 
             <form
               onSubmit={
@@ -754,29 +1000,102 @@ function UserManagement() {
                   )}
                 </label>
 
-                {/* PASSWORDS */}
+                {/* =================================
+                    EDIT: CHANGE PASSWORD BUTTON
+                ================================= */}
 
                 {modalMode ===
-                  "create" && (
+                  "edit" &&
+                  !changingPassword && (
+                    <div className="um-full um-change-password-row">
+                      <div>
+                        <strong>
+                          Password
+                        </strong>
+
+                        <small>
+                          Keep the current
+                          password or set a
+                          new one.
+                        </small>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="um-change-password-button"
+                        onClick={
+                          enablePasswordChange
+                        }
+                      >
+                        Change Password
+                      </button>
+                    </div>
+                  )}
+
+                {/* =================================
+                    PASSWORD FIELDS
+                ================================= */}
+
+                {(modalMode ===
+                  "create" ||
+                  changingPassword) && (
                   <>
                     <label>
                       <span>
-                        Password
+                        {modalMode ===
+                        "edit"
+                          ? "New Password"
+                          : "Password"}
                       </span>
 
-                      <input
-                        name="password"
-                        type="password"
-                        value={
-                          form.password
-                        }
-                        onChange={
-                          handleChange
-                        }
-                        autoComplete="new-password"
-                        minLength="6"
-                        required
-                      />
+                      <div className="um-password-field">
+                        <input
+                          name="password"
+                          type={
+                            showPassword
+                              ? "text"
+                              : "password"
+                          }
+                          value={
+                            form.password
+                          }
+                          onChange={
+                            handleChange
+                          }
+                          autoComplete="new-password"
+                          minLength="6"
+                          required
+                        />
+
+                        <button
+                          type="button"
+                          className="um-password-toggle"
+                          onClick={() =>
+                            setShowPassword(
+                              (
+                                current
+                              ) =>
+                                !current
+                            )
+                          }
+                          aria-label={
+                            showPassword
+                              ? "Hide password"
+                              : "Show password"
+                          }
+                          title={
+                            showPassword
+                              ? "Hide password"
+                              : "Show password"
+                          }
+                        >
+                          <EyeIcon
+                            visible={
+                              showPassword
+                            }
+                          />
+                        </button>
+                      </div>
                     </label>
 
                     <label>
@@ -784,27 +1103,77 @@ function UserManagement() {
                         Confirm Password
                       </span>
 
-                      <input
-                        name="confirmPassword"
-                        type="password"
-                        value={
-                          form.confirmPassword
-                        }
-                        onChange={
-                          handleChange
-                        }
-                        autoComplete="new-password"
-                        minLength="6"
-                        required
-                      />
+                      <div className="um-password-field">
+                        <input
+                          name="confirmPassword"
+                          type={
+                            showConfirmPassword
+                              ? "text"
+                              : "password"
+                          }
+                          value={
+                            form.confirmPassword
+                          }
+                          onChange={
+                            handleChange
+                          }
+                          autoComplete="new-password"
+                          minLength="6"
+                          required
+                        />
+
+                        <button
+                          type="button"
+                          className="um-password-toggle"
+                          onClick={() =>
+                            setShowConfirmPassword(
+                              (
+                                current
+                              ) =>
+                                !current
+                            )
+                          }
+                          aria-label={
+                            showConfirmPassword
+                              ? "Hide password"
+                              : "Show password"
+                          }
+                          title={
+                            showConfirmPassword
+                              ? "Hide password"
+                              : "Show password"
+                          }
+                        >
+                          <EyeIcon
+                            visible={
+                              showConfirmPassword
+                            }
+                          />
+                        </button>
+                      </div>
                     </label>
+
+                    {modalMode ===
+                      "edit" && (
+                      <div className="um-full um-password-cancel-row">
+                        <button
+                          type="button"
+                          className="um-cancel-password-button"
+                          onClick={
+                            cancelPasswordChange
+                          }
+                        >
+                          Cancel Password Change
+                        </button>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
 
-              {/* =========================
+              {/* =================================
                   ACTIONS
-              ========================= */}
+              ================================= */}
 
               <div className="um-modal-actions">
                 <button
@@ -837,9 +1206,9 @@ function UserManagement() {
         </div>
       )}
 
-      {/* =========================
+      {/* =================================
           DELETE MODAL
-      ========================= */}
+      ================================= */}
 
       {modalMode === "delete" &&
         selectedUser && (
@@ -864,6 +1233,21 @@ function UserManagement() {
               <h2>
                 Delete account?
               </h2>
+
+              {modalError && (
+                <div
+                  className="um-modal-error"
+                  role="alert"
+                >
+                  <span className="um-modal-error-icon">
+                    !
+                  </span>
+
+                  <span>
+                    {modalError}
+                  </span>
+                </div>
+              )}
 
               <p>
                 This will
