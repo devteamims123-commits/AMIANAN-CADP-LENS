@@ -29,6 +29,15 @@ const STATUS_ORDER = [
   "Cancelled",
 ];
 
+const STATUS_COLORS = {
+  Proposed: "#d6b84b",
+  Ongoing: "#2f7d4a",
+  Completed: "#174d2d",
+  "On Hold": "#c98b37",
+  Cancelled: "#9b5a52",
+  Unspecified: "#9aa79d",
+};
+
 function Dashboard() {
   const [sites, setSites] = useState([]);
   const [records, setRecords] = useState([]);
@@ -49,22 +58,21 @@ function Dashboard() {
     setErrorMessage("");
 
     try {
-      const [sitesResult, programsResult] =
-        await Promise.all([
-          supabase
-            .from("cadp_sites")
-            .select(
-              "id, convergence_name, province, municipality_city, barangay"
-            )
-            .order("convergence_name"),
+      const [sitesResult, programsResult] = await Promise.all([
+        supabase
+          .from("cadp_sites")
+          .select(
+            "id, convergence_name, province, municipality_city, barangay"
+          )
+          .order("convergence_name"),
 
-          supabase
-            .from("programs_projects")
-            .select("*")
-            .order("created_at", {
-              ascending: false,
-            }),
-        ]);
+        supabase
+          .from("programs_projects")
+          .select("*")
+          .order("created_at", {
+            ascending: false,
+          }),
+      ]);
 
       if (sitesResult.error) {
         throw sitesResult.error;
@@ -127,15 +135,26 @@ function Dashboard() {
     );
   }, [filteredSites]);
 
+  /*
+   * All records belonging to the selected province/site.
+   *
+   * This is intentionally kept separate from filteredRecords.
+   * It lets the Physical Target Summary count programs that
+   * DO NOT have a target for the selected year.
+   */
+  const siteFilteredRecords = useMemo(() => {
+    return records.filter((record) =>
+      filteredSiteIds.has(record.cadp_site_id)
+    );
+  }, [records, filteredSiteIds]);
+
+  /*
+   * Records displayed in KPI cards and charts.
+   * If a physical target year is selected, only programs
+   * containing a target for that year are included.
+   */
   const filteredRecords = useMemo(() => {
-    return records.filter((record) => {
-      const matchesSite =
-        filteredSiteIds.has(record.cadp_site_id);
-
-      if (!matchesSite) {
-        return false;
-      }
-
+    return siteFilteredRecords.filter((record) => {
       if (period === "all") {
         return true;
       }
@@ -148,7 +167,7 @@ function Dashboard() {
         String(target).trim() !== ""
       );
     });
-  }, [records, filteredSiteIds, period]);
+  }, [siteFilteredRecords, period]);
 
   const totalFinancialTarget = useMemo(() => {
     return filteredRecords.reduce(
@@ -162,7 +181,7 @@ function Dashboard() {
   const ongoingCount = useMemo(() => {
     return filteredRecords.filter(
       (record) =>
-        String(record.status).toLowerCase() ===
+        String(record.status || "").toLowerCase() ===
         "ongoing"
     ).length;
   }, [filteredRecords]);
@@ -171,9 +190,11 @@ function Dashboard() {
     const counts = {};
 
     filteredRecords.forEach((record) => {
-      const status = record.status || "Unspecified";
+      const status =
+        record.status || "Unspecified";
 
-      counts[status] = (counts[status] || 0) + 1;
+      counts[status] =
+        (counts[status] || 0) + 1;
     });
 
     const known = STATUS_ORDER
@@ -196,27 +217,43 @@ function Dashboard() {
     return [...known, ...others];
   }, [filteredRecords]);
 
+  /*
+   * Physical Target Summary FIX:
+   * siteRecords comes from siteFilteredRecords instead of
+   * filteredRecords, so "Without Target" remains accurate
+   * when a specific target year is selected.
+   */
   const siteSummary = useMemo(() => {
     return filteredSites
       .map((site) => {
-        const siteRecords = filteredRecords.filter(
-          (record) =>
-            record.cadp_site_id === site.id
-        );
+        const allSiteRecords =
+          siteFilteredRecords.filter(
+            (record) =>
+              record.cadp_site_id === site.id
+          );
 
-        const financial = siteRecords.reduce(
-          (total, record) =>
-            total +
-            (Number(record.financial_target) || 0),
-          0
-        );
+        const displayedSiteRecords =
+          filteredRecords.filter(
+            (record) =>
+              record.cadp_site_id === site.id
+          );
+
+        const financial =
+          displayedSiteRecords.reduce(
+            (total, record) =>
+              total +
+              (Number(record.financial_target) || 0),
+            0
+          );
 
         let withTarget = 0;
         let withoutTarget = 0;
 
-        siteRecords.forEach((record) => {
+        allSiteRecords.forEach((record) => {
+          let hasTarget = false;
+
           if (period === "all") {
-            const hasTarget = TARGET_PERIODS.some(
+            hasTarget = TARGET_PERIODS.some(
               (targetPeriod) => {
                 const value =
                   record[targetPeriod.field];
@@ -228,30 +265,27 @@ function Dashboard() {
                 );
               }
             );
-
-            if (hasTarget) {
-              withTarget += 1;
-            } else {
-              withoutTarget += 1;
-            }
           } else {
             const value = record[period];
 
-            if (
+            hasTarget =
               value !== null &&
               value !== undefined &&
-              String(value).trim() !== ""
-            ) {
-              withTarget += 1;
-            } else {
-              withoutTarget += 1;
-            }
+              String(value).trim() !== "";
+          }
+
+          if (hasTarget) {
+            withTarget += 1;
+          } else {
+            withoutTarget += 1;
           }
         });
 
         return {
           ...site,
-          programCount: siteRecords.length,
+          programCount:
+            displayedSiteRecords.length,
+          totalPrograms: allSiteRecords.length,
           financial,
           withTarget,
           withoutTarget,
@@ -261,12 +295,12 @@ function Dashboard() {
         (a, b) =>
           b.programCount - a.programCount
       );
-  }, [filteredSites, filteredRecords, period]);
-
-  const maxStatusValue = Math.max(
-    ...statusData.map((item) => item.value),
-    1
-  );
+  }, [
+    filteredSites,
+    siteFilteredRecords,
+    filteredRecords,
+    period,
+  ]);
 
   const maxProgramCount = Math.max(
     ...siteSummary.map(
@@ -309,11 +343,60 @@ function Dashboard() {
     setSiteId("all");
   };
 
+  /*
+   * Create a conic-gradient from the real status counts.
+   * No chart library is required.
+   */
+  const donutBackground = useMemo(() => {
+    const total = statusData.reduce(
+      (sum, item) => sum + item.value,
+      0
+    );
+
+    if (!total) {
+      return "#e8eee9";
+    }
+
+    let current = 0;
+
+    const segments = statusData.map(
+      (item, index) => {
+        const start = current;
+        const percentage =
+          (item.value / total) * 100;
+
+        current += percentage;
+
+        const color =
+          STATUS_COLORS[item.label] ||
+          [
+            "#225c36",
+            "#d6b84b",
+            "#78967f",
+            "#b98542",
+            "#6e806f",
+          ][index % 5];
+
+        return `${color} ${start}% ${current}%`;
+      }
+    );
+
+    return `conic-gradient(${segments.join(
+      ", "
+    )})`;
+  }, [statusData]);
+
+  const totalStatusRecords = statusData.reduce(
+    (total, item) => total + item.value,
+    0
+  );
+
   if (loading) {
     return (
       <div className="dashboard-page">
         <div className="dashboard-loading">
-          Loading dashboard...
+          <div className="dashboard-loader" />
+          <span>Loading dashboard...</span>
         </div>
       </div>
     );
@@ -321,15 +404,16 @@ function Dashboard() {
 
   return (
     <div className="dashboard-page">
+      {/* HEADER */}
       <header className="dashboard-header">
-        <div>
+        <div className="dashboard-header-content">
           <p className="dashboard-eyebrow">
             AMIANAN-CADP L.E.N.S.
           </p>
 
           <h1>Dashboard</h1>
 
-          <p>
+          <p className="dashboard-subtitle">
             Overview of CADP sites, programs,
             projects, physical targets, and funding.
           </p>
@@ -340,6 +424,9 @@ function Dashboard() {
           className="dashboard-refresh"
           onClick={loadDashboard}
         >
+          <span className="dashboard-refresh-icon">
+            ↻
+          </span>
           Refresh Data
         </button>
       </header>
@@ -350,6 +437,7 @@ function Dashboard() {
         </div>
       )}
 
+      {/* FILTERS */}
       <section className="dashboard-filters">
         <label>
           <span>Province</span>
@@ -428,65 +516,103 @@ function Dashboard() {
         </label>
       </section>
 
+      {/* KPI CARDS */}
       <section className="dashboard-cards">
         <article className="dashboard-card">
-          <span>CADP Sites</span>
+          <div className="dashboard-card-icon">
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M4 20V8l8-4 8 4v12h-5v-6H9v6H4Zm2-2h1v-6h10v6h1V9.2l-6-3-6 3V18Z" />
+            </svg>
+          </div>
 
-          <strong>
-            {filteredSites.length}
-          </strong>
+          <div className="dashboard-card-content">
+            <span>CADP Sites</span>
 
-          <small>
-            Registered sites
-          </small>
+            <strong>
+              {filteredSites.length}
+            </strong>
+
+            <small>Registered sites</small>
+          </div>
         </article>
 
         <article className="dashboard-card">
-          <span>
-            Programs / Projects
-          </span>
+          <div className="dashboard-card-icon">
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm0 2v14h14V5H5Zm3 3h8v2H8V8Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z" />
+            </svg>
+          </div>
 
-          <strong>
-            {filteredRecords.length}
-          </strong>
+          <div className="dashboard-card-content">
+            <span>
+              Programs / Projects
+            </span>
 
-          <small>
-            {selectedPeriodLabel}
-          </small>
+            <strong>
+              {filteredRecords.length}
+            </strong>
+
+            <small>
+              {selectedPeriodLabel}
+            </small>
+          </div>
         </article>
 
         <article className="dashboard-card">
-          <span>Ongoing</span>
+          <div className="dashboard-card-icon">
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="m4 17 5-5 3 3 6-7h-4V6h7v7h-2V9.7l-6.9 8.1-3.1-3.1-3.6 3.7L4 17Z" />
+            </svg>
+          </div>
 
-          <strong>
-            {ongoingCount}
-          </strong>
+          <div className="dashboard-card-content">
+            <span>Ongoing</span>
 
-          <small>
-            Active programs / projects
-          </small>
+            <strong>{ongoingCount}</strong>
+
+            <small>
+              Active programs / projects
+            </small>
+          </div>
         </article>
 
         <article className="dashboard-card">
-          <span>
-            Financial Target
-          </span>
+          <div className="dashboard-card-icon">
+            <span className="dashboard-peso">
+              ₱
+            </span>
+          </div>
 
-          <strong className="dashboard-money">
-            ₱
-            {formatCompactMoney(
-              totalFinancialTarget
-            )}
-          </strong>
+          <div className="dashboard-card-content">
+            <span>Financial Target</span>
 
-          <small>
-            Total target funding
-          </small>
+            <strong className="dashboard-money">
+              ₱
+              {formatCompactMoney(
+                totalFinancialTarget
+              )}
+            </strong>
+
+            <small>
+              Total target funding
+            </small>
+          </div>
         </article>
       </section>
 
+      {/* MAIN CHARTS */}
       <section className="dashboard-chart-grid">
-        <article className="dashboard-panel">
+        {/* STATUS DONUT */}
+        <article className="dashboard-panel dashboard-status-panel">
           <div className="dashboard-panel-header">
             <div>
               <h2>
@@ -497,47 +623,74 @@ function Dashboard() {
                 Distribution of records by status.
               </p>
             </div>
+
+            <span className="dashboard-panel-badge">
+              {selectedPeriodLabel}
+            </span>
           </div>
 
-          <div className="dashboard-bars">
-            {statusData.length === 0 ? (
-              <div className="dashboard-no-data">
-                No data available.
-              </div>
-            ) : (
-              statusData.map((item) => (
-                <div
-                  className="dashboard-bar-row"
-                  key={item.label}
-                >
-                  <div className="dashboard-bar-info">
-                    <span>
-                      {item.label}
-                    </span>
-
-                    <strong>
-                      {item.value}
-                    </strong>
-                  </div>
-
-                  <div className="dashboard-bar-track">
-                    <div
-                      className="dashboard-bar-fill"
-                      style={{
-                        width: `${
-                          (item.value /
-                            maxStatusValue) *
-                          100
-                        }%`,
-                      }}
-                    />
-                  </div>
+          {statusData.length === 0 ? (
+            <div className="dashboard-no-data">
+              No data available.
+            </div>
+          ) : (
+            <div className="dashboard-donut-layout">
+              <div
+                className="dashboard-donut"
+                style={{
+                  background: donutBackground,
+                }}
+              >
+                <div className="dashboard-donut-center">
+                  <strong>
+                    {totalStatusRecords}
+                  </strong>
+                  <span>Total</span>
                 </div>
-              ))
-            )}
-          </div>
+              </div>
+
+              <div className="dashboard-legend">
+                {statusData.map(
+                  (item, index) => (
+                    <div
+                      className="dashboard-legend-row"
+                      key={item.label}
+                    >
+                      <div className="dashboard-legend-label">
+                        <span
+                          className="dashboard-legend-dot"
+                          style={{
+                            background:
+                              STATUS_COLORS[
+                                item.label
+                              ] ||
+                              [
+                                "#225c36",
+                                "#d6b84b",
+                                "#78967f",
+                                "#b98542",
+                                "#6e806f",
+                              ][index % 5],
+                          }}
+                        />
+
+                        <span>
+                          {item.label}
+                        </span>
+                      </div>
+
+                      <strong>
+                        {item.value}
+                      </strong>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          )}
         </article>
 
+        {/* CADP SITE BARS */}
         <article className="dashboard-panel">
           <div className="dashboard-panel-header">
             <div>
@@ -563,7 +716,11 @@ function Dashboard() {
                   key={site.id}
                 >
                   <div className="dashboard-bar-info">
-                    <span>
+                    <span
+                      title={
+                        site.convergence_name
+                      }
+                    >
                       {site.convergence_name}
                     </span>
 
@@ -591,6 +748,7 @@ function Dashboard() {
         </article>
       </section>
 
+      {/* FINANCIAL TARGET */}
       <section className="dashboard-panel dashboard-financial-panel">
         <div className="dashboard-panel-header">
           <div>
@@ -603,9 +761,18 @@ function Dashboard() {
               and projects per site.
             </p>
           </div>
+
+          <div className="dashboard-financial-total">
+            <span>Total</span>
+            <strong>
+              {formatMoney(
+                totalFinancialTarget
+              )}
+            </strong>
+          </div>
         </div>
 
-        <div className="dashboard-bars">
+        <div className="dashboard-bars dashboard-financial-bars">
           {siteSummary.length === 0 ? (
             <div className="dashboard-no-data">
               No data available.
@@ -617,7 +784,11 @@ function Dashboard() {
                 key={site.id}
               >
                 <div className="dashboard-bar-info dashboard-financial-info">
-                  <span>
+                  <span
+                    title={
+                      site.convergence_name
+                    }
+                  >
                     {site.convergence_name}
                   </span>
 
@@ -628,9 +799,9 @@ function Dashboard() {
                   </strong>
                 </div>
 
-                <div className="dashboard-bar-track">
+                <div className="dashboard-bar-track dashboard-financial-track">
                   <div
-                    className="dashboard-bar-fill"
+                    className="dashboard-bar-fill dashboard-financial-fill"
                     style={{
                       width: `${
                         (site.financial /
@@ -646,7 +817,8 @@ function Dashboard() {
         </div>
       </section>
 
-      <section className="dashboard-panel">
+      {/* PHYSICAL TARGET SUMMARY */}
+      <section className="dashboard-panel dashboard-target-panel">
         <div className="dashboard-panel-header">
           <div>
             <h2>
@@ -654,13 +826,14 @@ function Dashboard() {
             </h2>
 
             <p>
-              Target availability for{" "}
-              <strong>
-                {selectedPeriodLabel}
-              </strong>
-              .
+              Target availability across selected
+              CADP sites.
             </p>
           </div>
+
+          <span className="dashboard-panel-badge">
+            {selectedPeriodLabel}
+          </span>
         </div>
 
         <div className="dashboard-table-scroll">
@@ -692,16 +865,20 @@ function Dashboard() {
                   <tr key={site.id}>
                     <td>
                       <strong>
-                        {site.convergence_name}
+                        {
+                          site.convergence_name
+                        }
                       </strong>
                     </td>
 
                     <td>
-                      {site.province}
+                      {site.province || "—"}
                     </td>
 
                     <td>
-                      {site.programCount}
+                      {period === "all"
+                        ? site.totalPrograms
+                        : site.totalPrograms}
                     </td>
 
                     <td>
