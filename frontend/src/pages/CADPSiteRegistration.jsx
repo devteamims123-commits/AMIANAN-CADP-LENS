@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../services/supabase";
 import { region1Locations } from "../data/region1Locations";
 import "./CADPSiteRegistration.css";
@@ -15,8 +15,11 @@ function CADPSiteRegistration() {
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
+  const [editingSite, setEditingSite] = useState(null);
+  const [deletingSite, setDeletingSite] = useState(null);
 
   const [form, setForm] = useState(initialForm);
 
@@ -31,44 +34,54 @@ function CADPSiteRegistration() {
   const municipalities = useMemo(() => {
     if (!form.province) return [];
 
-    return Object.keys(region1Locations[form.province] || {});
+    return Object.keys(
+      region1Locations[form.province] || {}
+    );
   }, [form.province]);
 
   const barangays = useMemo(() => {
-    if (!form.province || !form.municipalityCity) return [];
+    if (!form.province || !form.municipalityCity) {
+      return [];
+    }
 
     return (
-      region1Locations[form.province]?.[form.municipalityCity] || []
+      region1Locations[form.province]?.[
+        form.municipalityCity
+      ] || []
     );
   }, [form.province, form.municipalityCity]);
 
   const currentYear = new Date().getFullYear();
 
-  const years = Array.from(
-    { length: currentYear - 1899 },
-    (_, index) => currentYear - index
-  );
+  const years = useMemo(() => {
+    return Array.from(
+      { length: currentYear - 1899 },
+      (_, index) => currentYear - index
+    );
+  }, [currentYear]);
 
   /* ========================================
-     LOAD REGISTERED CADP SITES
+     LOAD CADP SITES
   ======================================== */
 
-  const loadSites = async () => {
+  const loadSites = useCallback(async () => {
     setLoading(true);
+    setErrorMessage("");
 
     try {
       const { data, error } = await supabase
         .from("cadp_sites")
         .select(
           `
-          id,
-          province,
-          municipality_city,
-          barangay,
-          year_started,
-          convergence_name,
-          created_at
-        `
+            id,
+            province,
+            municipality_city,
+            barangay,
+            year_started,
+            convergence_name,
+            created_at,
+            updated_at
+          `
         )
         .order("created_at", { ascending: false });
 
@@ -76,40 +89,46 @@ function CADPSiteRegistration() {
 
       setSites(data || []);
     } catch (error) {
-      console.error("Unable to load CADP sites:", error);
+      console.error(error);
 
       setErrorMessage(
-        error.message || "Unable to load registered CADP sites."
+        error.message ||
+          "Unable to load registered CADP sites."
       );
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadSites();
-  }, []);
+  }, [loadSites]);
 
   /* ========================================
-     FILTERED TABLE
+     FILTERED SITES
   ======================================== */
 
   const filteredSites = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const keyword = search.trim().toLowerCase();
 
     return sites.filter((site) => {
       const matchesProvince =
-        !provinceFilter || site.province === provinceFilter;
+        !provinceFilter ||
+        site.province === provinceFilter;
+
+      const searchableText = [
+        site.province,
+        site.municipality_city,
+        site.barangay,
+        site.year_started,
+        site.convergence_name,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
       const matchesSearch =
-        !query ||
-        site.province?.toLowerCase().includes(query) ||
-        site.municipality_city?.toLowerCase().includes(query) ||
-        site.barangay?.toLowerCase().includes(query) ||
-        String(site.year_started || "")
-          .toLowerCase()
-          .includes(query) ||
-        site.convergence_name?.toLowerCase().includes(query);
+        !keyword || searchableText.includes(keyword);
 
       return matchesProvince && matchesSearch;
     });
@@ -150,29 +169,106 @@ function CADPSiteRegistration() {
   };
 
   /* ========================================
-     OPEN MODAL
+     OPEN REGISTER MODAL
   ======================================== */
 
   const openModal = () => {
+    setEditingSite(null);
     setForm(initialForm);
     setErrorMessage("");
     setShowModal(true);
   };
 
   /* ========================================
-     CLOSE MODAL
+     OPEN EDIT MODAL
+  ======================================== */
+
+  const openEditModal = (site) => {
+    setEditingSite(site);
+
+    setForm({
+      province: site.province || "",
+      municipalityCity: site.municipality_city || "",
+      barangay: site.barangay || "",
+      yearStarted: String(site.year_started || ""),
+      convergenceName: site.convergence_name || "",
+    });
+
+    setErrorMessage("");
+    setMessage("");
+    setShowModal(true);
+  };
+
+  /* ========================================
+     CLOSE FORM MODAL
   ======================================== */
 
   const closeModal = () => {
     if (saving) return;
 
     setShowModal(false);
+    setEditingSite(null);
     setForm(initialForm);
     setErrorMessage("");
   };
 
   /* ========================================
-     REGISTER CADP SITE
+     CHECK DUPLICATE
+
+     Duplicate ONLY when ALL FIVE match:
+     Province
+     Municipality / City
+     Barangay
+     Year Started
+     Convergence Name
+  ======================================== */
+
+  const isDuplicate = () => {
+    const province = form.province
+      .trim()
+      .toLowerCase();
+
+    const municipality = form.municipalityCity
+      .trim()
+      .toLowerCase();
+
+    const barangay = form.barangay
+      .trim()
+      .toLowerCase();
+
+    const convergence = form.convergenceName
+      .trim()
+      .toLowerCase();
+
+    const year = Number(form.yearStarted);
+
+    return sites.some((site) => {
+      // Ignore the record currently being edited.
+      if (
+        editingSite &&
+        site.id === editingSite.id
+      ) {
+        return false;
+      }
+
+      return (
+        site.province?.trim().toLowerCase() ===
+          province &&
+        site.municipality_city
+          ?.trim()
+          .toLowerCase() === municipality &&
+        site.barangay?.trim().toLowerCase() ===
+          barangay &&
+        Number(site.year_started) === year &&
+        site.convergence_name
+          ?.trim()
+          .toLowerCase() === convergence
+      );
+    });
+  };
+
+  /* ========================================
+     REGISTER / UPDATE CADP SITE
   ======================================== */
 
   const handleSubmit = async (event) => {
@@ -188,7 +284,16 @@ function CADPSiteRegistration() {
       !form.yearStarted ||
       !form.convergenceName.trim()
     ) {
-      setErrorMessage("Please complete all fields.");
+      setErrorMessage(
+        "Please complete all fields."
+      );
+      return;
+    }
+
+    if (isDuplicate()) {
+      setErrorMessage(
+        "This exact CADP site entry is already registered."
+      );
       return;
     }
 
@@ -206,90 +311,92 @@ function CADPSiteRegistration() {
         );
       }
 
-      const { data: profile, error: profileError } = await supabase
+      const {
+        data: profile,
+        error: profileError,
+      } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        throw profileError;
+      }
 
-      if (!["super_admin", "admin"].includes(profile?.role)) {
+      if (
+        !["super_admin", "admin"].includes(
+          profile?.role
+        )
+      ) {
         throw new Error(
-          "You are not authorized to register CADP sites."
+          "You are not authorized to manage CADP sites."
         );
       }
 
-      /*
-       * Friendly duplicate check.
-       *
-       * A duplicate means ALL FIVE values are the same:
-       * Province
-       * Municipality / City
-       * Barangay
-       * Year Started
-       * Convergence Name
-       */
+      const siteData = {
+        province: form.province.trim(),
+        municipality_city:
+          form.municipalityCity.trim(),
+        barangay: form.barangay.trim(),
+        year_started: Number(
+          form.yearStarted
+        ),
+        convergence_name:
+          form.convergenceName.trim(),
+      };
 
-      const normalizedConvergenceName =
-        form.convergenceName.trim();
+      /* ---------- EDIT ---------- */
 
-      const duplicate = sites.some((site) => {
-        return (
-          site.province?.trim().toLowerCase() ===
-            form.province.trim().toLowerCase() &&
-          site.municipality_city?.trim().toLowerCase() ===
-            form.municipalityCity.trim().toLowerCase() &&
-          site.barangay?.trim().toLowerCase() ===
-            form.barangay.trim().toLowerCase() &&
-          Number(site.year_started) ===
-            Number(form.yearStarted) &&
-          site.convergence_name?.trim().toLowerCase() ===
-            normalizedConvergenceName.toLowerCase()
-        );
-      });
+      if (editingSite) {
+        const { error } = await supabase
+          .from("cadp_sites")
+          .update(siteData)
+          .eq("id", editingSite.id);
 
-      if (duplicate) {
-        setErrorMessage(
-          "This CADP site entry is already registered."
-        );
+        if (error) {
+          if (error.code === "23505") {
+            throw new Error(
+              "This exact CADP site entry is already registered."
+            );
+          }
 
-        setSaving(false);
-        return;
-      }
-
-      const { error } = await supabase
-        .from("cadp_sites")
-        .insert({
-          province: form.province,
-          municipality_city: form.municipalityCity,
-          barangay: form.barangay,
-          year_started: Number(form.yearStarted),
-          convergence_name: normalizedConvergenceName,
-          created_by: user.id,
-        });
-
-      if (error) {
-        /*
-         * PostgreSQL duplicate violation.
-         * This catches duplicates blocked by the
-         * cadp_sites_unique_entry database index.
-         */
-        if (error.code === "23505") {
-          setErrorMessage(
-            "This CADP site entry is already registered."
-          );
-
-          return;
+          throw error;
         }
 
-        throw error;
+        setMessage(
+          "CADP site updated successfully."
+        );
       }
 
-      setForm(initialForm);
-      setShowModal(false);
+      /* ---------- REGISTER ---------- */
 
-      setMessage("CADP site registered successfully.");
+      else {
+        const { error } = await supabase
+          .from("cadp_sites")
+          .insert({
+            ...siteData,
+            created_by: user.id,
+          });
+
+        if (error) {
+          if (error.code === "23505") {
+            throw new Error(
+              "This exact CADP site entry is already registered."
+            );
+          }
+
+          throw error;
+        }
+
+        setMessage(
+          "CADP site registered successfully."
+        );
+      }
+
+      setShowModal(false);
+      setEditingSite(null);
+      setForm(initialForm);
 
       await loadSites();
 
@@ -300,26 +407,107 @@ function CADPSiteRegistration() {
       console.error(error);
 
       setErrorMessage(
-        error.message || "Unable to register CADP site."
+        error.message ||
+          "Unable to save CADP site."
       );
     } finally {
       setSaving(false);
     }
   };
 
+  /* ========================================
+     DELETE CADP SITE
+  ======================================== */
+
+  const handleDelete = async () => {
+    if (!deletingSite) return;
+
+    setDeleting(true);
+    setMessage("");
+    setErrorMessage("");
+
+    try {
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error(
+          "Your session is unavailable. Please sign in again."
+        );
+      }
+
+      const {
+        data: profile,
+        error: profileError,
+      } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      if (
+        !["super_admin", "admin"].includes(
+          profile?.role
+        )
+      ) {
+        throw new Error(
+          "You are not authorized to delete CADP sites."
+        );
+      }
+
+      const { error } = await supabase
+        .from("cadp_sites")
+        .delete()
+        .eq("id", deletingSite.id);
+
+      if (error) throw error;
+
+      setDeletingSite(null);
+
+      setMessage(
+        "CADP site deleted successfully."
+      );
+
+      await loadSites();
+
+      window.setTimeout(() => {
+        setMessage("");
+      }, 4000);
+    } catch (error) {
+      console.error(error);
+
+      setErrorMessage(
+        error.message ||
+          "Unable to delete CADP site."
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  /* ========================================
+     RENDER
+  ======================================== */
+
   return (
     <div className="cadp-page">
-      {/* PAGE HEADER */}
+      {/* ================= HEADER ================= */}
 
       <header className="cadp-header">
-        <div>
+        <div className="cadp-header-text">
           <p>AMIANAN-CADP L.E.N.S.</p>
 
           <h1>CADP Sites</h1>
 
           <span>
-            View and manage registered Convergence and
-            Development Plan (CADP) sites.
+            View and manage registered Convergence
+            and Development Plan (CADP) sites.
           </span>
         </div>
 
@@ -332,20 +520,30 @@ function CADPSiteRegistration() {
         </button>
       </header>
 
-      {/* MAIN CONTENT */}
+      {/* ================= CONTENT ================= */}
 
       <main className="cadp-content">
+        {/* SUCCESS / ERROR */}
+
         {message && (
-          <div className="cadp-page-message success">
+          <div className="cadp-message success">
             {message}
           </div>
         )}
 
-        {/* FILTERS */}
+        {errorMessage && !showModal && (
+          <div className="cadp-message error">
+            {errorMessage}
+          </div>
+        )}
 
-        <section className="cadp-toolbar">
-          <div className="cadp-search-wrapper">
-            <span className="cadp-search-icon">⌕</span>
+        {/* ================= FILTERS ================= */}
+
+        <div className="cadp-toolbar">
+          <div className="cadp-search-box">
+            <span className="cadp-search-icon">
+              ⌕
+            </span>
 
             <input
               type="text"
@@ -361,23 +559,30 @@ function CADPSiteRegistration() {
             className="cadp-province-filter"
             value={provinceFilter}
             onChange={(event) =>
-              setProvinceFilter(event.target.value)
+              setProvinceFilter(
+                event.target.value
+              )
             }
           >
-            <option value="">All Provinces</option>
+            <option value="">
+              All Provinces
+            </option>
 
             {provinces.map((province) => (
-              <option key={province} value={province}>
+              <option
+                key={province}
+                value={province}
+              >
                 {province}
               </option>
             ))}
           </select>
-        </section>
+        </div>
 
-        {/* TABLE */}
+        {/* ================= TABLE CARD ================= */}
 
-        <section className="cadp-table-card">
-          <div className="cadp-table-heading">
+        <section className="cadp-sites-card">
+          <div className="cadp-sites-card-header">
             <div>
               <h2>Registered CADP Sites</h2>
 
@@ -395,11 +600,13 @@ function CADPSiteRegistration() {
               onClick={loadSites}
               disabled={loading}
             >
-              {loading ? "Loading..." : "Refresh"}
+              {loading
+                ? "Refreshing..."
+                : "Refresh"}
             </button>
           </div>
 
-          <div className="cadp-table-container">
+          <div className="cadp-table-wrapper">
             <table className="cadp-table">
               <thead>
                 <tr>
@@ -408,6 +615,9 @@ function CADPSiteRegistration() {
                   <th>Barangay</th>
                   <th>Year Started</th>
                   <th>Convergence Name</th>
+                  <th className="cadp-actions-column">
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
@@ -415,19 +625,22 @@ function CADPSiteRegistration() {
                 {loading ? (
                   <tr>
                     <td
-                      colSpan="5"
-                      className="cadp-table-state"
+                      colSpan="6"
+                      className="cadp-empty-state"
                     >
-                      Loading registered CADP sites...
+                      Loading registered CADP
+                      sites...
                     </td>
                   </tr>
-                ) : filteredSites.length === 0 ? (
+                ) : filteredSites.length ===
+                  0 ? (
                   <tr>
                     <td
-                      colSpan="5"
-                      className="cadp-table-state"
+                      colSpan="6"
+                      className="cadp-empty-state"
                     >
-                      No CADP sites found.
+                      No registered CADP sites
+                      found.
                     </td>
                   </tr>
                 ) : (
@@ -439,16 +652,44 @@ function CADPSiteRegistration() {
                         </span>
                       </td>
 
-                      <td>{site.municipality_city}</td>
+                      <td>
+                        {site.municipality_city}
+                      </td>
 
                       <td>{site.barangay}</td>
 
-                      <td>{site.year_started}</td>
+                      <td>
+                        {site.year_started}
+                      </td>
 
                       <td>
                         <strong>
-                          {site.convergence_name}
+                          {
+                            site.convergence_name
+                          }
                         </strong>
+                      </td>
+
+                      <td className="cadp-row-actions">
+                        <button
+                          type="button"
+                          className="cadp-edit-button"
+                          onClick={() =>
+                            openEditModal(site)
+                          }
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          className="cadp-delete-button"
+                          onClick={() =>
+                            setDeletingSite(site)
+                          }
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -459,15 +700,19 @@ function CADPSiteRegistration() {
         </section>
       </main>
 
-      {/* ====================================
-          REGISTER CADP SITE MODAL
-      ==================================== */}
+      {/* ========================================
+          REGISTER / EDIT MODAL
+      ======================================== */}
 
       {showModal && (
         <div
           className="cadp-modal-overlay"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
+            if (
+              event.target ===
+                event.currentTarget &&
+              !saving
+            ) {
               closeModal();
             }
           }}
@@ -480,15 +725,22 @@ function CADPSiteRegistration() {
           >
             <div className="cadp-modal-header">
               <div>
-                <p>NEW CADP SITE</p>
+                <p>
+                  {editingSite
+                    ? "EDIT CADP SITE"
+                    : "NEW CADP SITE"}
+                </p>
 
                 <h2 id="cadp-modal-title">
-                  Register CADP Site
+                  {editingSite
+                    ? "Edit CADP Site"
+                    : "Register CADP Site"}
                 </h2>
 
                 <span>
-                  Enter the information for the new CADP
-                  site.
+                  {editingSite
+                    ? "Update the information for this CADP site."
+                    : "Enter the information for the new CADP site."}
                 </span>
               </div>
 
@@ -503,11 +755,10 @@ function CADPSiteRegistration() {
               </button>
             </div>
 
-            <form
-              className="cadp-modal-form"
-              onSubmit={handleSubmit}
-            >
+            <form onSubmit={handleSubmit}>
               <div className="cadp-grid">
+                {/* PROVINCE */}
+
                 <label>
                   <span>Province</span>
 
@@ -525,22 +776,30 @@ function CADPSiteRegistration() {
                       Select Province
                     </option>
 
-                    {provinces.map((province) => (
-                      <option
-                        key={province}
-                        value={province}
-                      >
-                        {province}
-                      </option>
-                    ))}
+                    {provinces.map(
+                      (province) => (
+                        <option
+                          key={province}
+                          value={province}
+                        >
+                          {province}
+                        </option>
+                      )
+                    )}
                   </select>
                 </label>
 
+                {/* MUNICIPALITY */}
+
                 <label>
-                  <span>Municipality / City</span>
+                  <span>
+                    Municipality / City
+                  </span>
 
                   <select
-                    value={form.municipalityCity}
+                    value={
+                      form.municipalityCity
+                    }
                     onChange={(event) =>
                       update(
                         "municipalityCity",
@@ -567,6 +826,8 @@ function CADPSiteRegistration() {
                   </select>
                 </label>
 
+                {/* BARANGAY */}
+
                 <label>
                   <span>Barangay</span>
 
@@ -578,23 +839,29 @@ function CADPSiteRegistration() {
                         event.target.value
                       )
                     }
-                    disabled={!form.municipalityCity}
+                    disabled={
+                      !form.municipalityCity
+                    }
                     required
                   >
                     <option value="">
                       Select Barangay
                     </option>
 
-                    {barangays.map((barangay) => (
-                      <option
-                        key={barangay}
-                        value={barangay}
-                      >
-                        {barangay}
-                      </option>
-                    ))}
+                    {barangays.map(
+                      (barangay) => (
+                        <option
+                          key={barangay}
+                          value={barangay}
+                        >
+                          {barangay}
+                        </option>
+                      )
+                    )}
                   </select>
                 </label>
+
+                {/* YEAR STARTED */}
 
                 <label>
                   <span>Year Started</span>
@@ -624,12 +891,18 @@ function CADPSiteRegistration() {
                   </select>
                 </label>
 
+                {/* CONVERGENCE */}
+
                 <label className="cadp-full">
-                  <span>Convergence Name</span>
+                  <span>
+                    Convergence Name
+                  </span>
 
                   <input
                     type="text"
-                    value={form.convergenceName}
+                    value={
+                      form.convergenceName
+                    }
                     onChange={(event) =>
                       update(
                         "convergenceName",
@@ -643,38 +916,127 @@ function CADPSiteRegistration() {
               </div>
 
               {errorMessage && (
-                <div className="cadp-message error">
+                <div className="cadp-message error cadp-modal-message">
                   {errorMessage}
                 </div>
               )}
 
-              <p className="cadp-note">
-                Available to Super Admin and Admin
-                accounts. Location choices are limited to
-                Region I.
-              </p>
+              <div className="cadp-modal-footer">
+                <p className="cadp-note">
+                  Available to Super Admin and
+                  Admin accounts. Location
+                  choices are limited to Region
+                  I.
+                </p>
 
-              <div className="cadp-actions">
-                <button
-                  type="button"
-                  className="cadp-cancel"
-                  onClick={closeModal}
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
+                <div className="cadp-actions">
+                  <button
+                    type="button"
+                    className="cadp-cancel"
+                    onClick={closeModal}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </button>
 
-                <button
-                  type="submit"
-                  className="cadp-submit"
-                  disabled={saving}
-                >
-                  {saving
-                    ? "Registering..."
-                    : "Register CADP Site"}
-                </button>
+                  <button
+                    type="submit"
+                    className="cadp-submit"
+                    disabled={saving}
+                  >
+                    {saving
+                      ? editingSite
+                        ? "Saving..."
+                        : "Registering..."
+                      : editingSite
+                        ? "Save Changes"
+                        : "Register CADP Site"}
+                  </button>
+                </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================
+          DELETE CONFIRMATION MODAL
+      ======================================== */}
+
+      {deletingSite && (
+        <div
+          className="cadp-modal-overlay"
+          onMouseDown={(event) => {
+            if (
+              event.target ===
+                event.currentTarget &&
+              !deleting
+            ) {
+              setDeletingSite(null);
+            }
+          }}
+        >
+          <div
+            className="cadp-delete-modal"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="cadp-delete-icon">
+              !
+            </div>
+
+            <h2>Delete CADP Site?</h2>
+
+            <p>
+              Are you sure you want to delete
+              this CADP site? This action cannot
+              be undone.
+            </p>
+
+            <div className="cadp-delete-site-preview">
+              <strong>
+                {
+                  deletingSite.convergence_name
+                }
+              </strong>
+
+              <span>
+                {deletingSite.province} •{" "}
+                {
+                  deletingSite.municipality_city
+                }{" "}
+                • {deletingSite.barangay}
+              </span>
+
+              <span>
+                Year Started:{" "}
+                {deletingSite.year_started}
+              </span>
+            </div>
+
+            <div className="cadp-delete-actions">
+              <button
+                type="button"
+                className="cadp-delete-cancel"
+                onClick={() =>
+                  setDeletingSite(null)
+                }
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="cadp-delete-confirm"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting
+                  ? "Deleting..."
+                  : "Delete Site"}
+              </button>
+            </div>
           </div>
         </div>
       )}

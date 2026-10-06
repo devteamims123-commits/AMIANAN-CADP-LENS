@@ -780,3 +780,227 @@
     width: 100%;
   }
 }
+
+/* ========================================
+   CADP TABLE ACTIONS
+======================================== */
+
+.cadp-actions-column {
+  width: 160px;
+  text-align: center !important;
+}
+
+.cadp-row-actions {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.cadp-row-actions button {
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 7px;
+
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.cadp-edit-button {
+  margin-right: 7px;
+
+  border: 1px solid #b7d5bf;
+  background: #edf7ef;
+  color: #216b38;
+}
+
+.cadp-edit-button:hover {
+  border-color: #216b38;
+  background: #dff0e3;
+  transform: translateY(-1px);
+}
+
+.cadp-delete-button {
+  border: 1px solid #efcccc;
+  background: #fff3f3;
+  color: #b52c2c;
+}
+
+.cadp-delete-button:hover {
+  border-color: #d94b4b;
+  background: #ffe5e5;
+  transform: translateY(-1px);
+}
+
+
+/* ========================================
+   DELETE CONFIRMATION MODAL
+======================================== */
+
+.cadp-delete-modal {
+  width: calc(100% - 40px);
+  max-width: 420px;
+
+  padding: 30px;
+
+  border: 1px solid #e3e9e5;
+  border-radius: 16px;
+
+  background: #ffffff;
+
+  text-align: center;
+
+  box-shadow:
+    0 25px 70px rgba(10, 35, 19, 0.25);
+}
+
+.cadp-delete-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 52px;
+  height: 52px;
+
+  margin: 0 auto 16px;
+
+  border-radius: 50%;
+
+  background: #fff0f0;
+  color: #c93636;
+
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.cadp-delete-modal h2 {
+  margin: 0;
+
+  color: #173e27;
+
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.cadp-delete-modal > p {
+  max-width: 340px;
+
+  margin: 9px auto 20px;
+
+  color: #758078;
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.cadp-delete-site-preview {
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+
+  padding: 15px 16px;
+
+  border: 1px solid #e3e9e5;
+  border-radius: 9px;
+
+  background: #f8faf8;
+
+  text-align: left;
+}
+
+.cadp-delete-site-preview strong {
+  color: #173e27;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.cadp-delete-site-preview span {
+  color: #6d786f;
+
+  font-size: 11px;
+}
+
+.cadp-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 22px;
+}
+
+.cadp-delete-actions button {
+  min-height: 42px;
+  padding: 0 18px;
+
+  border-radius: 8px;
+
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.cadp-delete-cancel {
+  border: 1px solid #ccd8cf;
+
+  background: #ffffff;
+  color: #46594d;
+}
+
+.cadp-delete-cancel:hover:not(:disabled) {
+  background: #f4f7f5;
+}
+
+.cadp-delete-confirm {
+  border: 1px solid #b83232;
+
+  background: #b83232;
+  color: #ffffff;
+}
+
+.cadp-delete-confirm:hover:not(:disabled) {
+  border-color: #9f2929;
+  background: #9f2929;
+}
+
+.cadp-delete-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* ========================================
+   MOBILE ACTIONS
+======================================== */
+
+@media (max-width: 700px) {
+  .cadp-delete-modal {
+    padding: 24px 20px;
+  }
+
+  .cadp-delete-actions {
+    flex-direction: column-reverse;
+  }
+
+  .cadp-delete-actions button {
+    width: 100%;
+  }
+
+  .cadp-row-actions {
+    min-width: 150px;
+  }
+}
