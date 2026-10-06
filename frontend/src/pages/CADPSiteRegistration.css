@@ -3,6 +3,10 @@
   background: #f5f7f5;
 }
 
+/* =========================
+   HEADER
+========================= */
+
 .cadp-header {
   padding: 24px 34px;
   background: #fff;
@@ -30,18 +34,35 @@
   font-size: 14px;
 }
 
+/* =========================
+   CONTENT
+========================= */
+
 .cadp-content {
+  width: 100%;
   padding: 34px;
+  box-sizing: border-box;
 }
 
+/* =========================
+   FORM CARD
+========================= */
+
 .cadp-form-card {
+  width: 100%;
   max-width: 850px;
+  margin: 0 auto;
   padding: 30px;
   border: 1px solid #e2e8e3;
   border-radius: 14px;
   background: #fff;
   box-shadow: 0 7px 24px rgba(25, 65, 37, 0.06);
+  box-sizing: border-box;
 }
+
+/* =========================
+   FORM GRID
+========================= */
 
 .cadp-grid {
   display: grid;
@@ -60,6 +81,10 @@
   font-size: 13px;
   font-weight: 700;
 }
+
+/* =========================
+   INPUTS / SELECTS
+========================= */
 
 .cadp-grid select,
 .cadp-grid input {
@@ -85,9 +110,14 @@
   color: #9ba29d;
 }
 
+/* Full width field */
 .cadp-full {
   grid-column: 1 / -1;
 }
+
+/* =========================
+   ACTION BUTTONS
+========================= */
 
 .cadp-actions {
   display: flex;
@@ -121,6 +151,10 @@
   cursor: not-allowed;
 }
 
+/* =========================
+   MESSAGE
+========================= */
+
 .cadp-message {
   margin-top: 18px;
   padding: 12px 14px;
@@ -138,6 +172,10 @@
   color: #a92d2d;
 }
 
+/* =========================
+   NOTE
+========================= */
+
 .cadp-note {
   margin: 18px 0 0;
   color: #7a837c;
@@ -146,16 +184,36 @@
 }
 
 /* =========================
+   TABLET
+========================= */
+
+@media (max-width: 1000px) {
+  .cadp-content {
+    padding: 28px;
+  }
+
+  .cadp-form-card {
+    max-width: 100%;
+  }
+}
+
+/* =========================
    MOBILE VIEW
 ========================= */
 
 @media (max-width: 760px) {
-  .cadp-header,
+  .cadp-header {
+    padding: 20px;
+  }
+
   .cadp-content {
     padding: 20px;
   }
 
   .cadp-form-card {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
     padding: 20px;
   }
 
@@ -173,5 +231,9 @@
 
   .cadp-actions button {
     width: 100%;
+  }
+
+  .cadp-note {
+    text-align: center;
   }
 }
