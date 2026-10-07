@@ -198,27 +198,7 @@ function ProgramsProjects() {
 
 
 
-  const [editingContribution, setEditingContribution] = useState(null);
-
-  const [deletingContributionId, setDeletingContributionId] = useState(null);
-
   const canFund = ["super_admin", "admin", "user"].includes(currentProfile?.role);
-
-  const canEditContribution = (contribution, profile = currentProfile) => {
-
-    if (!contribution || !profile) return false;
-
-    if (["super_admin", "admin"].includes(profile.role)) return true;
-
-    if (profile.role !== "user") return false;
-
-    const agency = profile.agency?.trim().toLowerCase();
-
-    const institution = contribution.funding_institution?.trim().toLowerCase();
-
-    return Boolean(agency && agency === institution);
-
-  };
 
   const fundingRequestError = (error) =>
 
@@ -1273,7 +1253,7 @@ function ProgramsProjects() {
 
     }
 
-    setEditingContribution(null);
+
     let defaultPeriod = selectedPeriodData;
 
 
@@ -1326,128 +1306,9 @@ function ProgramsProjects() {
 
 
 
-  const getEditableContributions = (record) =>
-
-    fundingContributions.filter((contribution) =>
-
-      contribution.program_project_id === record.id &&
-
-      (!selectedPeriodData || contribution.target_year === selectedPeriodData.year) &&
-
-      canEditContribution(contribution)
-
-    );
-
-  const openAgencyFundingEditor = (record) => {
-
-    const contributions = getEditableContributions(record);
-
-    if (!contributions.length) {
-
-      setErrorMessage("Your agency has no editable contribution for this project and selected year.");
-
-      return;
-
-    }
-
-    openEditContribution(record, contributions[0]);
-
-  };
-  const openEditContribution = (record, contribution) => {
-
-    if (!canEditContribution(contribution)) {
-
-      setErrorMessage("You can only edit your agency's contributions.");
-
-      return;
-
-    }
-
-    setEditingContribution(contribution);
-
-
-
-    setFundingRecord(record);
-
-    setFundingForm({
-
-      targetYear: contribution.target_year,
-
-      fundingInstitution: contribution.funding_institution,
-
-      amount: String(contribution.amount),
-
-    });
-
-    setFundingError("");
-
-    setMessage("");
-
-    setShowFundingForm(true);
-
-  };
-
-  const handleDeleteContribution = async (contribution) => {
-
-    if (!canDelete || deletingContributionId) return;
-
-    if (!window.confirm("Delete this funding contribution?")) return;
-
-    setDeletingContributionId(contribution.id);
-
-    setErrorMessage("");
-
-    setMessage("");
-
-    try {
-
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-      if (userError || !user) throw new Error("Please sign in again.");
-
-      const { data: profile, error: profileError } = await supabase
-
-        .from("profiles").select("role").eq("id", user.id).single();
-
-      if (profileError) throw profileError;
-
-      if (profile?.role !== "super_admin") throw new Error("Only Superadmin can delete funding contributions.");
-
-      const { data: deleted, error } = await supabase
-
-        .from("project_funding_contributions")
-
-        .delete().eq("id", contribution.id).select("id").maybeSingle();
-
-      if (error) throw error;
-
-      if (!deleted) throw new Error("Delete denied or the contribution no longer exists.");
-
-      await loadData();
-
-      setShowFundingForm(false);
-
-      setEditingContribution(null);
-
-      setFundingRecord(null);
-
-      setFundingForm(initialFundingForm);
-      setMessage("Funding contribution deleted successfully.");
-
-    } catch (error) {
-
-      setErrorMessage(fundingRequestError(error));
-
-    } finally {
-
-      setDeletingContributionId(null);
-
-    }
-
-  };
   const closeFundingForm = () => {
 
-    if (fundingSaving || deletingContributionId) return;
+    if (fundingSaving) return;
 
 
 
@@ -1457,7 +1318,7 @@ function ProgramsProjects() {
 
     setFundingForm(initialFundingForm);
 
-    setEditingContribution(null);
+
     setFundingError("");
 
   };
@@ -1524,13 +1385,13 @@ function ProgramsProjects() {
 
       if (!["super_admin", "admin", "user"].includes(profile?.role)) {
 
-        throw new Error("You are not allowed to add or edit funding.");
+        throw new Error("You are not allowed to add funding.");
 
       }
 
 
 
-      if (!profile.agency?.trim() && !editingContribution) {
+      if (!profile.agency?.trim()) {
 
         throw new Error("Your account does not have an agency assigned. Please contact the system administrator.");
 
@@ -1562,69 +1423,27 @@ function ProgramsProjects() {
 
       const latestContributions = fundingResult.data || [];
 
-      const existing = editingContribution
-
-        ? latestContributions.find((item) => item.id === editingContribution.id)
-
-        : null;
-
-      if (editingContribution && !canEditContribution(existing, profile)) {
-
-        throw new Error("You can only edit your agency's contributions, or the contribution no longer exists.");
-
-      }
-
-
-
-      if (existing && existing.target_year !== selectedFundingPeriod.year) {
-
-        throw new Error("The contribution year changed. Reopen Edit and try again.");
-
-      }
-
-
-
       const financialTarget = Number(projectResult.data[selectedFundingPeriod.financialField] || 0);
 
       if (financialTarget <= 0) throw new Error(`Please set the ${selectedFundingPeriod.label} Financial Target before adding funding.`);
 
-      // Exclude the contribution being edited so its amount is replaced, not added twice.
+      // Sum the existing contributions for the selected year.
 
       const otherFunding = latestContributions
 
-        .filter((item) => item.target_year === selectedFundingPeriod.year && item.id !== existing?.id)
+        .filter((item) => item.target_year === selectedFundingPeriod.year)
 
         .reduce((total, item) => total + Number(item.amount || 0), 0);
 
       const remaining = Math.max(financialTarget - otherFunding, 0);
 
-      // Permit reducing an existing amount even if older records already exceed the target.
-
-      const reducingExisting = existing && amount <= Number(existing.amount);
-
-      if (amount > remaining && !reducingExisting) {
+      if (amount > remaining) {
 
         throw new Error(`The contribution cannot exceed the available amount of ${formatMoney(remaining)}.`);
 
       }
 
 
-
-      if (existing) {
-
-        const { data: updated, error } = await supabase
-
-          .from("project_funding_contributions")
-
-          .update({ amount })
-
-          .eq("id", existing.id).select("id").maybeSingle();
-
-        if (error) throw error;
-
-        if (!updated) throw new Error("Update denied or the contribution no longer exists.");
-
-      } else {
 
         const { data: added, error } = await supabase
 
@@ -1650,13 +1469,11 @@ function ProgramsProjects() {
 
         if (!added) throw new Error("Funding contribution was not saved.");
 
-      }
 
 
 
 
 
-      const action = existing ? "updated" : "added";
 
 
 
@@ -1668,12 +1485,12 @@ function ProgramsProjects() {
 
 
 
-      setEditingContribution(null);
+  
       await loadData();
 
 
 
-      setMessage(`Funding contribution ${action} successfully for ${selectedFundingPeriod.label}.`);
+      setMessage(`Funding contribution added successfully for ${selectedFundingPeriod.label}.`);
     } catch (error) {
 
       console.error(error);
@@ -2568,17 +2385,7 @@ function ProgramsProjects() {
 
                         )}
 
-                        {getEditableContributions(record).length > 0 && (
-
-                          <button type="button" className="programs-edit" onClick={() => openAgencyFundingEditor(record)}>
-
-                            {currentProfile?.role === "user" ? "Edit" : "Edit Fund"}
-
-                          </button>
-
-                        )}
-
-                        {["super_admin", "admin"].includes(currentProfile?.role) && canEdit(record) && (
+                        {canEdit(record) && (
                         <button
 
                           type="button"
@@ -2593,7 +2400,7 @@ function ProgramsProjects() {
 
                         >
 
-                          Edit Project
+                          Edit
 
                         </button>
 
@@ -3219,7 +3026,7 @@ function ProgramsProjects() {
 
                 <h2>
 
-                  {editingContribution ? "Edit Funding Contribution" : "Add Funding Contribution"}
+                  Add Funding Contribution
 
                 </h2>
 
@@ -3235,7 +3042,7 @@ function ProgramsProjects() {
 
                 onClick={closeFundingForm}
 
-                disabled={fundingSaving || Boolean(deletingContributionId)}
+                disabled={fundingSaving}
 
               >
 
@@ -3265,41 +3072,6 @@ function ProgramsProjects() {
 
 
 
-              {editingContribution && (
-
-                <label className="programs-funding-field">
-
-                  <span>{currentProfile?.role === "user" ? "Your Agency's Contribution" : "Contribution to Edit"}</span>
-
-                  <select value={editingContribution.id} disabled={fundingSaving || Boolean(deletingContributionId)}
-
-                    onChange={(event) => {
-
-                      const contribution = getEditableContributions(fundingRecord).find((item) => item.id === event.target.value);
-
-                      if (contribution) openEditContribution(fundingRecord, contribution);
-
-                    }}>
-
-                    {getEditableContributions(fundingRecord).map((contribution) => (
-
-                      <option key={contribution.id} value={contribution.id}>
-
-                        {contribution.target_year} — {contribution.funding_institution} — {formatMoney(contribution.amount)}
-
-                        {contribution.created_at ? ` — ${new Date(contribution.created_at).toLocaleString("en-PH")}` : ""}
-
-                      </option>
-
-                    ))}
-
-                  </select>
-
-                  <small className="programs-auto-field-note">Select the contribution to update, then change its amount.</small>
-
-                </label>
-
-              )}
               <label className="programs-funding-field">
 
                 <span>Target Year *</span>
@@ -3310,7 +3082,7 @@ function ProgramsProjects() {
 
                   value={fundingForm.targetYear}
 
-                  disabled={Boolean(editingContribution) || fundingSaving || Boolean(deletingContributionId)}
+                  disabled={fundingSaving}
                   onChange={(event) =>
 
                     setFundingForm(
@@ -3487,7 +3259,7 @@ function ProgramsProjects() {
 
                   type="text"
 
-                  value={editingContribution ? fundingForm.fundingInstitution : currentProfile?.agency || ""}
+                  value={currentProfile?.agency || ""}
 
                   readOnly
 
@@ -3497,7 +3269,7 @@ function ProgramsProjects() {
 
                 <small className="programs-auto-field-note">
 
-                  {editingContribution ? "The original funding agency is preserved." : "Automatically based on the logged-in account agency."}
+                  Automatically based on the logged-in account agency.
 
                 </small>
 
@@ -3577,17 +3349,6 @@ function ProgramsProjects() {
 
             <div className="programs-modal-actions">
 
-              {canDelete && editingContribution && (
-
-                <button type="button" className="programs-delete" disabled={fundingSaving || Boolean(deletingContributionId)}
-
-                  onClick={() => handleDeleteContribution(editingContribution)}>
-
-                  {deletingContributionId ? "Deleting..." : "Delete Contribution"}
-
-                </button>
-
-              )}
               <button
 
                 type="button"
@@ -3596,7 +3357,7 @@ function ProgramsProjects() {
 
                 onClick={closeFundingForm}
 
-                disabled={fundingSaving || Boolean(deletingContributionId)}
+                disabled={fundingSaving}
 
               >
 
@@ -3614,9 +3375,9 @@ function ProgramsProjects() {
 
                 disabled={
 
-                  fundingSaving || Boolean(deletingContributionId) ||
+                  fundingSaving ||
 
-                  (!editingContribution && currentFundingInfo &&
+                  (currentFundingInfo &&
 
                     currentFundingInfo.percentage >= 100)
 
@@ -3628,11 +3389,7 @@ function ProgramsProjects() {
 
                   ? "Saving..."
 
-                  : editingContribution
-
-                    ? "Save Changes"
-
-                    : currentFundingInfo && currentFundingInfo.percentage >= 100
+                  : currentFundingInfo && currentFundingInfo.percentage >= 100
 
                       ? "Fully Funded"
 
