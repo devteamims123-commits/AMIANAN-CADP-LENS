@@ -2535,7 +2535,13 @@ function ProgramsProjects() {
 
 
                     <td>
-                      <div className="programs-source-funds">
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                        }}
+                      >
                         {(selectedAgency
                           ? [selectedAgencyLabel]
                           : getSourcesOfFund(
@@ -2545,7 +2551,9 @@ function ProgramsProjects() {
                         ).map((agency) => (
                           <div
                             key={agency.toLowerCase()}
-                            className="programs-source-fund-agency"
+                            style={{
+                              lineHeight: "1.35",
+                            }}
                           >
                             {agency}
                           </div>
