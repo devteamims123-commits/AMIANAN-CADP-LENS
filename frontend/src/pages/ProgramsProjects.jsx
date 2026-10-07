@@ -2535,11 +2535,22 @@ function ProgramsProjects() {
 
 
                     <td>
-
-                      {(selectedAgency ? [selectedAgencyLabel] : getSourcesOfFund(record, selectedPeriodData?.year)).map((agency) => (
-                        <div key={agency.toLowerCase()}>{agency}</div>
-                      ))}
-
+                      <div className="programs-source-funds">
+                        {(selectedAgency
+                          ? [selectedAgencyLabel]
+                          : getSourcesOfFund(
+                              record,
+                              selectedPeriodData?.year
+                            )
+                        ).map((agency) => (
+                          <div
+                            key={agency.toLowerCase()}
+                            className="programs-source-fund-agency"
+                          >
+                            {agency}
+                          </div>
+                        ))}
+                      </div>
                     </td>
 
 

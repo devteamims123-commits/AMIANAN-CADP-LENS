@@ -3067,4 +3067,15 @@
   .programs-actions button {
     width: auto;
   }
+  /* Separate agencies in Source of Fund column */
+  .programs-source-funds {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .programs-source-fund-agency {
+    display: block;
+    line-height: 1.4;
+  }
 }
