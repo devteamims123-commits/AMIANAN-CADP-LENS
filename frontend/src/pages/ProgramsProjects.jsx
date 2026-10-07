@@ -156,6 +156,8 @@ function ProgramsProjects() {
 
   const [selectedSite, setSelectedSite] = useState("");
 
+  const [selectedAgency, setSelectedAgency] = useState("");
+
   const [selectedPeriod, setSelectedPeriod] = useState("all");
 
   const [search, setSearch] = useState("");
@@ -402,6 +404,17 @@ function ProgramsProjects() {
 
 
 
+  const agencyOptions = useMemo(() => {
+    const agencies = new Map();
+    fundingContributions.forEach((item) => {
+      const agency = item.funding_institution?.trim();
+      if (agency && !agencies.has(agency.toLowerCase())) agencies.set(agency.toLowerCase(), agency);
+    });
+    return Array.from(agencies, ([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [fundingContributions]);
+  const selectedAgencyLabel = agencyOptions.find((item) => item.value === selectedAgency)?.label || "";
+
   const filteredRecords = useMemo(() => {
 
     const query = search.trim().toLowerCase();
@@ -476,13 +489,22 @@ function ProgramsProjects() {
 
 
 
-      return matchesSite && matchesPeriod && matchesSearch;
+      const matchesAgency = !selectedAgency || fundingContributions.some((item) =>
+        item.program_project_id === record.id &&
+        item.funding_institution?.trim().toLowerCase() === selectedAgency &&
+        (!selectedPeriodData || item.target_year === selectedPeriodData.year)
+      );
+      return matchesSite && matchesPeriod && matchesSearch && matchesAgency;
 
     });
 
   }, [
 
     records,
+
+    fundingContributions,
+
+    selectedAgency,
 
     selectedSite,
 
@@ -1883,10 +1905,21 @@ function ProgramsProjects() {
     return Array.from(sources.values());
   };
 
+  const getDisplayedAgencyFunding = (record, year) => getAgencyFunding(record, year)
+    .filter((item) => !selectedAgency || item.agency.toLowerCase() === selectedAgency);
+  const getDisplayedFundingInfo = (record, period) => {
+    const info = getFundingInfo(record, period);
+    if (!selectedAgency) return info;
+    const currentFund = getDisplayedAgencyFunding(record, period.year).reduce((total, item) => total + item.amount, 0);
+    const percentage = info.financialTarget > 0 ? Math.min(currentFund / info.financialTarget * 100, 100) : 0;
+    return { ...info, currentFund, gap: Math.max(info.financialTarget - currentFund, 0), percentage,
+      status: percentage >= 100 ? "Fully Funded" : currentFund > 0 ? "Partially Funded" : "Not Funded" };
+  };
+
   const renderAgencyFunding = (record, period) => (
     <div>
-      <strong>{formatMoney(getFundingInfo(record, period).currentFund)}</strong>
-      {getAgencyFunding(record, period.year).map(({ agency, amount }) => (
+      <strong>{formatMoney(getDisplayedFundingInfo(record, period).currentFund)}</strong>
+      {getDisplayedAgencyFunding(record, period.year).map(({ agency, amount }) => (
         <small key={agency.toLowerCase()} style={{ display: "block", marginTop: 4 }}>{agency}: {formatMoney(amount)}</small>
       ))}
     </div>
@@ -1905,7 +1938,7 @@ function ProgramsProjects() {
 
     if (selectedPeriodData) {
 
-      const info = getFundingInfo(
+      const info = getDisplayedFundingInfo(
 
         record,
 
@@ -1979,7 +2012,7 @@ function ProgramsProjects() {
 
         {periodsWithTarget.map((period) => {
 
-          const info = getFundingInfo(
+          const info = getDisplayedFundingInfo(
 
             record,
 
@@ -2173,7 +2206,7 @@ function ProgramsProjects() {
 
       <section className="programs-content">
 
-        <div className="programs-toolbar">
+        <div className="programs-toolbar" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", alignItems: "end" }}>
 
           <label className="programs-site-field">
 
@@ -2274,6 +2307,14 @@ function ProgramsProjects() {
           </label>
 
 
+
+          <label className="programs-period-field">
+            <span>Agency</span>
+            <select value={selectedAgency} onChange={(event) => setSelectedAgency(event.target.value)}>
+              <option value="">All Agencies</option>
+              {agencyOptions.map((agency) => <option key={agency.value} value={agency.value}>{agency.label}</option>)}
+            </select>
+          </label>
 
           <label className="programs-search-field">
 
@@ -2441,7 +2482,7 @@ function ProgramsProjects() {
 
                   <th>
 
-                    Current Fund
+                    {selectedAgency ? "Agency Contribution" : "Current Fund"}
 
                     <span className="programs-period-label">
 
@@ -2455,7 +2496,7 @@ function ProgramsProjects() {
 
                   <th>
 
-                    Funding Status
+                    {selectedAgency ? "Agency Funding Status" : "Funding Status"}
 
                     <span className="programs-period-label">
 
@@ -2495,7 +2536,7 @@ function ProgramsProjects() {
 
                     <td>
 
-                      {getSourcesOfFund(record, selectedPeriodData?.year).map((agency) => (
+                      {(selectedAgency ? [selectedAgencyLabel] : getSourcesOfFund(record, selectedPeriodData?.year)).map((agency) => (
                         <div key={agency.toLowerCase()}>{agency}</div>
                       ))}
 
@@ -2578,12 +2619,6 @@ function ProgramsProjects() {
                             Edit
                           </button>
                         )}
-                        {getEditableContributions(record).length > 0 && (
-                          <button type="button" className="programs-edit" onClick={() => openAgencyFundingEditor(record)}>
-                            Edit Contribution
-                          </button>
-                        )}
-
                         {canDelete && (
                         <button
 
