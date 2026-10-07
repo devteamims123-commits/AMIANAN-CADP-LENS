@@ -154,7 +154,7 @@ function ProgramsProjects() {
 
 
 
-  const [selectedSite, setSelectedSite] = useState("");
+  const [selectedSite, setSelectedSite] = useState("vintar");
 
   const [selectedAgency, setSelectedAgency] = useState("");
 
@@ -296,7 +296,7 @@ function ProgramsProjects() {
 
             )
 
-            .order("convergence_name"),
+            .order("municipality_city"),
 
 
 
@@ -352,7 +352,13 @@ function ProgramsProjects() {
 
 
 
-      setSites(sitesResult.data || []);
+      const registeredSites = sitesResult.data || [];
+
+      setSites(registeredSites);
+
+      setSelectedSite((current) => current === "vintar" && !registeredSites.some((site) =>
+
+        site.municipality_city?.trim().toLowerCase() === "vintar") ? "" : current);
 
       setRecords(recordsResult.data || []);
 
@@ -415,6 +421,33 @@ function ProgramsProjects() {
   }, [fundingContributions]);
   const selectedAgencyLabel = agencyOptions.find((item) => item.value === selectedAgency)?.label || "";
 
+  const siteMunicipalities = useMemo(() => {
+
+    const municipalities = new Map();
+
+    sites.forEach((site) => {
+
+      const label = site.municipality_city?.trim();
+
+      if (label && !municipalities.has(label.toLowerCase())) municipalities.set(label.toLowerCase(), label);
+
+    });
+
+    return Array.from(municipalities, ([value, label]) => ({ value, label }))
+
+      .sort((a, b) => a.label.localeCompare(b.label));
+
+  }, [sites]);
+
+  const getDefaultSiteId = () => {
+
+    const selected = sites.find((site) => site.municipality_city?.trim().toLowerCase() === selectedSite);
+
+    const vintar = sites.find((site) => site.municipality_city?.trim().toLowerCase() === "vintar");
+
+    return (selected || vintar)?.id || "";
+
+  };
   const filteredRecords = useMemo(() => {
 
     const query = search.trim().toLowerCase();
@@ -425,7 +458,9 @@ function ProgramsProjects() {
 
       const matchesSite =
 
-        !selectedSite || record.cadp_site_id === selectedSite;
+        !selectedSite || sites.some((site) => site.id === record.cadp_site_id &&
+
+          site.municipality_city?.trim().toLowerCase() === selectedSite);
 
 
 
@@ -502,6 +537,7 @@ function ProgramsProjects() {
 
     records,
 
+    sites,
     fundingContributions,
 
     selectedAgency,
@@ -544,6 +580,7 @@ function ProgramsProjects() {
 
       ...initialForm,
 
+      cadpSiteId: getDefaultSiteId(),
       sourceOfFund: currentProfile?.agency || "",
 
     });
@@ -2228,23 +2265,17 @@ function ProgramsProjects() {
 
               <option value="">
 
-                All CADP Sites
+                All Cities / Municipalities
 
               </option>
 
 
 
-              {sites.map((site) => (
+              {siteMunicipalities.map((municipality) => (
 
-                <option
+                <option key={municipality.value} value={municipality.value}>
 
-                  key={site.id}
-
-                  value={site.id}
-
-                >
-
-                  {site.convergence_name}
+                  {municipality.label}
 
                 </option>
 
@@ -2800,11 +2831,11 @@ function ProgramsProjects() {
 
                     >
 
-                      {site.convergence_name} —{" "}
+                      {site.municipality_city || "City / municipality not specified"}
 
-                      {site.municipality_city},{" "}
+                      {site.barangay ? ` — ${site.barangay}` : ""}
 
-                      {site.province}
+                      {site.province ? `, ${site.province}` : ""}
 
                     </option>
 
