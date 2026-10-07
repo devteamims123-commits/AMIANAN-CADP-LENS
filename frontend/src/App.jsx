@@ -17,6 +17,8 @@ import DashboardShell from "./pages/dashboards/DashboardShell";
 import Dashboard from "./pages/dashboards/Dashboard";
 
 import CADPSiteRegistration from "./pages/CADPSiteRegistration";
+import CADPProfile from "./pages/CADPProfile";
+import CADPProfileView from "./pages/CADPProfileView";
 import ProgramsProjects from "./pages/ProgramsProjects";
 import UserManagement from "./pages/UserManagement";
 import MaintenanceLogs from "./pages/MaintenanceLogs";
@@ -68,15 +70,14 @@ function App() {
             </RoleRoute>
           }
         >
-          {/* ONE Dashboard - All Roles */}
+          {/* Dashboard - All Roles */}
 
           <Route
             path="/dashboard"
             element={<Dashboard />}
           />
 
-          {/* Old dashboard URLs redirect
-              to the single Dashboard */}
+          {/* Old dashboard URLs redirect to Dashboard */}
 
           <Route
             path="/super-admin"
@@ -130,6 +131,38 @@ function App() {
                 ]}
               >
                 <CADPSiteRegistration />
+              </RoleRoute>
+            }
+          />
+
+          {/* CADP Profile - Registered Sites */}
+
+          <Route
+            path="/cadp-profile"
+            element={
+              <RoleRoute
+                allowedRoles={[
+                  "super_admin",
+                  "admin",
+                ]}
+              >
+                <CADPProfile />
+              </RoleRoute>
+            }
+          />
+
+          {/* CADP Profile - View Individual Site */}
+
+          <Route
+            path="/cadp-profile/:siteId"
+            element={
+              <RoleRoute
+                allowedRoles={[
+                  "super_admin",
+                  "admin",
+                ]}
+              >
+                <CADPProfileView />
               </RoleRoute>
             }
           />

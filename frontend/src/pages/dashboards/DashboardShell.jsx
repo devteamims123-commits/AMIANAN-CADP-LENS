@@ -63,6 +63,10 @@ function DashboardShell() {
     role === "super_admin" ||
     role === "admin";
 
+  const canViewCADPProfile =
+    role === "super_admin" ||
+    role === "admin";
+
   const canViewPrograms =
     role === "super_admin" ||
     role === "admin" ||
@@ -77,6 +81,10 @@ function DashboardShell() {
 
   const isActive = (path) =>
     location.pathname === path;
+
+  const isCADPProfileActive =
+    location.pathname === "/cadp-profile" ||
+    location.pathname.startsWith("/cadp-profile/");
 
   const openLogoutDialog = () => {
     setLogoutError("");
@@ -161,7 +169,8 @@ function DashboardShell() {
         </div>
 
         <nav className="sidebar-nav">
-          {/* Dashboard - ALL ROLES */}
+          {/* Dashboard */}
+
           <button
             type="button"
             className={`sidebar-link ${
@@ -183,20 +192,17 @@ function DashboardShell() {
           </button>
 
           {/* CADP Site Registration */}
+
           {canViewCADPSites && (
             <button
               type="button"
               className={`sidebar-link ${
-                isActive(
-                  "/cadp-sites/register"
-                )
+                isActive("/cadp-sites/register")
                   ? "active"
                   : ""
               }`}
               onClick={() =>
-                navigate(
-                  "/cadp-sites/register"
-                )
+                navigate("/cadp-sites/register")
               }
             >
               <span className="sidebar-icon">
@@ -209,21 +215,42 @@ function DashboardShell() {
             </button>
           )}
 
-          {/* Programs / Projects */}
-          {canViewPrograms && (
+          {/* CADP Profile */}
+
+          {canViewCADPProfile && (
             <button
               type="button"
               className={`sidebar-link ${
-                isActive(
-                  "/programs-projects"
-                )
+                isCADPProfileActive
                   ? "active"
                   : ""
               }`}
               onClick={() =>
-                navigate(
-                  "/programs-projects"
-                )
+                navigate("/cadp-profile")
+              }
+            >
+              <span className="sidebar-icon">
+                ◫
+              </span>
+
+              <span>
+                CADP Profile
+              </span>
+            </button>
+          )}
+
+          {/* Programs / Projects */}
+
+          {canViewPrograms && (
+            <button
+              type="button"
+              className={`sidebar-link ${
+                isActive("/programs-projects")
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() =>
+                navigate("/programs-projects")
               }
             >
               <span className="sidebar-icon">
@@ -237,20 +264,17 @@ function DashboardShell() {
           )}
 
           {/* User Management */}
+
           {canViewUserManagement && (
             <button
               type="button"
               className={`sidebar-link ${
-                isActive(
-                  "/user-management"
-                )
+                isActive("/user-management")
                   ? "active"
                   : ""
               }`}
               onClick={() =>
-                navigate(
-                  "/user-management"
-                )
+                navigate("/user-management")
               }
             >
               <span className="sidebar-icon">
@@ -264,20 +288,17 @@ function DashboardShell() {
           )}
 
           {/* Maintenance Logs */}
+
           {canViewMaintenanceLogs && (
             <button
               type="button"
               className={`sidebar-link ${
-                isActive(
-                  "/maintenance-logs"
-                )
+                isActive("/maintenance-logs")
                   ? "active"
                   : ""
               }`}
               onClick={() =>
-                navigate(
-                  "/maintenance-logs"
-                )
+                navigate("/maintenance-logs")
               }
             >
               <span className="sidebar-icon">
@@ -290,7 +311,8 @@ function DashboardShell() {
             </button>
           )}
 
-          {/* Help - available to all roles */}
+          {/* Help */}
+
           <button
             type="button"
             className="sidebar-link"
