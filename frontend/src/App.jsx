@@ -26,7 +26,7 @@ import MaintenanceLogs from "./pages/MaintenanceLogs";
 function App() {
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* ================= PUBLIC ROUTES ================= */}
 
       <Route
         path="/"
@@ -53,7 +53,7 @@ function App() {
         element={<ForgotPassword />}
       />
 
-      {/* Protected Routes */}
+      {/* ================= PROTECTED ROUTES ================= */}
 
       <Route element={<ProtectedRoute />}>
         <Route
@@ -70,14 +70,14 @@ function App() {
             </RoleRoute>
           }
         >
-          {/* Dashboard - All Roles */}
+          {/* ================= DASHBOARD ================= */}
 
           <Route
             path="/dashboard"
             element={<Dashboard />}
           />
 
-          {/* Old dashboard URLs redirect to Dashboard */}
+          {/* Old dashboard URLs */}
 
           <Route
             path="/super-admin"
@@ -119,7 +119,8 @@ function App() {
             }
           />
 
-          {/* CADP Site Registration */}
+          {/* ================= CADP SITE REGISTRATION ================= */}
+          {/* Super Admin + Admin only */}
 
           <Route
             path="/cadp-sites/register"
@@ -135,7 +136,8 @@ function App() {
             }
           />
 
-          {/* CADP Profile - Registered Sites */}
+          {/* ================= CADP PROFILE ================= */}
+          {/* Super Admin + Admin + User */}
 
           <Route
             path="/cadp-profile"
@@ -144,6 +146,7 @@ function App() {
                 allowedRoles={[
                   "super_admin",
                   "admin",
+                  "user",
                 ]}
               >
                 <CADPProfile />
@@ -151,7 +154,8 @@ function App() {
             }
           />
 
-          {/* CADP Profile - View Individual Site */}
+          {/* ================= CADP PROFILE VIEW ================= */}
+          {/* Super Admin + Admin + User */}
 
           <Route
             path="/cadp-profile/:siteId"
@@ -160,6 +164,7 @@ function App() {
                 allowedRoles={[
                   "super_admin",
                   "admin",
+                  "user",
                 ]}
               >
                 <CADPProfileView />
@@ -167,7 +172,7 @@ function App() {
             }
           />
 
-          {/* Programs / Projects */}
+          {/* ================= PROGRAMS / PROJECTS ================= */}
 
           <Route
             path="/programs-projects"
@@ -184,7 +189,8 @@ function App() {
             }
           />
 
-          {/* User Management */}
+          {/* ================= USER MANAGEMENT ================= */}
+          {/* Super Admin only */}
 
           <Route
             path="/user-management"
@@ -199,7 +205,8 @@ function App() {
             }
           />
 
-          {/* Maintenance Logs */}
+          {/* ================= MAINTENANCE LOGS ================= */}
+          {/* Super Admin + Admin */}
 
           <Route
             path="/maintenance-logs"
@@ -217,7 +224,7 @@ function App() {
         </Route>
       </Route>
 
-      {/* Unknown Route */}
+      {/* ================= UNKNOWN ROUTE ================= */}
 
       <Route
         path="*"

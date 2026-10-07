@@ -65,7 +65,8 @@ function DashboardShell() {
 
   const canViewCADPProfile =
     role === "super_admin" ||
-    role === "admin";
+    role === "admin" ||
+    role === "user";
 
   const canViewPrograms =
     role === "super_admin" ||
