@@ -37,7 +37,7 @@ function DashboardShell() {
       const { data, error } = await supabase
         .from("profiles")
         .select(
-          "id, full_name, username, email, role"
+          "id, full_name, username, email, role, agency"
         )
         .eq("id", user.id)
         .single();
@@ -309,19 +309,12 @@ function DashboardShell() {
         <div className="sidebar-footer">
           <div className="sidebar-user">
             <small>
-              Current Role
+              Agency
             </small>
 
             <strong>
-              {role === "super_admin"
-                ? "Super Admin"
-                : role === "admin"
-                  ? "Admin"
-                  : role === "user"
-                    ? "User"
-                    : role === "viewer"
-                      ? "Viewer"
-                      : "Unknown"}
+              {profile?.agency ||
+                "No Agency Assigned"}
             </strong>
           </div>
 
