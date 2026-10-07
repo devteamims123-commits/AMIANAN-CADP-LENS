@@ -9,6 +9,7 @@ function Register() {
     fullName: "",
     username: "",
     email: "",
+    agency: "",
     password: "",
     confirmPassword: "",
   });
@@ -30,6 +31,11 @@ function Register() {
     setMessage("");
     setSuccess(false);
 
+    if (!form.agency.trim()) {
+      setMessage("Agency is required.");
+      return;
+    }
+
     if (form.password.length < 6) {
       setMessage("Password must contain at least 6 characters.");
       return;
@@ -50,6 +56,7 @@ function Register() {
           data: {
             full_name: form.fullName.trim(),
             username: form.username.trim(),
+            agency: form.agency.trim(),
           },
         },
       });
@@ -88,7 +95,6 @@ function Register() {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* FULL NAME */}
           <div className="form-group">
             <label htmlFor="fullName">Full Name</label>
 
@@ -104,7 +110,6 @@ function Register() {
             />
           </div>
 
-          {/* USERNAME + EMAIL */}
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="username">Username</label>
@@ -137,7 +142,21 @@ function Register() {
             </div>
           </div>
 
-          {/* PASSWORD + CONFIRM PASSWORD */}
+          <div className="form-group">
+            <label htmlFor="agency">Agency</label>
+
+            <input
+              id="agency"
+              name="agency"
+              type="text"
+              value={form.agency}
+              onChange={handleChange}
+              placeholder="Enter your agency"
+              autoComplete="organization"
+              required
+            />
+          </div>
+
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="registerPassword">Password</label>
@@ -155,9 +174,7 @@ function Register() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="confirmPassword">
-                Confirm Password
-              </label>
+              <label htmlFor="confirmPassword">Confirm Password</label>
 
               <input
                 id="confirmPassword"
@@ -172,7 +189,6 @@ function Register() {
             </div>
           </div>
 
-          {/* MESSAGE */}
           {message && (
             <div
               className={`form-message ${
@@ -183,7 +199,6 @@ function Register() {
             </div>
           )}
 
-          {/* CREATE ACCOUNT */}
           <button
             className="primary-button"
             type="submit"
