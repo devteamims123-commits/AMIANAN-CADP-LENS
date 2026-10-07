@@ -1872,6 +1872,17 @@ function ProgramsProjects() {
     return Array.from(totals.values());
   };
 
+  const getSourcesOfFund = (record, year) => {
+    if (!record) return [];
+    const sources = new Map();
+    [record.source_of_fund, ...getAgencyFunding(record, year).map((item) => item.agency)]
+      .forEach((name) => {
+        const agency = name?.trim();
+        if (agency && !sources.has(agency.toLowerCase())) sources.set(agency.toLowerCase(), agency);
+      });
+    return Array.from(sources.values());
+  };
+
   const renderAgencyFunding = (record, period) => (
     <div>
       <strong>{formatMoney(getFundingInfo(record, period).currentFund)}</strong>
@@ -2484,12 +2495,9 @@ function ProgramsProjects() {
 
                     <td>
 
-                      <div>{record.source_of_fund}</div>
-                      {getAgencyFunding(record, selectedPeriodData?.year).length > 0 && (
-                        <small style={{ display: "block", marginTop: 8 }}>
-                          Contributors: {getAgencyFunding(record, selectedPeriodData?.year).map((item) => item.agency).join(", ")}
-                        </small>
-                      )}
+                      {getSourcesOfFund(record, selectedPeriodData?.year).map((agency) => (
+                        <div key={agency.toLowerCase()}>{agency}</div>
+                      ))}
 
                     </td>
 
@@ -2838,7 +2846,7 @@ function ProgramsProjects() {
 
                     editingId
 
-                      ? form.sourceOfFund
+                      ? getSourcesOfFund(records.find((record) => record.id === editingId)).join(", ") || form.sourceOfFund
 
                       : currentProfile?.agency || ""
 
@@ -2852,7 +2860,7 @@ function ProgramsProjects() {
 
                 <small className="programs-auto-field-note">
 
-                  Automatically based on the account agency.
+                  {editingId ? "Agencies associated with this project's funding." : "Automatically based on the account agency."}
 
                 </small>
 
@@ -3452,7 +3460,7 @@ function ProgramsProjects() {
 
                 <span>
 
-                  Funding Institution *
+                  Source of Fund *
 
                 </span>
 
