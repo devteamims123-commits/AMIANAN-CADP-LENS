@@ -196,7 +196,7 @@ function ProgramsProjects() {
 
 
 
-  const [contributionsRecord, setContributionsRecord] = useState(null);
+
 
   const [editingContribution, setEditingContribution] = useState(null);
 
@@ -1326,6 +1326,33 @@ function ProgramsProjects() {
 
 
 
+  const getEditableContributions = (record) =>
+
+    fundingContributions.filter((contribution) =>
+
+      contribution.program_project_id === record.id &&
+
+      (!selectedPeriodData || contribution.target_year === selectedPeriodData.year) &&
+
+      canEditContribution(contribution)
+
+    );
+
+  const openAgencyFundingEditor = (record) => {
+
+    const contributions = getEditableContributions(record);
+
+    if (!contributions.length) {
+
+      setErrorMessage("Your agency has no editable contribution for this project and selected year.");
+
+      return;
+
+    }
+
+    openEditContribution(record, contributions[0]);
+
+  };
   const openEditContribution = (record, contribution) => {
 
     if (!canEditContribution(contribution)) {
@@ -1338,7 +1365,7 @@ function ProgramsProjects() {
 
     setEditingContribution(contribution);
 
-    setContributionsRecord(null);
+
 
     setFundingRecord(record);
 
@@ -1398,6 +1425,13 @@ function ProgramsProjects() {
 
       await loadData();
 
+      setShowFundingForm(false);
+
+      setEditingContribution(null);
+
+      setFundingRecord(null);
+
+      setFundingForm(initialFundingForm);
       setMessage("Funding contribution deleted successfully.");
 
     } catch (error) {
@@ -1413,7 +1447,7 @@ function ProgramsProjects() {
   };
   const closeFundingForm = () => {
 
-    if (fundingSaving) return;
+    if (fundingSaving || deletingContributionId) return;
 
 
 
@@ -1544,7 +1578,7 @@ function ProgramsProjects() {
 
       if (existing && existing.target_year !== selectedFundingPeriod.year) {
 
-        throw new Error("The contribution year changed. Reopen Funding Details and try again.");
+        throw new Error("The contribution year changed. Reopen Edit and try again.");
 
       }
 
@@ -1620,7 +1654,7 @@ function ProgramsProjects() {
 
 
 
-      const savedProject = projectResult.data;
+
 
       const action = existing ? "updated" : "added";
 
@@ -1637,7 +1671,7 @@ function ProgramsProjects() {
       setEditingContribution(null);
       await loadData();
 
-      setContributionsRecord(savedProject);
+
 
       setMessage(`Funding contribution ${action} successfully for ${selectedFundingPeriod.label}.`);
     } catch (error) {
@@ -2534,21 +2568,17 @@ function ProgramsProjects() {
 
                         )}
 
-                        <button type="button" className="programs-fund" onClick={() => {
+                        {getEditableContributions(record).length > 0 && (
 
-                          setErrorMessage("");
+                          <button type="button" className="programs-edit" onClick={() => openAgencyFundingEditor(record)}>
 
-                          setContributionsRecord(record);
+                            {currentProfile?.role === "user" ? "Edit" : "Edit Fund"}
 
-                        }}>
+                          </button>
 
-                          Funding Details
+                        )}
 
-                        </button>
-
-
-
-                        {canEdit(record) && (
+                        {["super_admin", "admin"].includes(currentProfile?.role) && canEdit(record) && (
                         <button
 
                           type="button"
@@ -2563,7 +2593,7 @@ function ProgramsProjects() {
 
                         >
 
-                          Edit
+                          Edit Project
 
                         </button>
 
@@ -3145,159 +3175,6 @@ function ProgramsProjects() {
 
 
 
-      {contributionsRecord && (
-
-        <div className="programs-modal-backdrop" onMouseDown={(event) => {
-
-          if (event.target === event.currentTarget && !deletingContributionId) setContributionsRecord(null);
-
-        }}>
-
-          <div className="programs-modal programs-funding-modal" role="dialog" aria-modal="true" aria-labelledby="funding-details-title"
-
-            style={{ width: "min(900px, 95vw)", maxHeight: "90vh", overflowY: "auto" }}>
-
-            <div className="programs-modal-header">
-
-              <div>
-
-                <p className="module-eyebrow">FUNDING CONTRIBUTIONS</p>
-
-                <h2 id="funding-details-title">Funding Details</h2>
-
-              </div>
-
-              <button type="button" className="programs-modal-close" aria-label="Close funding details"
-
-                disabled={Boolean(deletingContributionId)} onClick={() => setContributionsRecord(null)}>×</button>
-
-            </div>
-
-            <div className="programs-funding-body">
-
-              <div className="programs-funding-project">
-
-                <span>Program / Project</span>
-
-                <strong>{contributionsRecord.intervention}</strong>
-
-              </div>
-
-              <p>Each agency's contribution is listed separately. Current Fund is their combined total for each year.</p>
-
-              {TARGET_PERIODS.filter((period) => !selectedPeriodData || period.year === selectedPeriodData.year).map((period) => {
-
-                const items = fundingContributions.filter((item) =>
-
-                  item.program_project_id === contributionsRecord.id && item.target_year === period.year);
-
-                const info = getFundingInfo(contributionsRecord, period);
-
-                return (
-
-                  <section key={period.year} style={{ marginBottom: 24 }}>
-
-                    <h3>{period.label}</h3>
-
-                    <p>Target: <strong>{formatMoney(info.financialTarget)}</strong> · Current Fund: <strong>{formatMoney(info.currentFund)}</strong> · Gap: <strong>{formatMoney(info.gap)}</strong></p>
-
-                    {items.length === 0 ? <p>No funding contributions for this year.</p> : (
-
-                      <div style={{ overflowX: "auto" }}>
-
-                        <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-
-                          <thead><tr>
-
-                            <th style={{ padding: 10 }}>Agency</th>
-
-                            <th style={{ padding: 10 }}>Amount</th>
-
-                            <th style={{ padding: 10 }}>Actions</th>
-
-                          </tr></thead>
-
-                          <tbody>{items.map((contribution) => (
-
-                            <tr key={contribution.id} style={{ borderTop: "1px solid #d9e4dc" }}>
-
-                              <td style={{ padding: 10 }}>{contribution.funding_institution || "Unassigned agency"}</td>
-
-                              <td style={{ padding: 10 }}>{formatMoney(contribution.amount)}</td>
-
-                              <td style={{ padding: 10 }}>
-
-                                <div className="programs-actions">
-
-                                  {canEditContribution(contribution) && (
-
-                                    <button type="button" className="programs-edit" disabled={Boolean(deletingContributionId)}
-
-                                      onClick={() => openEditContribution(contributionsRecord, contribution)}>Edit Fund</button>
-
-                                  )}
-
-                                  {canDelete && (
-
-                                    <button type="button" className="programs-delete" disabled={Boolean(deletingContributionId)}
-
-                                      onClick={() => handleDeleteContribution(contribution)}>
-
-                                      {deletingContributionId === contribution.id ? "Deleting..." : "Delete"}
-
-                                    </button>
-
-                                  )}
-
-                                  {!canEditContribution(contribution) && !canDelete && <span>View only</span>}
-
-                                </div>
-
-                              </td>
-
-                            </tr>
-
-                          ))}</tbody>
-
-                        </table>
-
-                      </div>
-
-                    )}
-
-                  </section>
-
-                );
-
-              })}
-
-              {errorMessage && <div className="programs-message error">{errorMessage}</div>}
-
-            </div>
-
-            <div className="programs-modal-actions">
-
-              <button type="button" className="programs-cancel" disabled={Boolean(deletingContributionId)}
-
-                onClick={() => setContributionsRecord(null)}>Close</button>
-
-              {canFund && <button type="button" className="programs-save" disabled={Boolean(deletingContributionId)} onClick={() => {
-
-                const record = contributionsRecord;
-
-                setContributionsRecord(null);
-
-                openFundingForm(record);
-
-              }}>Add Funding</button>}
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
       {showFundingForm && fundingRecord && (
 
         <div
@@ -3358,7 +3235,7 @@ function ProgramsProjects() {
 
                 onClick={closeFundingForm}
 
-                disabled={fundingSaving}
+                disabled={fundingSaving || Boolean(deletingContributionId)}
 
               >
 
@@ -3388,6 +3265,41 @@ function ProgramsProjects() {
 
 
 
+              {editingContribution && (
+
+                <label className="programs-funding-field">
+
+                  <span>{currentProfile?.role === "user" ? "Your Agency's Contribution" : "Contribution to Edit"}</span>
+
+                  <select value={editingContribution.id} disabled={fundingSaving || Boolean(deletingContributionId)}
+
+                    onChange={(event) => {
+
+                      const contribution = getEditableContributions(fundingRecord).find((item) => item.id === event.target.value);
+
+                      if (contribution) openEditContribution(fundingRecord, contribution);
+
+                    }}>
+
+                    {getEditableContributions(fundingRecord).map((contribution) => (
+
+                      <option key={contribution.id} value={contribution.id}>
+
+                        {contribution.target_year} — {contribution.funding_institution} — {formatMoney(contribution.amount)}
+
+                        {contribution.created_at ? ` — ${new Date(contribution.created_at).toLocaleString("en-PH")}` : ""}
+
+                      </option>
+
+                    ))}
+
+                  </select>
+
+                  <small className="programs-auto-field-note">Select the contribution to update, then change its amount.</small>
+
+                </label>
+
+              )}
               <label className="programs-funding-field">
 
                 <span>Target Year *</span>
@@ -3398,7 +3310,7 @@ function ProgramsProjects() {
 
                   value={fundingForm.targetYear}
 
-                  disabled={Boolean(editingContribution) || fundingSaving}
+                  disabled={Boolean(editingContribution) || fundingSaving || Boolean(deletingContributionId)}
                   onChange={(event) =>
 
                     setFundingForm(
@@ -3665,6 +3577,17 @@ function ProgramsProjects() {
 
             <div className="programs-modal-actions">
 
+              {canDelete && editingContribution && (
+
+                <button type="button" className="programs-delete" disabled={fundingSaving || Boolean(deletingContributionId)}
+
+                  onClick={() => handleDeleteContribution(editingContribution)}>
+
+                  {deletingContributionId ? "Deleting..." : "Delete Contribution"}
+
+                </button>
+
+              )}
               <button
 
                 type="button"
@@ -3673,7 +3596,7 @@ function ProgramsProjects() {
 
                 onClick={closeFundingForm}
 
-                disabled={fundingSaving}
+                disabled={fundingSaving || Boolean(deletingContributionId)}
 
               >
 
@@ -3691,7 +3614,7 @@ function ProgramsProjects() {
 
                 disabled={
 
-                  fundingSaving ||
+                  fundingSaving || Boolean(deletingContributionId) ||
 
                   (!editingContribution && currentFundingInfo &&
 
