@@ -196,6 +196,23 @@ function ProgramsProjects() {
 
 
 
+  const canDelete = currentProfile?.role === "super_admin";
+
+  const canEdit = (record, profile = currentProfile) => {
+
+    if (!record || !profile) return false;
+
+    if (["super_admin", "admin"].includes(profile.role)) return true;
+
+    if (profile.role !== "user") return false;
+
+    const agency = profile.agency?.trim().toLowerCase();
+
+    const recordAgency = record.source_of_fund?.trim().toLowerCase();
+
+    return Boolean(agency && agency === recordAgency);
+
+  };
   useEffect(() => {
 
     loadData();
@@ -490,6 +507,13 @@ function ProgramsProjects() {
 
   const openEditForm = (record) => {
 
+    if (!canEdit(record)) {
+
+      setErrorMessage("You can only edit your agency's records.");
+
+      return;
+
+    }
     setEditingId(record.id);
 
 
@@ -660,6 +684,35 @@ function ProgramsProjects() {
 
 
 
+      const { data: freshProfile, error: profileError } = await supabase
+
+        .from("profiles")
+
+        .select("id, role, agency")
+
+        .eq("id", user.id)
+
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (!["super_admin", "admin", "user"].includes(freshProfile?.role)) {
+
+        throw new Error("You are not allowed to save programs or projects.");
+
+      }
+
+      const editingRecord = editingId
+
+        ? records.find((item) => item.id === editingId)
+
+        : null;
+
+      if (editingId && !canEdit(editingRecord, freshProfile)) {
+
+        throw new Error("You can only edit your agency's records.");
+
+      }
       if (
 
         !form.cadpSiteId ||
@@ -682,7 +735,7 @@ function ProgramsProjects() {
 
 
 
-      if (!editingId && !currentProfile?.agency?.trim()) {
+      if (!editingId && !freshProfile?.agency?.trim()) {
 
         throw new Error(
 
@@ -732,7 +785,7 @@ function ProgramsProjects() {
 
       );
 
-const payload = {
+      const payload = {
 
         cadp_site_id: form.cadpSiteId,
 
@@ -742,9 +795,9 @@ const payload = {
 
         source_of_fund: editingId
 
-          ? form.sourceOfFund.trim()
+          ? editingRecord.source_of_fund
 
-          : currentProfile.agency.trim(),
+          : freshProfile.agency.trim(),
 
         status: form.status,
 
@@ -794,13 +847,17 @@ const payload = {
 
       if (editingId) {
 
-        const { error } = await supabase
+        const { data: updatedRecord, error } = await supabase
 
           .from("programs_projects")
 
           .update(payload)
 
-          .eq("id", editingId);
+          .eq("id", editingId)
+
+          .select("id")
+
+          .maybeSingle();
 
 
 
@@ -808,6 +865,11 @@ const payload = {
 
           throw error;
 
+        }
+
+        if (!updatedRecord) {
+
+          throw new Error("Update denied or the record no longer exists.");
         }
 
 
@@ -888,6 +950,13 @@ const payload = {
 
   const handleDelete = async (record) => {
 
+    if (!canDelete) {
+
+      setErrorMessage("Only Superadmin can delete records.");
+
+      return;
+
+    }
     const confirmed = window.confirm(
 
       "Are you sure you want to delete this Program / Project?"
@@ -912,13 +981,43 @@ const payload = {
 
     try {
 
-      const { error } = await supabase
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+
+        throw new Error("Your session is unavailable. Please sign in again.");
+
+      }
+
+      const { data: freshProfile, error: profileError } = await supabase
+
+        .from("profiles")
+
+        .select("role")
+
+        .eq("id", user.id)
+
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (freshProfile?.role !== "super_admin") {
+
+        throw new Error("Only Superadmin can delete records.");
+
+      }
+
+      const { data: deletedRecord, error } = await supabase
 
         .from("programs_projects")
 
         .delete()
 
-        .eq("id", record.id);
+        .eq("id", record.id)
+
+        .select("id")
+
+        .maybeSingle();
 
 
 
@@ -926,6 +1025,11 @@ const payload = {
 
         throw error;
 
+      }
+
+      if (!deletedRecord) {
+
+        throw new Error("Delete denied or the record no longer exists.");
       }
 
 
@@ -2330,6 +2434,7 @@ const payload = {
 
 
 
+                        {canEdit(record) && (
                         <button
 
                           type="button"
@@ -2350,6 +2455,9 @@ const payload = {
 
 
 
+                        )}
+
+                        {canDelete && (
                         <button
 
                           type="button"
@@ -2368,6 +2476,7 @@ const payload = {
 
                         </button>
 
+                        )}
                       </div>
 
                     </td>
@@ -3359,3 +3468,4 @@ const payload = {
 
 
 export default ProgramsProjects;
+
