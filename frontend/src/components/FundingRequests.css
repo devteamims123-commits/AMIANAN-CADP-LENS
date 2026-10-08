@@ -307,3 +307,16 @@
   .cadp-request-dialog .cadp-request-heading h2 { font-size: 18px; }
   .cadp-request-dialog .cadp-request-detail h3 { font-size: 15px; }
 }
+
+.cadp-request-dialog input { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 1px solid #ccdcd1; border-radius: 8px; background: #fff; color: #33443b; font-family: inherit; font-size: 13px; line-height: 1.6; }
+.cadp-request-dialog input:focus { outline: 2px solid #bed9c7; outline-offset: 1px; border-color: #438660; }
+.cadp-request-dialog .cadp-request-amount { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #edf5ef; color: #477055; font-size: 12px; }
+.cadp-request-dialog .cadp-request-amount strong { color: #195b36; font-size: 16px; font-weight: 600; }
+.cadp-request-dialog .cadp-delete-request { margin-right: auto; color: #b23b3b; border-color: #efd8d8; }
+.cadp-request-dialog .cadp-request-status[data-status="pending"] { background: #faf4e4; color: #806316; border-color: #efe3c1; }
+.cadp-request-dialog .cadp-request-status[data-status="accepted"] { background: #eaf5ec; color: #28643d; border-color: #d1e6d6; }
+.cadp-request-dialog .cadp-request-status[data-status="transferred"] { background: #edf1fb; color: #455d93; border-color: #dbe2f3; }
+.cadp-request-dialog .cadp-request-status[data-status="deleted"] { background: #f2f2f2; color: #747474; border-color: #e1e1e1; }
+.cadp-request-transfer { display: grid; gap: 12px; padding-top: 16px; border-top: 1px solid #e8eee9; }
+.cadp-request-transfer h4 { margin: 0; font-size: 14px; color: #304d3b; }
+.cadp-request-dialog .cadp-request-help { font-size: 11px; color: #79887d; }

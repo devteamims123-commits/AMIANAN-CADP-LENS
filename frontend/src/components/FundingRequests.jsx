@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { supabase } from "../services/supabase";
 import "./FundingRequests.css";
 
+const money = (value) => value == null ? "Not specified" : new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
 const normalize = (value) => value?.trim().toLowerCase() || "";
 
 function Dialog({ title, children, onClose }) {
@@ -38,12 +39,16 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
   const [selectedId, setSelectedId] = useState(null);
   const [recipient, setRecipient] = useState("");
   const [message, setMessage] = useState("");
+  const [amount, setAmount] = useState("");
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [transferAgency, setTransferAgency] = useState("");
+  const [transferMessage, setTransferMessage] = useState("");
   const [reply, setReply] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const closeInbox = useCallback(() => { setInbox(false); setSelectedId(null); }, []);
+  const closeInbox = useCallback(() => { setInbox(false); setSelectedId(null); setTransferOpen(false); }, []);
   const closeEndorsement = useCallback(() => { if (!busy) onCloseEndorsement(); }, [busy, onCloseEndorsement]);
   const load = useCallback(async () => {
     const result = await supabase.from("funding_endorsements").select("*").order("created_at", { ascending: false });
@@ -63,9 +68,10 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
     return () => { active = false; window.clearInterval(timer); window.removeEventListener("focus", refresh); };
   }, [profile?.id, load]);
   useEffect(() => {
-    if (!endorsementProject) return;
+    if (!endorsementProject && !transferOpen) return;
     let active = true;
-    setRecipient(""); setMessage(""); setError(""); setNotice(""); setAgencies([]); setLoading(true);
+    if (endorsementProject) { setRecipient(""); setMessage(""); setAmount(""); }
+     setError(""); setNotice(""); setAgencies([]); setLoading(true);
     supabase.rpc("funding_recipient_agencies").then(({ data, error: err }) => {
       if (!active) return;
       if (err) setError(err.message);
@@ -73,21 +79,30 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
       setLoading(false);
     }).catch((err) => { if (active) { setError(err.message); setLoading(false); } });
     return () => { active = false; };
-  }, [endorsementProject]);
-  const received = requests.filter((item) => normalize(item.recipient_agency) === normalize(profile?.agency));
+  }, [endorsementProject, transferOpen]);
+  const received = requests.filter((item) => normalize(item.recipient_agency) === normalize(profile?.agency) && !item.recipient_deleted);
   const sent = requests.filter((item) => item.sender_id === profile?.id);
   const pending = received.filter((item) => item.status === "pending").length;
   const visible = tab === "sent" ? sent : received;
   const selected = visible.find((item) => item.id === selectedId);
-  const mayRespond = selected?.status === "pending" && normalize(selected.recipient_agency) === normalize(profile?.agency)
-    && ["super_admin", "admin", "user"].includes(profile?.role);
+  const isReceiver = Boolean(selected && !selected.recipient_deleted
+    && normalize(selected.recipient_agency) === normalize(profile?.agency)
+    && ["super_admin", "admin", "user"].includes(profile?.role));
+  const mayRespond = isReceiver && selected?.status === "pending";
+  const transferOptions = agencies.filter((item) => ![
+    normalize(profile?.agency), normalize(selected?.sender_agency),
+    normalize(selected?.original_sender_agency || selected?.sender_agency),
+  ].includes(normalize(item.agency)));
   async function send(event) {
     event.preventDefault();
     if (busy) return;
+    if (!/^\d+(\.\d{1,2})?$/.test(amount) || Number(amount) <= 0 || Number(amount) > 999999999999.99) {
+      setError("Enter a valid amount greater than zero, with at most two decimal places."); return;
+    }
     setBusy(true); setError(""); setNotice("");
     try {
       const { error: err } = await supabase.rpc("send_funding_endorsement", {
-        p_project_id: String(endorsementProject.id), p_recipient_agency: recipient, p_message: message.trim(),
+        p_project_id: String(endorsementProject.id), p_recipient_agency: recipient, p_message: message.trim(), p_amount: amount,
       });
       if (err) throw err;
       onCloseEndorsement(); setInbox(true); setTab("sent"); setSelectedId(null);
@@ -107,6 +122,31 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
     } catch (err) { setError(err.message || "Unable to respond."); }
     finally { setBusy(false); }
   }
+  async function removeRequest() {
+    if (busy || !selected || !isReceiver) return;
+    if (!window.confirm("Delete this request from your agency's inbox? The sender's history will be kept.")) return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const { error: err } = await supabase.rpc("delete_received_funding_endorsement", { p_request_id: selected.id });
+      if (err) throw err;
+      setSelectedId(null); setTransferOpen(false); setNotice("Request deleted from your agency's inbox."); await load();
+    } catch (err) { setError(err.message || "Unable to delete request."); }
+    finally { setBusy(false); }
+  }
+  async function transfer(event) {
+    event.preventDefault();
+    if (busy || !mayRespond || !transferOptions.some((item) => item.agency === transferAgency)) return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const { error: err } = await supabase.rpc("transfer_funding_endorsement", {
+        p_request_id: selected.id, p_recipient_agency: transferAgency, p_message: transferMessage.trim(),
+      });
+      if (err) throw err;
+      setTransferOpen(false); setSelectedId(null); setTab("sent");
+      setNotice("Request transferred. The requested amount was preserved."); await load();
+    } catch (err) { setError(err.message || "Unable to transfer request."); }
+    finally { setBusy(false); }
+  }
   return <>
     <button type="button" className="cadp-inbox-button" title="Funding requests" aria-label={`Funding inbox, ${pending} pending requests`}
       onClick={() => { setInbox(true); setTab("received"); setSelectedId(null); setNotice(""); }}>
@@ -121,28 +161,48 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
           {agencies.filter((item) => normalize(item.agency) !== normalize(profile?.agency)).map((item) => <option key={item.agency} value={item.agency}>{item.agency}</option>)}
         </select></label>
         {!loading && agencies.filter((item) => normalize(item.agency) !== normalize(profile?.agency)).length === 0 && <p>No other agencies with eligible accounts are available.</p>}
+        <label>Requested amount (₱)<input type="number" inputMode="decimal" min="0.01" max="999999999999.99" step="0.01" required value={amount} disabled={busy} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" /></label>
         <label>Message<textarea required maxLength={4000} rows={5} value={message} disabled={busy} onChange={(event) => setMessage(event.target.value)} placeholder="Explain the funding request…" /></label>
         {error && <p role="alert" className="cadp-request-error">{error}</p>}
-        <div className="cadp-request-footer"><button type="button" disabled={busy} onClick={closeEndorsement}>Cancel</button><button className="cadp-primary" disabled={busy || loading || !recipient || !message.trim()}>{busy ? "Sending…" : "Send Request"}</button></div>
+        <div className="cadp-request-footer"><button type="button" disabled={busy} onClick={closeEndorsement}>Cancel</button><button className="cadp-primary" disabled={busy || loading || !recipient || !message.trim() || !amount || Number(amount) <= 0}>{busy ? "Sending…" : "Send Request"}</button></div>
       </form>
     </Dialog>}
     {inbox && <Dialog title="Funding Requests" onClose={closeInbox}>
-      <div className="cadp-request-tabs"><button type="button" aria-pressed={tab === "received"} onClick={() => { setTab("received"); setSelectedId(null); }}>Inbox ({pending})</button><button type="button" aria-pressed={tab === "sent"} onClick={() => { setTab("sent"); setSelectedId(null); }}>Sent</button><button type="button" disabled={busy} onClick={() => load().then(() => setError("")).catch((err) => setError(err.message))}>Refresh</button></div>
+      <div className="cadp-request-tabs"><button type="button" aria-pressed={tab === "received"} onClick={() => { setTab("received"); setSelectedId(null); setTransferOpen(false); }}>Inbox ({pending})</button><button type="button" aria-pressed={tab === "sent"} onClick={() => { setTab("sent"); setSelectedId(null); setTransferOpen(false); }}>Sent</button><button type="button" disabled={busy} onClick={() => load().then(() => setError("")).catch((err) => setError(err.message))}>Refresh</button></div>
       {error && <p role="alert" className="cadp-request-error">{error}</p>}
       {notice && <p role="status" className="cadp-request-notice">{notice}</p>}
       {selected ? <div className="cadp-request-detail">
-        <button type="button" onClick={() => setSelectedId(null)}>← Back to requests</button>
+        <button type="button" onClick={() => { setSelectedId(null); setTransferOpen(false); }}>← Back to requests</button>
         <h3>{selected.project_title}</h3>
         <p>From: <strong>{selected.sender_agency}</strong><br/>To: <strong>{selected.recipient_agency}</strong></p>
-        <p className="cadp-request-status">{selected.status}</p>
+        <p className="cadp-request-status" data-status={selected.recipient_deleted ? "deleted" : selected.status}>{selected.recipient_deleted ? "Deleted by receiver" : selected.status}</p>
+        <p className="cadp-request-amount">Requested amount <strong>{money(selected.amount)}</strong></p>
+        {selected.forwarded_to && <p>Transferred to: <strong>{selected.forwarded_to}</strong></p>}
+        {selected.parent_request_id && <p>Originally sent by: <strong>{selected.original_sender_agency}</strong></p> }
         <p className="cadp-request-message">{selected.message}</p>
         <small>Sent {new Date(selected.created_at).toLocaleString()}</small>
         {selected.responded_at && <p>Response ({new Date(selected.responded_at).toLocaleString()}): <span className="cadp-request-message">{selected.reply || "No reply message."}</span></p>}
-        {mayRespond && <><label>Reply (optional)<textarea rows={3} maxLength={4000} value={reply} disabled={busy} onChange={(event) => setReply(event.target.value)} /></label><p>Accepting acknowledges the request. Add funding separately through Add Fund.</p><div className="cadp-request-footer"><button type="button" disabled={busy} onClick={() => respond("declined")}>Decline</button><button type="button" className="cadp-primary" disabled={busy} onClick={() => respond("accepted")}>{busy ? "Saving…" : "Accept"}</button></div></>}
+        {mayRespond && !transferOpen && <><label>Reply (optional)<textarea rows={3} maxLength={4000} value={reply} disabled={busy} onChange={(event) => setReply(event.target.value)} /></label><p className="cadp-request-help">Accepting acknowledges the request. Record any contribution separately through Add Fund.</p></>}
+        {isReceiver && !transferOpen && <div className="cadp-request-footer">
+          <button type="button" className="cadp-delete-request" disabled={busy} onClick={removeRequest}>Delete</button>
+          {mayRespond && <><button type="button" disabled={busy} onClick={() => { setTransferOpen(true); setTransferAgency(""); setTransferMessage(selected.message); setError(""); }}>Transfer</button>
+          <button type="button" className="cadp-primary" disabled={busy} onClick={() => respond("accepted")}>{busy ? "Saving…" : "Accept"}</button></>}
+        </div>}
+        {transferOpen && mayRespond && <form className="cadp-request-transfer" onSubmit={transfer}>
+          <h4>Transfer to another agency</h4>
+          <label>Receiving agency<select required disabled={busy || loading} value={transferAgency} onChange={(event) => setTransferAgency(event.target.value)}>
+            <option value="">{loading ? "Loading agencies…" : "Select another agency"}</option>
+            {transferOptions.map((item) => <option key={item.agency} value={item.agency}>{item.agency}</option>)}
+          </select></label>
+          {!loading && transferOptions.length === 0 && <p>No other eligible agencies are available.</p>}
+          <label>Message<textarea required rows={3} maxLength={4000} disabled={busy} value={transferMessage} onChange={(event) => setTransferMessage(event.target.value)} /></label>
+          <div className="cadp-request-footer"><button type="button" disabled={busy} onClick={() => setTransferOpen(false)}>Cancel</button><button className="cadp-primary" disabled={busy || loading || !transferAgency || !transferMessage.trim()}>{busy ? "Transferring…" : "Transfer Request"}</button></div>
+        </form>}
+
       </div> : <div className="cadp-request-list">
         {visible.length === 0 && <p>No {tab === "sent" ? "sent" : "received"} requests yet.</p>}
-        {visible.map((item) => <button type="button" key={item.id} onClick={() => { setSelectedId(item.id); setReply(""); setNotice(""); }}>
-          <strong>{item.project_title}</strong><span>{tab === "sent" ? `To: ${item.recipient_agency}` : `From: ${item.sender_agency}`}</span><span className="cadp-request-preview">{item.message}</span><span className="cadp-request-status">{item.status}</span><small>{new Date(item.created_at).toLocaleString()}</small>
+        {visible.map((item) => <button type="button" key={item.id} onClick={() => { setSelectedId(item.id); setTransferOpen(false); setReply(""); setNotice(""); }}>
+          <strong>{item.project_title}</strong><span>{tab === "sent" ? `To: ${item.recipient_agency}` : `From: ${item.sender_agency}`}</span><span className="cadp-request-preview">{item.message}</span><span className="cadp-request-amount">{money(item.amount)}</span><span className="cadp-request-status" data-status={item.recipient_deleted ? "deleted" : item.status}>{item.recipient_deleted ? "Deleted by receiver" : item.status}</span><small>{new Date(item.created_at).toLocaleString()}</small>
         </button>)}
       </div>}
     </Dialog>}
