@@ -416,6 +416,14 @@ function ProgramsProjects() {
 
 
   const canFund = ["super_admin", "admin", "user"].includes(currentProfile?.role);
+  const canAddProjectFund = (record) => {
+    const agency = currentProfile?.agency?.trim().toLowerCase();
+    return Boolean(canFund && agency && record && (
+      agency === record.source_of_fund?.trim().toLowerCase()
+      || acceptedProjectIds.includes(String(record.id))
+    ));
+  };
+
 
 
 
@@ -2666,11 +2674,11 @@ function ProgramsProjects() {
 
 
 
-    if (!canFund) {
+    if (!canAddProjectFund(record)) {
 
 
 
-      setErrorMessage("You are not allowed to add funding.");
+      setErrorMessage("Your agency must accept the funding request before adding funds to this project.");
 
 
 
@@ -3225,6 +3233,14 @@ function ProgramsProjects() {
 
 
 
+
+      if (!editingContribution) {
+        const { data: allowed, error: permissionError } = await supabase.rpc("cadp_can_add_project_funding", {
+          p_project_id: String(fundingRecord.id),
+        });
+        if (permissionError) throw permissionError;
+        if (allowed !== true) throw new Error("Your agency must accept the funding request before adding funds to this project.");
+      }
 
       const amount = Number(fundingForm.amount);
 
@@ -5326,7 +5342,7 @@ function ProgramsProjects() {
 
                     <td>
                       <ProjectActions
-                        canFund={canFund} canEdit={canEdit(record)} canDelete={canDelete}
+                        disabled={!canAddProjectFund(record)} canFund={canFund} canAddFund={canAddProjectFund(record)} canEdit={canEdit(record)} canDelete={canDelete}
                         onFund={() => openFundingForm(record)}
                         onEdit={() => openEditForm(record)}
                         onEndorse={() => setEndorsementProject(record)}

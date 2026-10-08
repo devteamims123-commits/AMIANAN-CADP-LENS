@@ -320,3 +320,16 @@
 .cadp-request-transfer { display: grid; gap: 12px; padding-top: 16px; border-top: 1px solid #e8eee9; }
 .cadp-request-transfer h4 { margin: 0; font-size: 14px; color: #304d3b; }
 .cadp-request-dialog .cadp-request-help { font-size: 11px; color: #79887d; }
+
+.cadp-action-menu button:disabled,
+.cadp-action-menu button:disabled:hover { background: #fff; color: #a2aca6; cursor: not-allowed; opacity: .7; }
+
+.cadp-action-toggle:disabled,
+.cadp-action-toggle:disabled:hover {
+  background: #f2f4f2;
+  border-color: #dde3de;
+  color: #9ba59e;
+  cursor: not-allowed;
+  opacity: .75;
+  box-shadow: none;
+}

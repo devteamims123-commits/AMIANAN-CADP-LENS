@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "./FundingRequests.css";
 
-export default function ProjectActions({ canFund, canEdit, canDelete, onFund, onEdit, onEndorse, onDelete }) {
+export default function ProjectActions({ disabled = false, canFund, canAddFund = canFund, canEdit, canDelete, onFund, onEdit, onEndorse, onDelete }) {
   const anchor = useRef(null);
   const menu = useRef(null);
   const [position, setPosition] = useState(null);
@@ -27,12 +27,13 @@ export default function ProjectActions({ canFund, canEdit, canDelete, onFund, on
       window.removeEventListener("scroll", scroll, true);
     };
   }, [position]);
-  const run = (callback) => { setPosition(null); callback(); };
+  const run = (callback) => { if (disabled) return; setPosition(null); callback(); };
   const canEndorse = canFund;
   if (!canFund && !canEdit && !canEndorse && !canDelete) return <span>—</span>;
   return <>
-    <button type="button" className="cadp-action-toggle" ref={anchor} aria-expanded={Boolean(position)} aria-haspopup="true"
+    <button type="button" className="cadp-action-toggle" ref={anchor} aria-expanded={Boolean(position)} aria-haspopup="true" disabled={disabled} title={disabled ? "Your agency must accept the funding request to use these actions." : undefined}
       onClick={() => {
+        if (disabled) return;
         const rect = anchor.current.getBoundingClientRect();
         const height = 190;
         setPosition(position ? null : {
@@ -40,8 +41,8 @@ export default function ProjectActions({ canFund, canEdit, canDelete, onFund, on
           top: rect.bottom + height > window.innerHeight ? Math.max(8, rect.top - height) : rect.bottom + 6,
         });
       }}>Actions ▾</button>
-    {position && createPortal(<div ref={menu} className="cadp-action-menu" style={position}>
-      {canFund && <button type="button" onClick={() => run(onFund)}>Add Fund</button>}
+    {!disabled && position && createPortal(<div ref={menu} className="cadp-action-menu" style={position}>
+      {canFund && <button type="button" disabled={!canAddFund} title={!canAddFund ? "Accept the funding request first to add funds." : undefined} onClick={() => run(onFund)}>Add Fund</button>}
       {canEdit && <button type="button" onClick={() => run(onEdit)}>Edit Project</button>}
       {canEndorse && <button type="button" onClick={() => run(onEndorse)}>Endorse for Funding</button>}
       {canDelete && <button type="button" className="cadp-danger" onClick={() => run(onDelete)}>Delete</button>}
