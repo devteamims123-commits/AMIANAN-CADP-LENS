@@ -319,6 +319,7 @@ function ProgramsProjects() {
 
 
   const [selectedAgency, setSelectedAgency] = useState("");
+  const [acceptedProjectIds, setAcceptedProjectIds] = useState([]);
 
 
 
@@ -570,7 +571,7 @@ function ProgramsProjects() {
 
 
 
-      const [sitesResult, recordsResult, fundingResult, profileResult] =
+      const [sitesResult, recordsResult, fundingResult, profileResult, acceptedResult] =
 
 
 
@@ -680,6 +681,8 @@ function ProgramsProjects() {
 
             .single(),
 
+          supabase.rpc("cadp_accepted_projects"),
+
 
 
         ]);
@@ -703,6 +706,10 @@ function ProgramsProjects() {
 
 
       if (profileResult.error) throw profileResult.error;
+      if (acceptedResult.error) throw acceptedResult.error;
+      const acceptedData = acceptedResult.data || {};
+      const mergeById = (first, second) => Array.from(new Map([...first, ...second].map((item) => [String(item.id), item])).values());
+      setAcceptedProjectIds((acceptedData.projects || []).map((item) => String(item.id)));
 
 
 
@@ -710,7 +717,7 @@ function ProgramsProjects() {
 
 
 
-      const registeredSites = sitesResult.data || [];
+      const registeredSites = mergeById(sitesResult.data || [], acceptedData.sites || []);
 
 
 
@@ -726,11 +733,11 @@ function ProgramsProjects() {
 
 
 
-      setRecords(recordsResult.data || []);
+      setRecords(mergeById(recordsResult.data || [], acceptedData.projects || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
 
 
 
-      setFundingContributions(fundingResult.data || []);
+      setFundingContributions(mergeById(fundingResult.data || [], acceptedData.funding || []));
 
 
 
@@ -838,11 +845,14 @@ function ProgramsProjects() {
 
     });
 
+    const acceptedAgency = currentProfile?.agency?.trim();
+    if (acceptedProjectIds.length && acceptedAgency) agencies.set(acceptedAgency.toLowerCase(), acceptedAgency);
+
     return Array.from(agencies, ([value, label]) => ({ value, label }))
 
       .sort((a, b) => a.label.localeCompare(b.label));
 
-  }, [fundingContributions]);
+  }, [fundingContributions, acceptedProjectIds, currentProfile?.agency]);
 
   const selectedAgencyLabel = agencyOptions.find((item) => item.value === selectedAgency)?.label || "";
 
@@ -1054,7 +1064,7 @@ function ProgramsProjects() {
 
 
 
-      const matchesAgency = !selectedAgency || fundingContributions.some((item) =>
+      const matchesAgency = !selectedAgency || (selectedAgency === currentProfile?.agency?.trim().toLowerCase() && acceptedProjectIds.includes(String(record.id))) || fundingContributions.some((item) =>
 
         item.program_project_id === record.id &&
 
@@ -1087,6 +1097,8 @@ function ProgramsProjects() {
 
 
     selectedAgency,
+    acceptedProjectIds,
+    currentProfile?.agency,
 
 
 
@@ -4446,7 +4458,10 @@ function ProgramsProjects() {
 
         </div>
         <div className="cadp-header-actions">
-          <FundingRequests profile={currentProfile} endorsementProject={endorsementProject} onCloseEndorsement={closeEndorsement} />
+          <FundingRequests profile={currentProfile} endorsementProject={endorsementProject} onCloseEndorsement={closeEndorsement} onAccepted={async () => {
+            setSelectedSite(""); setSelectedPeriod("all"); setSelectedAgency(""); setSearch("");
+            await loadData();
+          }} />
 
 
 
