@@ -268,3 +268,42 @@
   .cadp-request-tabs button:last-child { margin-left: 0; }
   .cadp-request-footer > button { flex: 1; }
 }
+
+/* Refined inbox layout. */
+.cadp-request-backdrop { background: rgb(15 30 23 / 48%); backdrop-filter: blur(3px); }
+.cadp-request-dialog { width: min(600px, 100%); padding: 22px; border-radius: 14px; color: #33443b; box-shadow: 0 24px 80px rgb(8 24 15 / 24%); }
+.cadp-request-heading { margin-bottom: 18px; }
+.cadp-request-dialog .cadp-request-heading h2 { font-size: 19px; font-weight: 600; letter-spacing: -.3px; }
+.cadp-request-dialog .cadp-request-heading button { background: #f4f6f4; color: #66766c; font-size: 22px; border-radius: 50%; }
+.cadp-request-tabs { gap: 4px; margin: 0 0 18px; padding: 5px; background: #f2f5f3; border: 0; border-radius: 9px; }
+.cadp-request-dialog .cadp-request-tabs button { min-height: 32px; padding: 6px 13px; border: 1px solid transparent; background: transparent; color: #65756b; font-size: 12px; }
+.cadp-request-dialog .cadp-request-tabs button[aria-pressed="true"] { background: #fff; color: #1a633a; border-color: #dce7df; box-shadow: 0 1px 3px rgb(21 53 34 / 6%); }
+.cadp-request-dialog .cadp-request-tabs button:last-child { margin-left: auto; font-size: 11px; }
+.cadp-request-detail { display: grid; gap: 12px; }
+.cadp-request-dialog .cadp-request-detail > button { justify-self: start; min-height: 28px; border: 0; background: transparent; padding: 0; font-size: 11px; color: #738178; }
+.cadp-request-dialog .cadp-request-detail > button:hover { color: #1a633a; }
+.cadp-request-dialog .cadp-request-detail h3 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.5; color: #263e30; letter-spacing: -.2px; }
+.cadp-request-dialog .cadp-request-detail > p { margin: 0; font-size: 12px; line-height: 1.8; }
+.cadp-request-dialog .cadp-request-detail > p:first-of-type { padding: 10px 12px; border-radius: 8px; background: #f6f8f6; color: #7a877e; }
+.cadp-request-dialog .cadp-request-detail > p:first-of-type strong { color: #40584a; font-weight: 500; }
+.cadp-request-dialog .cadp-request-status { margin: 0; padding: 3px 9px; border: 1px solid #dce6df; background: #eef3ef; color: #45604e; font-size: 10px; font-weight: 500; }
+.cadp-request-dialog .cadp-request-detail > .cadp-request-status { justify-self: start; }
+.cadp-request-dialog .cadp-request-detail > .cadp-request-message { padding: 14px 16px; border: 0; border-left: 3px solid #accab5; border-radius: 0 8px 8px 0; background: #f7faf8; color: #384d40; font-size: 13px; line-height: 1.8; }
+.cadp-request-dialog .cadp-request-detail > small { font-size: 10px; color: #93a097; }
+.cadp-request-dialog .cadp-request-detail > p:last-of-type:not(.cadp-request-status):not(.cadp-request-message) { padding-top: 12px; border-top: 1px solid #e8eee9; color: #87938b; font-size: 10px; }
+.cadp-request-dialog .cadp-request-detail > p:last-of-type > .cadp-request-message { display: block; padding: 8px 0 2px; color: #384d40; font-size: 13px; line-height: 1.8; }
+.cadp-request-dialog .cadp-request-list > button { padding: 13px 14px; background: #fff; border-color: #e3eae5; gap: 5px; }
+.cadp-request-dialog .cadp-request-list > button > strong { font-size: 13px; font-weight: 600; color: #304d3b; }
+.cadp-request-dialog .cadp-request-list > button > span { font-size: 11px; }
+.cadp-request-dialog .cadp-request-list > button > .cadp-request-status { font-size: 10px; }
+.cadp-request-dialog label { margin: 4px 0; font-size: 11px; font-weight: 500; }
+.cadp-request-dialog select, .cadp-request-dialog textarea { font-size: 12px; background: #fff; }
+.cadp-request-dialog .cadp-request-form { display: grid; gap: 16px; }
+.cadp-request-dialog .cadp-request-form > p { margin: 0; font-size: 13px; }
+.cadp-request-footer { margin-top: 6px; padding-top: 14px; border-top: 1px solid #e8eee9; }
+.cadp-request-dialog .cadp-request-footer button { min-height: 34px; font-size: 12px; }
+@media (max-width: 640px) {
+  .cadp-request-dialog { padding: 18px; }
+  .cadp-request-dialog .cadp-request-heading h2 { font-size: 18px; }
+  .cadp-request-dialog .cadp-request-detail h3 { font-size: 15px; }
+}
