@@ -28,7 +28,8 @@ export default function ProjectActions({ canFund, canEdit, canDelete, onFund, on
     };
   }, [position]);
   const run = (callback) => { setPosition(null); callback(); };
-  if (!canFund && !canEdit && !canDelete) return <span>—</span>;
+  const canEndorse = canFund;
+  if (!canFund && !canEdit && !canEndorse && !canDelete) return <span>—</span>;
   return <>
     <button type="button" className="cadp-action-toggle" ref={anchor} aria-expanded={Boolean(position)} aria-haspopup="true"
       onClick={() => {
@@ -42,7 +43,7 @@ export default function ProjectActions({ canFund, canEdit, canDelete, onFund, on
     {position && createPortal(<div ref={menu} className="cadp-action-menu" style={position}>
       {canFund && <button type="button" onClick={() => run(onFund)}>Add Fund</button>}
       {canEdit && <button type="button" onClick={() => run(onEdit)}>Edit Project</button>}
-      {canEdit && <button type="button" onClick={() => run(onEndorse)}>Endorse for Funding</button>}
+      {canEndorse && <button type="button" onClick={() => run(onEndorse)}>Endorse for Funding</button>}
       {canDelete && <button type="button" className="cadp-danger" onClick={() => run(onDelete)}>Delete</button>}
     </div>, document.body)}
   </>;
