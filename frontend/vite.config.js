@@ -15,39 +15,36 @@ const spaRoutes = [
 ]
 
 function spaFallbackPages() {
+  let outputDirectory
+
   return {
     name: 'spa-fallback-pages',
+    apply: 'build',
 
-    closeBundle() {
-      const distDir = path.resolve(process.cwd(), 'dist')
+    configResolved(config) {
+      outputDirectory = path.resolve(config.root, config.build.outDir)
+    },
+
+    writeBundle(outputOptions, bundle) {
+      // Only copy a successfully generated HTML entry. A failed build
+      // should report its original error without a second plugin error.
+      if (!bundle['index.html']) return
+
+      const distDir = outputOptions.dir
+        ? path.resolve(outputOptions.dir)
+        : outputDirectory
       const indexFile = path.join(distDir, 'index.html')
-
-      if (!fs.existsSync(indexFile)) {
-        throw new Error('dist/index.html was not generated.')
-      }
-
       const indexHtml = fs.readFileSync(indexFile, 'utf8')
 
       for (const route of spaRoutes) {
         const routeDirectory = path.join(distDir, route)
-
-        fs.mkdirSync(routeDirectory, {
-          recursive: true,
-        })
-
-        fs.writeFileSync(
-          path.join(routeDirectory, 'index.html'),
-          indexHtml,
-          'utf8'
-        )
+        fs.mkdirSync(routeDirectory, { recursive: true })
+        fs.writeFileSync(path.join(routeDirectory, 'index.html'), indexHtml, 'utf8')
       }
     },
   }
 }
 
 export default defineConfig({
-  plugins: [
-    react(),
-    spaFallbackPages(),
-  ],
+  plugins: [react(), spaFallbackPages()],
 })
