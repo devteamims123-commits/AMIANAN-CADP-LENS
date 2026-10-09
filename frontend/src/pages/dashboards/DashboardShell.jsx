@@ -13,6 +13,7 @@ function DashboardShell() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -152,7 +153,7 @@ function DashboardShell() {
 
   return (
     <div className="dashboard-layout">
-      <aside className="dashboard-sidebar">
+      <header className="dashboard-sidebar">
         <div className="sidebar-brand">
           <div className="sidebar-logo">
             A
@@ -169,187 +170,96 @@ function DashboardShell() {
           </div>
         </div>
 
-        <nav className="sidebar-nav">
-          {/* Dashboard */}
+        <button
+          type="button"
+          className="mobile-menu-toggle"
+          aria-expanded={menuOpen}
+          aria-label="Toggle navigation"
+          onClick={() => setMenuOpen((value) => !value)}
+        >
+          ☰
+        </button>
 
+        <nav className={`sidebar-nav ${menuOpen ? "open" : ""}`}>
           <button
             type="button"
-            className={`sidebar-link ${
-              isActive("/dashboard")
-                ? "active"
-                : ""
-            }`}
-            onClick={() =>
-              navigate("/dashboard")
-            }
+            className={`sidebar-link ${isActive("/dashboard") ? "active" : ""}`}
+            onClick={() => { navigate("/dashboard"); setMenuOpen(false); }}
           >
-            <span className="sidebar-icon">
-              ▦
-            </span>
-
-            <span>
-              Dashboard
-            </span>
+            Dashboard
           </button>
 
-          {/* CADP Site Registration */}
-
-          {canViewCADPSites && (
-            <button
-              type="button"
-              className={`sidebar-link ${
-                isActive("/cadp-sites/register")
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                navigate("/cadp-sites/register")
-              }
-            >
-              <span className="sidebar-icon">
-                ⌖
-              </span>
-
-              <span>
-                CADP Site Registration
-              </span>
-            </button>
+          {(canViewCADPSites || canViewCADPProfile) && (
+            <details className="nav-dropdown" key={`cadp-${location.pathname}`}>
+              <summary className={`sidebar-link ${isActive("/cadp-sites/register") || isCADPProfileActive ? "active" : ""}`}>
+                CADP Management <span className="nav-chevron">⌄</span>
+              </summary>
+              <div className="nav-dropdown-menu">
+                {canViewCADPSites && (
+                  <button type="button" className={`dropdown-link ${isActive("/cadp-sites/register") ? "active" : ""}`}
+                    onClick={() => { navigate("/cadp-sites/register"); setMenuOpen(false); }}>
+                    CADP Site Registration
+                  </button>
+                )}
+                {canViewCADPProfile && (
+                  <button type="button" className={`dropdown-link ${isCADPProfileActive ? "active" : ""}`}
+                    onClick={() => { navigate("/cadp-profile"); setMenuOpen(false); }}>
+                    CADP Profile
+                  </button>
+                )}
+              </div>
+            </details>
           )}
-
-          {/* CADP Profile */}
-
-          {canViewCADPProfile && (
-            <button
-              type="button"
-              className={`sidebar-link ${
-                isCADPProfileActive
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                navigate("/cadp-profile")
-              }
-            >
-              <span className="sidebar-icon">
-                ◫
-              </span>
-
-              <span>
-                CADP Profile
-              </span>
-            </button>
-          )}
-
-          {/* Programs / Projects */}
 
           {canViewPrograms && (
-            <button
-              type="button"
-              className={`sidebar-link ${
-                isActive("/programs-projects")
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                navigate("/programs-projects")
-              }
-            >
-              <span className="sidebar-icon">
-                ▤
-              </span>
-
-              <span>
-                Programs / Projects
-              </span>
+            <button type="button" className={`sidebar-link ${isActive("/programs-projects") ? "active" : ""}`}
+              onClick={() => { navigate("/programs-projects"); setMenuOpen(false); }}>
+              Programs / Projects
             </button>
           )}
 
-          {/* User Management */}
-
-          {canViewUserManagement && (
-            <button
-              type="button"
-              className={`sidebar-link ${
-                isActive("/user-management")
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                navigate("/user-management")
-              }
-            >
-              <span className="sidebar-icon">
-                ♙
-              </span>
-
-              <span>
-                User Management
-              </span>
-            </button>
+          {(canViewUserManagement || canViewMaintenanceLogs) && (
+            <details className="nav-dropdown" key={`admin-${location.pathname}`}>
+              <summary className={`sidebar-link ${isActive("/user-management") || isActive("/maintenance-logs") ? "active" : ""}`}>
+                Administration <span className="nav-chevron">⌄</span>
+              </summary>
+              <div className="nav-dropdown-menu">
+                {canViewUserManagement && (
+                  <button type="button" className={`dropdown-link ${isActive("/user-management") ? "active" : ""}`}
+                    onClick={() => { navigate("/user-management"); setMenuOpen(false); }}>
+                    User Management
+                  </button>
+                )}
+                {canViewMaintenanceLogs && (
+                  <button type="button" className={`dropdown-link ${isActive("/maintenance-logs") ? "active" : ""}`}
+                    onClick={() => { navigate("/maintenance-logs"); setMenuOpen(false); }}>
+                    Maintenance Logs
+                  </button>
+                )}
+              </div>
+            </details>
           )}
 
-          {/* Maintenance Logs */}
-
-          {canViewMaintenanceLogs && (
-            <button
-              type="button"
-              className={`sidebar-link ${
-                isActive("/maintenance-logs")
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                navigate("/maintenance-logs")
-              }
-            >
-              <span className="sidebar-icon">
-                ≡
-              </span>
-
-              <span>
-                Maintenance Logs
-              </span>
-            </button>
-          )}
-
-          {/* Help */}
-
-          <button
-            type="button"
-            className="sidebar-link"
-            disabled
-          >
-            <span className="sidebar-icon">
-              ?
-            </span>
-
-            <span>
-              Help
-            </span>
-          </button>
+          <button type="button" className="sidebar-link" disabled>Help</button>
         </nav>
 
         <div className="sidebar-footer">
-          <div className="sidebar-user">
-            <small>
-              Agency
-            </small>
-
-            <strong>
-              {profile?.agency ||
-                "No Agency Assigned"}
-            </strong>
-          </div>
-
-          <button
-            type="button"
-            className="sidebar-logout"
-            onClick={openLogoutDialog}
-          >
-            Sign Out
-          </button>
+          <details className="nav-dropdown profile-dropdown">
+            <summary className="sidebar-link profile-trigger">
+              Profile <span className="nav-chevron">⌄</span>
+            </summary>
+            <div className="nav-dropdown-menu profile-menu">
+              <div className="profile-menu-info">
+                <small>Agency</small>
+                <strong>{profile?.agency || "No Agency Assigned"}</strong>
+              </div>
+              <button type="button" className="dropdown-link signout-link" onClick={openLogoutDialog}>
+                Sign Out
+              </button>
+            </div>
+          </details>
         </div>
-      </aside>
+      </header>
 
       <main className="dashboard-main">
         <Outlet />
