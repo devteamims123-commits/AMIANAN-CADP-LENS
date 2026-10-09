@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import "./SearchableDropdown.css";
 
 export default function SearchableDropdown({
-  label, value, options, onChange, placeholder = "Search or select", disabled = false,
+  label, value, options, onChange, placeholder = "Search or select", searchPlaceholder = placeholder, disabled = false,
 }) {
   const id = useId();
   const trigger = useRef(null);
@@ -65,7 +65,7 @@ export default function SearchableDropdown({
             role="combobox" aria-label={`Search ${label}`} aria-autocomplete="list"
             aria-expanded="true" aria-controls={`${id}-list`}
             aria-activedescendant={filtered[active] ? `${id}-option-${active}` : undefined}
-            placeholder={placeholder} value={query}
+            placeholder={searchPlaceholder} value={query}
             onChange={(event) => { setQuery(event.target.value); setActive(0); }}
             onKeyDown={onKeyDown} />
           <div ref={list} id={`${id}-list`} role="listbox" aria-label={label}
