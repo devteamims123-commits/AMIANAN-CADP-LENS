@@ -9,6 +9,7 @@ import { supabase } from "../services/supabase";
 import "./ProgramsProjects.css";
 import ProjectActions from "../components/ProjectActions";
 import FundingRequests from "../components/FundingRequests";
+import SearchableDropdown from "../components/SearchableDropdown";
 
 
 
@@ -5771,42 +5772,28 @@ function ProgramsProjects() {
 
 
 
-              <label className="programs-full">
+              <div className="programs-full cadp-kpi-field">
                 <span>KPI Category *</span>
-                <select
-                  value={form.kpiCategory}
-                  onChange={(event) => updateForm("kpiCategory", event.target.value)}
-                  required
-                >
-                  <option value="" disabled>Select a category</option>
-                  {form.kpiCategory === LEGACY_KPI_CATEGORY && (
-                    <option value={LEGACY_KPI_CATEGORY}>Existing KPI — category unassigned</option>
-                  )}
-                  {kpiCategories.map(({ name: category }) => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </label>
+                <SearchableDropdown
+                  label="KPI category"
+                  value={form.kpiCategory === LEGACY_KPI_CATEGORY ? "Existing KPI — category unassigned" : form.kpiCategory}
+                  options={kpiCategories.map(({ name }) => name)}
+                  placeholder="Search category"
+                  onChange={(category) => updateForm("kpiCategory", category)}
+                />
+              </div>
 
-              <label className="programs-full">
+              <div className="programs-full cadp-kpi-field">
                 <span>KPI (Key Performance Indicators) *</span>
-                <select
+                <SearchableDropdown
+                  label="KPI"
                   value={form.kpi}
-                  onChange={(event) => updateForm("kpi", event.target.value)}
+                  options={kpiByCategory[form.kpiCategory] || []}
+                  placeholder={form.kpiCategory ? "Search or select a KPI" : "Choose a category first"}
                   disabled={!form.kpiCategory || form.kpiCategory === LEGACY_KPI_CATEGORY}
-                  required
-                >
-                  <option value="" disabled>
-                    {form.kpiCategory ? "Select a KPI" : "Select a category first"}
-                  </option>
-                  {form.kpi && !(kpiByCategory[form.kpiCategory] || []).includes(form.kpi) && (
-                    <option value={form.kpi}>Current KPI: {form.kpi}</option>
-                  )}
-                  {(kpiByCategory[form.kpiCategory] || []).map((kpi) => (
-                    <option key={kpi} value={kpi}>{kpi}</option>
-                  ))}
-                </select>
-              </label>
+                  onChange={(kpi) => updateForm("kpi", kpi)}
+                />
+              </div>
 
 
 
