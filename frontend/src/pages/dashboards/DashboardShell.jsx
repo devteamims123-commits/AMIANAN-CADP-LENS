@@ -97,8 +97,6 @@ function DashboardShell() {
     }
   };
 
-  if (loadingProfile) return <div className="page-loader">Loading...</div>;
-
   return (
     <div className="dashboard-layout">
       <header className="dashboard-sidebar">
@@ -141,7 +139,7 @@ function DashboardShell() {
             (canViewCADPSites || canViewCADPProfile) && (
               <details
                 className="nav-dropdown"
-                key={`cadp-${location.pathname}`}
+                
                 onMouseEnter={openOnHover}
                 onMouseLeave={closeOnLeave}
               >
@@ -195,7 +193,7 @@ function DashboardShell() {
                   onMouseEnter={openOnHover}
                   onMouseLeave={closeOnLeave}
                   className="nav-dropdown"
-                  key={`admin-${location.pathname}`}
+                  
                 >
                   <summary
                     className={`sidebar-link ${
@@ -269,7 +267,15 @@ function DashboardShell() {
         </div>
       </header>
 
-      <main className="dashboard-main"><Outlet /></main>
+      <main className="dashboard-main">
+        {loadingProfile ? (
+          <div role="status" style={{ minHeight: 180, display: "grid", placeItems: "center", color: "#235e26", fontWeight: 600 }}>
+            Loading content...
+          </div>
+        ) : (
+          <Outlet />
+        )}
+      </main>
 
       <dialog
         ref={logoutDialogRef}

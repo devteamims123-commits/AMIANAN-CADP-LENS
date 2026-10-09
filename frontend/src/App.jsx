@@ -56,20 +56,7 @@ function App() {
       {/* ================= PROTECTED ROUTES ================= */}
 
       <Route element={<ProtectedRoute />}>
-        <Route
-          element={
-            <RoleRoute
-              allowedRoles={[
-                "super_admin",
-                "admin",
-                "user",
-                "viewer",
-              ]}
-            >
-              <DashboardShell />
-            </RoleRoute>
-          }
-        >
+        <Route element={<DashboardShell />}>
           {/* ================= DASHBOARD ================= */}
 
           <Route
