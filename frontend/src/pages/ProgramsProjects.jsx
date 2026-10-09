@@ -16,6 +16,17 @@ import FundingRequests from "../components/FundingRequests";
 
 
 
+const LEGACY_KPI_CATEGORY = "__existing_kpi__";
+const getKpiCategory = (record, catalogue) => {
+  const categories = Object.keys(catalogue);
+  if (categories.includes(record.kpi_category)) return record.kpi_category;
+  const matches = categories.filter((category) =>
+    catalogue[category].includes(record.kpi)
+  );
+  // Ambiguous and older free-text KPIs keep their value until explicitly recategorized.
+  return matches.length === 1 ? matches[0] : record.kpi ? LEGACY_KPI_CATEGORY : "";
+};
+
 const TARGET_PERIODS = [
 
 
@@ -200,6 +211,7 @@ const initialForm = {
 
 
 
+  kpiCategory: "",
   kpi: "",
 
 
@@ -299,6 +311,16 @@ function ProgramsProjects() {
 
 
   const [sites, setSites] = useState([]);
+  const [kpiCategories, setKpiCategories] = useState([]);
+  const [kpiOptions, setKpiOptions] = useState([]);
+  const kpiByCategory = useMemo(() => {
+    const catalogue = Object.fromEntries(kpiCategories.map((category) => [category.name, []]));
+    kpiOptions.forEach((option) => {
+      if (catalogue[option.category_name]) catalogue[option.category_name].push(option.label);
+    });
+    return catalogue;
+  }, [kpiCategories, kpiOptions]);
+
 
 
 
@@ -579,7 +601,7 @@ function ProgramsProjects() {
 
 
 
-      const [sitesResult, recordsResult, fundingResult, profileResult, acceptedResult] =
+      const [sitesResult, recordsResult, fundingResult, profileResult, acceptedResult, categoriesResult, kpisResult] =
 
 
 
@@ -690,6 +712,8 @@ function ProgramsProjects() {
             .single(),
 
           supabase.rpc("cadp_accepted_projects"),
+          supabase.from("kpi_categories").select("name, display_order").order("display_order").order("name"),
+          supabase.from("kpi_indicators").select("category_name, label, display_order").order("display_order").order("label"),
 
 
 
@@ -715,6 +739,14 @@ function ProgramsProjects() {
 
       if (profileResult.error) throw profileResult.error;
       if (acceptedResult.error) throw acceptedResult.error;
+      if (categoriesResult.error || kpisResult.error) {
+        throw new Error("Unable to load the KPI catalogue. Run database/kpi_catalogue.sql and try again.");
+      }
+      if (!(categoriesResult.data || []).length || !(kpisResult.data || []).length) {
+        throw new Error("The KPI catalogue is empty. Run database/kpi_catalogue.sql to populate it.");
+      }
+      setKpiCategories(categoriesResult.data);
+      setKpiOptions(kpisResult.data);
       const acceptedData = acceptedResult.data || {};
       const mergeById = (first, second) => Array.from(new Map([...first, ...second].map((item) => [String(item.id), item])).values());
       setAcceptedProjectIds((acceptedData.projects || []).map((item) => String(item.id)));
@@ -1147,6 +1179,7 @@ function ProgramsProjects() {
 
 
       [field]: value,
+      ...(field === "kpiCategory" ? { kpi: "" } : {}),
 
 
 
@@ -1254,6 +1287,7 @@ function ProgramsProjects() {
 
 
 
+      kpiCategory: getKpiCategory(record, kpiByCategory),
       kpi: record.kpi || "",
 
 
@@ -1644,6 +1678,7 @@ function ProgramsProjects() {
 
 
 
+        !form.kpiCategory ||
         !form.kpi.trim() ||
 
 
@@ -1789,6 +1824,7 @@ function ProgramsProjects() {
 
 
         kpi: form.kpi.trim(),
+        kpi_category: form.kpiCategory === LEGACY_KPI_CATEGORY ? null : form.kpiCategory,
 
 
 
@@ -5736,65 +5772,40 @@ function ProgramsProjects() {
 
 
               <label className="programs-full">
-
-
-
-                <span>
-
-
-
-                  KPI (Key Performance Indicators) *
-
-
-
-                </span>
-
-
-
-
-
-
-
-                <textarea
-
-
-
-                  value={form.kpi}
-
-
-
-                  onChange={(event) =>
-
-
-
-                    updateForm(
-
-
-
-                      "kpi",
-
-
-
-                      event.target.value
-
-
-
-                    )
-
-
-
-                  }
-
-
-
+                <span>KPI Category *</span>
+                <select
+                  value={form.kpiCategory}
+                  onChange={(event) => updateForm("kpiCategory", event.target.value)}
                   required
+                >
+                  <option value="" disabled>Select a category</option>
+                  {form.kpiCategory === LEGACY_KPI_CATEGORY && (
+                    <option value={LEGACY_KPI_CATEGORY}>Existing KPI — category unassigned</option>
+                  )}
+                  {kpiCategories.map(({ name: category }) => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </label>
 
-
-
-                />
-
-
-
+              <label className="programs-full">
+                <span>KPI (Key Performance Indicators) *</span>
+                <select
+                  value={form.kpi}
+                  onChange={(event) => updateForm("kpi", event.target.value)}
+                  disabled={!form.kpiCategory || form.kpiCategory === LEGACY_KPI_CATEGORY}
+                  required
+                >
+                  <option value="" disabled>
+                    {form.kpiCategory ? "Select a KPI" : "Select a category first"}
+                  </option>
+                  {form.kpi && !(kpiByCategory[form.kpiCategory] || []).includes(form.kpi) && (
+                    <option value={form.kpi}>Current KPI: {form.kpi}</option>
+                  )}
+                  {(kpiByCategory[form.kpiCategory] || []).map((kpi) => (
+                    <option key={kpi} value={kpi}>{kpi}</option>
+                  ))}
+                </select>
               </label>
 
 
