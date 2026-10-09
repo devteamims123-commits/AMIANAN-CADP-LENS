@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../../services/supabase";
 import "./DashboardShell.css";
+import amiananLogo from "../../assets/AMIANAN CADP L.E.N.S LOGO.png";
 
 function DashboardShell() {
   const navigate = useNavigate();
@@ -165,9 +166,11 @@ function DashboardShell() {
     <div className="dashboard-layout">
       <header className="dashboard-sidebar">
         <div className="sidebar-brand">
-          <div className="sidebar-logo">
-            A
-          </div>
+          <img
+              src={amiananLogo}
+              alt="AMIANAN-CADP L.E.N.S. Logo"
+              className="navbar-logo"
+            />
 
           <div className="sidebar-brand-text">
             <strong>

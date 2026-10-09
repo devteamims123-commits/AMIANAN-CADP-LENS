@@ -78,3 +78,10 @@
   .nav-dropdown-menu { top:100%; margin-top:0; }
   .nav-dropdown:hover > summary { background:#e9f2e9; color:#174c2d; }
 }
+
+.navbar-logo {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
