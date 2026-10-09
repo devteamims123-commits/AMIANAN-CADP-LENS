@@ -154,3 +154,40 @@
     height: 44px;
   }
 }
+
+/* Align dropdown labels and arrows */
+.nav-dropdown > summary.sidebar-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  white-space: nowrap;
+}
+
+/* Remove browser's default details arrow */
+.nav-dropdown > summary {
+  list-style: none;
+}
+
+.nav-dropdown > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Clean chevron arrow */
+.nav-dropdown .nav-chevron {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.18s ease;
+  font-size: 0;
+  line-height: 0;
+}
+
+/* Rotate arrow when dropdown is open */
+.nav-dropdown[open] > summary .nav-chevron {
+  transform: rotate(225deg) translateY(-1px);
+}

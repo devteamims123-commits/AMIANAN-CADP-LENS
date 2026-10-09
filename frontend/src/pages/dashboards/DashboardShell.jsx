@@ -146,7 +146,7 @@ function DashboardShell() {
                 onMouseLeave={closeOnLeave}
               >
                 <summary className={`sidebar-link ${isActive("/cadp-sites/register") || isCADPProfileActive ? "active" : ""}`}>
-                  CADP Management <span className="nav-chevron">⌄</span>
+                  CADP Management <span className="nav-chevron" aria-hidden="true" />
                 </summary>
                 <div className="nav-dropdown-menu">
                   {canViewCADPSites && (
@@ -182,7 +182,7 @@ function DashboardShell() {
               onMouseLeave={closeOnLeave}
             >
               <summary className={`sidebar-link ${isActive("/user-management") || isActive("/maintenance-logs") ? "active" : ""}`}>
-                Administration <span className="nav-chevron">⌄</span>
+                Administration <span className="nav-chevron" aria-hidden="true" />
               </summary>
               <div className="nav-dropdown-menu">
                 {canViewUserManagement && (
