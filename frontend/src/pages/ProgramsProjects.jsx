@@ -878,6 +878,11 @@ function ProgramsProjects() {
 
     const agencies = new Map();
 
+    records.forEach((record) => {
+      const agency = record.source_of_fund?.trim();
+      if (agency && !agencies.has(agency.toLowerCase())) agencies.set(agency.toLowerCase(), agency);
+    });
+
     fundingContributions.forEach((item) => {
 
       const agency = item.funding_institution?.trim();
@@ -893,7 +898,7 @@ function ProgramsProjects() {
 
       .sort((a, b) => a.label.localeCompare(b.label));
 
-  }, [fundingContributions, acceptedProjectIds, currentProfile?.agency]);
+  }, [records, fundingContributions, acceptedProjectIds, currentProfile?.agency]);
 
   const selectedAgencyLabel = agencyOptions.find((item) => item.value === selectedAgency)?.label || "";
 
@@ -1105,15 +1110,15 @@ function ProgramsProjects() {
 
 
 
-      const matchesAgency = !selectedAgency || (selectedAgency === currentProfile?.agency?.trim().toLowerCase() && acceptedProjectIds.includes(String(record.id))) || fundingContributions.some((item) =>
-
-        item.program_project_id === record.id &&
-
-        item.funding_institution?.trim().toLowerCase() === selectedAgency &&
-
-        (!selectedPeriodData || item.target_year === selectedPeriodData.year)
-
-      );
+      const matchesAgency = !selectedAgency
+        || record.source_of_fund?.trim().toLowerCase() === selectedAgency
+        || (selectedAgency === currentProfile?.agency?.trim().toLowerCase()
+          && acceptedProjectIds.includes(String(record.id)))
+        || fundingContributions.some((item) =>
+          String(item.program_project_id) === String(record.id)
+          && item.funding_institution?.trim().toLowerCase() === selectedAgency
+          && (!selectedPeriodData || item.target_year === selectedPeriodData.year)
+        );
 
       return matchesSite && matchesPeriod && matchesSearch && matchesAgency;
 
