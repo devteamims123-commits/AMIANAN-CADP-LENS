@@ -129,37 +129,39 @@ function DashboardShell() {
             Dashboard
           </button>
 
-          {(canViewCADPSites || canViewCADPProfile) && (
-            <details
-              className="nav-dropdown"
-              key={`cadp-${location.pathname}`}
-              onMouseEnter={openOnHover}
-              onMouseLeave={closeOnLeave}
+          {role === "user" ? (
+            <button
+              type="button"
+              className={`sidebar-link ${isCADPProfileActive ? "active" : ""}`}
+              onClick={() => goTo("/cadp-profile")}
             >
-              <summary className={`sidebar-link ${isActive("/cadp-sites/register") || isCADPProfileActive ? "active" : ""}`}>
-                CADP Management <span className="nav-chevron">⌄</span>
-              </summary>
-              <div className="nav-dropdown-menu">
-                {canViewCADPSites && (
-                  <button
-                    type="button"
-                    className={`dropdown-link ${isActive("/cadp-sites/register") ? "active" : ""}`}
-                    onClick={() => goTo("/cadp-sites/register")}
-                  >
-                    CADP Site Registration
-                  </button>
-                )}
-                {canViewCADPProfile && (
-                  <button
-                    type="button"
-                    className={`dropdown-link ${isCADPProfileActive ? "active" : ""}`}
-                    onClick={() => goTo("/cadp-profile")}
-                  >
-                    CADP Profile
-                  </button>
-                )}
-              </div>
-            </details>
+              CADP Profile
+            </button>
+          ) : (
+            (canViewCADPSites || canViewCADPProfile) && (
+              <details
+                className="nav-dropdown"
+                key={`cadp-${location.pathname}`}
+                onMouseEnter={openOnHover}
+                onMouseLeave={closeOnLeave}
+              >
+                <summary className={`sidebar-link ${isActive("/cadp-sites/register") || isCADPProfileActive ? "active" : ""}`}>
+                  CADP Management <span className="nav-chevron">⌄</span>
+                </summary>
+                <div className="nav-dropdown-menu">
+                  {canViewCADPSites && (
+                    <button type="button" className={`dropdown-link ${isActive("/cadp-sites/register") ? "active" : ""}`} onClick={() => goTo("/cadp-sites/register")}>
+                      CADP Site Registration
+                    </button>
+                  )}
+                  {canViewCADPProfile && (
+                    <button type="button" className={`dropdown-link ${isCADPProfileActive ? "active" : ""}`} onClick={() => goTo("/cadp-profile")}>
+                      CADP Profile
+                    </button>
+                  )}
+                </div>
+              </details>
+            )
           )}
 
           {canViewPrograms && (
@@ -209,9 +211,9 @@ function DashboardShell() {
 
         <div className="sidebar-footer navbar-user-section">
           <div className="navbar-user-info">
-            <span className="navbar-user-label">USER</span>
-            <strong className="navbar-user-name" title={profile?.full_name || profile?.username || "User"}>
-              {profile?.full_name || profile?.username || "User"}
+            <span className="navbar-user-label">AGENCY</span>
+            <strong className="navbar-user-name" title={profile?.agency || "No Agency Assigned"}>
+              {profile?.agency || "No Agency Assigned"}
             </strong>
           </div>
           <button
