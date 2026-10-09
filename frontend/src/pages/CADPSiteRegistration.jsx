@@ -2,14 +2,25 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../services/supabase";
 import { region1Locations } from "../data/region1Locations";
 import "./CADPSiteRegistration.css";
+import "./BarangaySelection.css";
 
 const initialForm = {
   province: "",
   municipalityCity: "",
-  barangay: "",
+  barangay: [],
   yearStarted: "",
   convergenceName: "",
 };
+
+// Keep the existing text column compatible with pages that display site.barangay.
+const parseBarangays = (value) => Array.from(new Set(
+  (Array.isArray(value) ? value : String(value || "").split(";"))
+    .map((name) => name.trim()).filter(Boolean)
+));
+const serializeBarangays = (value) => parseBarangays(value)
+  .sort((a, b) => a.localeCompare(b)).join("; ");
+const barangayKey = (value) => parseBarangays(value)
+  .map((name) => name.toLowerCase()).sort().join(";");
 
 function CADPSiteRegistration() {
   const [sites, setSites] = useState([]);
@@ -22,6 +33,7 @@ function CADPSiteRegistration() {
   const [deletingSite, setDeletingSite] = useState(null);
 
   const [form, setForm] = useState(initialForm);
+  const [barangaySearch, setBarangaySearch] = useState("");
 
   const [search, setSearch] = useState("");
   const [provinceFilter, setProvinceFilter] = useState("");
@@ -142,21 +154,23 @@ function CADPSiteRegistration() {
     setErrorMessage("");
 
     if (field === "province") {
+      setBarangaySearch("");
       setForm((previous) => ({
         ...previous,
         province: value,
         municipalityCity: "",
-        barangay: "",
+        barangay: [],
       }));
 
       return;
     }
 
     if (field === "municipalityCity") {
+      setBarangaySearch("");
       setForm((previous) => ({
         ...previous,
         municipalityCity: value,
-        barangay: "",
+        barangay: [],
       }));
 
       return;
@@ -175,6 +189,7 @@ function CADPSiteRegistration() {
   const openModal = () => {
     setEditingSite(null);
     setForm(initialForm);
+    setBarangaySearch("");
     setErrorMessage("");
     setShowModal(true);
   };
@@ -185,11 +200,12 @@ function CADPSiteRegistration() {
 
   const openEditModal = (site) => {
     setEditingSite(site);
+    setBarangaySearch("");
 
     setForm({
       province: site.province || "",
       municipalityCity: site.municipality_city || "",
-      barangay: site.barangay || "",
+      barangay: parseBarangays(site.barangay),
       yearStarted: String(site.year_started || ""),
       convergenceName: site.convergence_name || "",
     });
@@ -232,9 +248,7 @@ function CADPSiteRegistration() {
       .trim()
       .toLowerCase();
 
-    const barangay = form.barangay
-      .trim()
-      .toLowerCase();
+    const barangay = barangayKey(form.barangay);
 
     const convergence = form.convergenceName
       .trim()
@@ -257,8 +271,7 @@ function CADPSiteRegistration() {
         site.municipality_city
           ?.trim()
           .toLowerCase() === municipality &&
-        site.barangay?.trim().toLowerCase() ===
-          barangay &&
+        barangayKey(site.barangay) === barangay &&
         Number(site.year_started) === year &&
         site.convergence_name
           ?.trim()
@@ -280,7 +293,7 @@ function CADPSiteRegistration() {
     if (
       !form.province ||
       !form.municipalityCity ||
-      !form.barangay ||
+      !form.barangay.length ||
       !form.yearStarted ||
       !form.convergenceName.trim()
     ) {
@@ -338,7 +351,7 @@ function CADPSiteRegistration() {
         province: form.province.trim(),
         municipality_city:
           form.municipalityCity.trim(),
-        barangay: form.barangay.trim(),
+        barangay: serializeBarangays(form.barangay),
         year_started: Number(
           form.yearStarted
         ),
@@ -826,40 +839,52 @@ function CADPSiteRegistration() {
                   </select>
                 </label>
 
-                {/* BARANGAY */}
-
-                <label>
-                  <span>Barangay</span>
-
-                  <select
-                    value={form.barangay}
-                    onChange={(event) =>
-                      update(
-                        "barangay",
-                        event.target.value
-                      )
-                    }
-                    disabled={
-                      !form.municipalityCity
-                    }
-                    required
-                  >
-                    <option value="">
-                      Select Barangay
-                    </option>
-
-                    {barangays.map(
-                      (barangay) => (
-                        <option
-                          key={barangay}
-                          value={barangay}
-                        >
-                          {barangay}
-                        </option>
-                      )
-                    )}
-                  </select>
-                </label>
+                {/* BARANGAYS */}
+                <div className="cadp-barangay-field">
+                  <span id="cadp-barangay-label">Barangays *</span>
+                  {!form.municipalityCity ? (
+                    <div className="cadp-barangay-disabled">Select a municipality / city first</div>
+                  ) : (
+                    <details className="cadp-barangay-select" key={`${form.province}-${form.municipalityCity}`}>
+                      <summary aria-labelledby="cadp-barangay-label cadp-barangay-summary">
+                        <span id="cadp-barangay-summary">
+                          {form.barangay.length ? `${form.barangay.length} barangay${form.barangay.length === 1 ? "" : "s"} selected` : "Select barangays"}
+                        </span>
+                      </summary>
+                      <div className="cadp-barangay-panel">
+                        <input type="search" aria-label="Search barangays" placeholder="Search barangays"
+                          value={barangaySearch} disabled={saving}
+                          onChange={(event) => setBarangaySearch(event.target.value)} />
+                        <div className="cadp-barangay-options" role="group" aria-label="Available barangays">
+                          {Array.from(new Set([...barangays, ...form.barangay]))
+                            .filter((name) => name.toLowerCase().includes(barangaySearch.trim().toLowerCase()))
+                            .map((name) => (
+                              <label key={name} className="cadp-barangay-option">
+                                <input type="checkbox" checked={form.barangay.includes(name)} disabled={saving}
+                                  onChange={(event) => update("barangay", event.target.checked
+                                    ? [...form.barangay, name]
+                                    : form.barangay.filter((item) => item !== name))} />
+                                <span>{name}</span>
+                              </label>
+                            ))}
+                          {!Array.from(new Set([...barangays, ...form.barangay])).some((name) =>
+                            name.toLowerCase().includes(barangaySearch.trim().toLowerCase())) && (
+                            <p className="cadp-barangay-empty">No matching barangays.</p>
+                          )}
+                        </div>
+                      </div>
+                    </details>
+                  )}
+                  {form.barangay.length > 0 && (
+                    <div className="cadp-barangay-tags" aria-label="Selected barangays">
+                      {form.barangay.map((name) => (
+                        <span key={name}>{name}<button type="button" disabled={saving}
+                          aria-label={`Remove ${name}`} onClick={() => update("barangay", form.barangay.filter((item) => item !== name))}>×</button></span>
+                      ))}
+                    </div>
+                  )}
+                  <small className="cadp-barangay-hint">Select one or more barangays.</small>
+                </div>
 
                 {/* YEAR STARTED */}
 
