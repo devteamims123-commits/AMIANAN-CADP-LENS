@@ -174,38 +174,75 @@ function DashboardShell() {
             </button>
           )}
 
-          {(canViewUserManagement || canViewMaintenanceLogs) && (
-            <details
-              className="nav-dropdown"
-              key={`admin-${location.pathname}`}
-              onMouseEnter={openOnHover}
-              onMouseLeave={closeOnLeave}
-            >
-              <summary className={`sidebar-link ${isActive("/user-management") || isActive("/maintenance-logs") ? "active" : ""}`}>
-                Administration <span className="nav-chevron" aria-hidden="true" />
-              </summary>
-              <div className="nav-dropdown-menu">
-                {canViewUserManagement && (
-                  <button
-                    type="button"
-                    className={`dropdown-link ${isActive("/user-management") ? "active" : ""}`}
-                    onClick={() => goTo("/user-management")}
+          {/* Administration Navigation */}
+
+            {role === "admin" ? (
+              <button
+                type="button"
+                className={`sidebar-link ${
+                  isActive("/maintenance-logs") ? "active" : ""
+                }`}
+                onClick={() => {
+                  navigate("/maintenance-logs");
+                  setMenuOpen(false);
+                }}
+              >
+                Maintenance Logs
+              </button>
+            ) : (
+              (canViewUserManagement || canViewMaintenanceLogs) && (
+                <details
+                  onMouseEnter={openOnHover}
+                  onMouseLeave={closeOnLeave}
+                  className="nav-dropdown"
+                  key={`admin-${location.pathname}`}
+                >
+                  <summary
+                    className={`sidebar-link ${
+                      isActive("/user-management") ||
+                      isActive("/maintenance-logs")
+                        ? "active"
+                        : ""
+                    }`}
                   >
-                    User Management
-                  </button>
-                )}
-                {canViewMaintenanceLogs && (
-                  <button
-                    type="button"
-                    className={`dropdown-link ${isActive("/maintenance-logs") ? "active" : ""}`}
-                    onClick={() => goTo("/maintenance-logs")}
-                  >
-                    Maintenance Logs
-                  </button>
-                )}
-              </div>
-            </details>
-          )}
+                    Administration
+                    <span className="nav-chevron" aria-hidden="true" />
+                  </summary>
+
+                  <div className="nav-dropdown-menu">
+                    {canViewUserManagement && (
+                      <button
+                        type="button"
+                        className={`dropdown-link ${
+                          isActive("/user-management") ? "active" : ""
+                        }`}
+                        onClick={() => {
+                          navigate("/user-management");
+                          setMenuOpen(false);
+                        }}
+                      >
+                        User Management
+                      </button>
+                    )}
+
+                    {canViewMaintenanceLogs && (
+                      <button
+                        type="button"
+                        className={`dropdown-link ${
+                          isActive("/maintenance-logs") ? "active" : ""
+                        }`}
+                        onClick={() => {
+                          navigate("/maintenance-logs");
+                          setMenuOpen(false);
+                        }}
+                      >
+                        Maintenance Logs
+                      </button>
+                    )}
+                  </div>
+                </details>
+              )
+            )}
           <button type="button" className="sidebar-link" disabled>Help</button>
         </nav>
 
