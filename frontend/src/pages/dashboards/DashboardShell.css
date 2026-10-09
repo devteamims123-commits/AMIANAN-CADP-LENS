@@ -233,3 +233,76 @@
     margin: 0;
   }
 }
+
+/* Fix Sign Out dialog dimensions */
+.logout-dialog {
+  box-sizing: border-box;
+  width: min(480px, calc(100vw - 32px));
+  max-width: 480px;
+  max-height: calc(100dvh - 32px);
+  height: auto;
+  min-height: 0;
+  padding: 32px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Keep logo and system name on the same row */
+.logout-dialog .logout-dialog-brand {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  width: 100%;
+  margin: 0 0 22px;
+}
+
+/* Prevent the logo from stretching */
+.logout-dialog .logout-dialog-logo {
+  display: block;
+  width: 56px;
+  height: 56px;
+  max-width: 56px;
+  max-height: 56px;
+  min-width: 56px;
+  object-fit: contain;
+  flex: 0 0 56px;
+}
+
+/* Brand lettering */
+.logout-dialog .logout-dialog-brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.logout-dialog .logout-dialog-brand-text strong {
+  font-size: 17px;
+  font-weight: 800;
+  color: #174c2d;
+}
+
+.logout-dialog .logout-dialog-brand-text span {
+  font-size: 13px;
+  font-weight: 800;
+  color: #b68e20;
+}
+
+/* Prevent old logo styling from stretching the dialog */
+.logout-dialog .logout-dialog-mark {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .logout-dialog {
+    padding: 24px;
+  }
+
+  .logout-dialog .logout-dialog-brand-text strong {
+    font-size: 15px;
+  }
+}
