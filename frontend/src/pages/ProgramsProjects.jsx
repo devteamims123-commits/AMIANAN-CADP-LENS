@@ -5778,7 +5778,7 @@ function ProgramsProjects() {
                   label="KPI category"
                   value={form.kpiCategory === LEGACY_KPI_CATEGORY ? "Existing KPI — category unassigned" : form.kpiCategory}
                   options={kpiCategories.map(({ name }) => name)}
-                  placeholder="Search category"
+                  placeholder="Select or Search category"
                   onChange={(category) => updateForm("kpiCategory", category)}
                 />
               </div>
@@ -5789,7 +5789,7 @@ function ProgramsProjects() {
                   label="KPI"
                   value={form.kpi}
                   options={kpiByCategory[form.kpiCategory] || []}
-                  placeholder={form.kpiCategory ? "Search or select a KPI" : "Choose a category first"}
+                  placeholder={form.kpiCategory ? "Search or Select a KPI" : "Choose a category first"}
                   disabled={!form.kpiCategory || form.kpiCategory === LEGACY_KPI_CATEGORY}
                   onChange={(kpi) => updateForm("kpi", kpi)}
                 />
