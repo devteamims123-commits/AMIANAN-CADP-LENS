@@ -118,17 +118,6 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
     } catch (err) { setError(err.message || "Unable to respond."); }
     finally { setBusy(false); }
   }
-  async function removeRequest() {
-    if (busy || !selected || !isReceiver) return;
-    if (!window.confirm("Delete this request from your agency's inbox? The sender's history will be kept.")) return;
-    setBusy(true); setError(""); setNotice("");
-    try {
-      const { error: err } = await supabase.rpc("delete_received_funding_endorsement", { p_request_id: selected.id });
-      if (err) throw err;
-      setSelectedId(null); setTransferOpen(false); setNotice("Request deleted from your agency's inbox."); await load();
-    } catch (err) { setError(err.message || "Unable to delete request."); }
-    finally { setBusy(false); }
-  }
   async function transfer(event) {
     event.preventDefault();
     if (busy || !mayRespond || !transferOptions.some((item) => item.agency === transferAgency)) return;
@@ -177,10 +166,9 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
         <small>Sent {new Date(selected.created_at).toLocaleString()}</small>
         {selected.responded_at && <p>Response ({new Date(selected.responded_at).toLocaleString()}): <span className="cadp-request-message">{selected.reply || "No reply message."}</span></p>}
         {mayRespond && !transferOpen && <><label>Reply (optional)<textarea rows={3} maxLength={4000} value={reply} disabled={busy} onChange={(event) => setReply(event.target.value)} /></label><p className="cadp-request-help">Accept adds the shared project to your agency's Programs / Projects list. Record funding separately through Add Fund.</p></>}
-        {isReceiver && !transferOpen && <div className="cadp-request-footer">
-          <button type="button" className="cadp-delete-request" disabled={busy} onClick={removeRequest}>Delete</button>
-          {mayRespond && <><button type="button" disabled={busy} onClick={() => { setTransferOpen(true); setTransferAgency(""); setTransferMessage(selected.message); setError(""); }}>Transfer</button>
-          <button type="button" className="cadp-primary" disabled={busy} onClick={() => respond("accepted")}>{busy ? "Saving…" : "Accept"}</button></>}
+        {mayRespond && !transferOpen && <div className="cadp-request-footer">
+          <button type="button" disabled={busy} onClick={() => { setTransferOpen(true); setTransferAgency(""); setTransferMessage(selected.message); setError(""); }}>Transfer</button>
+          <button type="button" className="cadp-primary" disabled={busy} onClick={() => respond("accepted")}>{busy ? "Saving…" : "Accept"}</button>
         </div>}
         {transferOpen && mayRespond && <form className="cadp-request-transfer" onSubmit={transfer}>
           <h4>Transfer to another agency</h4>
