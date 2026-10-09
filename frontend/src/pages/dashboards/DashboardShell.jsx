@@ -270,15 +270,8 @@ function DashboardShell() {
       </header>
 
       <main className="dashboard-main">
-        {loadingProfile ? (
-          <div role="status" style={{ minHeight: 180, display: "grid", placeItems: "center", color: "#235e26", fontWeight: 600 }}>
-            Loading content...
-          </div>
-        ) : (
-          <Outlet />
-        )}
+        {!loadingProfile && <Outlet />}
       </main>
-
       <dialog
         ref={logoutDialogRef}
         className="logout-dialog"
