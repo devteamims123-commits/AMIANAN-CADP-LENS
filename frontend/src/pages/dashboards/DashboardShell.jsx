@@ -14,6 +14,16 @@ function DashboardShell() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const openOnHover = (event) => {
+    if (window.matchMedia("(min-width: 1101px) and (hover: hover)").matches) {
+      event.currentTarget.open = true;
+    }
+  };
+  const closeOnLeave = (event) => {
+    if (window.matchMedia("(min-width: 1101px) and (hover: hover)").matches) {
+      event.currentTarget.open = false;
+    }
+  };
 
   useEffect(() => {
     loadProfile();
@@ -190,7 +200,7 @@ function DashboardShell() {
           </button>
 
           {(canViewCADPSites || canViewCADPProfile) && (
-            <details className="nav-dropdown" key={`cadp-${location.pathname}`}>
+            <details onMouseEnter={openOnHover} onMouseLeave={closeOnLeave} className="nav-dropdown" key={`cadp-${location.pathname}`}>
               <summary className={`sidebar-link ${isActive("/cadp-sites/register") || isCADPProfileActive ? "active" : ""}`}>
                 CADP Management <span className="nav-chevron">⌄</span>
               </summary>
@@ -219,7 +229,7 @@ function DashboardShell() {
           )}
 
           {(canViewUserManagement || canViewMaintenanceLogs) && (
-            <details className="nav-dropdown" key={`admin-${location.pathname}`}>
+            <details onMouseEnter={openOnHover} onMouseLeave={closeOnLeave} className="nav-dropdown" key={`admin-${location.pathname}`}>
               <summary className={`sidebar-link ${isActive("/user-management") || isActive("/maintenance-logs") ? "active" : ""}`}>
                 Administration <span className="nav-chevron">⌄</span>
               </summary>
@@ -244,7 +254,7 @@ function DashboardShell() {
         </nav>
 
         <div className="sidebar-footer">
-          <details className="nav-dropdown profile-dropdown">
+          <details onMouseEnter={openOnHover} onMouseLeave={closeOnLeave} className="nav-dropdown profile-dropdown">
             <summary className="sidebar-link profile-trigger">
               Profile <span className="nav-chevron">⌄</span>
             </summary>

@@ -70,3 +70,11 @@
   .profile-dropdown { width:auto; }
   .profile-menu { position:absolute; right:0; left:auto; width:250px; box-shadow:0 12px 30px rgba(20,60,35,.14); }
 }
+
+/* Right-align navigation and open dropdowns immediately on hover */
+@media (min-width:1101px) {
+  .sidebar-nav { justify-content:flex-end; margin-left:auto; flex:0 1 auto; }
+  .dashboard-sidebar { gap:18px; }
+  .nav-dropdown-menu { top:100%; margin-top:0; }
+  .nav-dropdown:hover > summary { background:#e9f2e9; color:#174c2d; }
+}
