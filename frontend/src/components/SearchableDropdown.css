@@ -33,10 +33,12 @@
 .cadp-search-select__trigger > span { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 .cadp-search-select__trigger > svg { flex: 0 0 18px; }
 .cadp-search-select .cadp-search-select__trigger:hover:not(:disabled) { border-color: #43845f; background: #f8fbf9; }
-.cadp-search-select .cadp-search-select__trigger:focus-visible,
-.cadp-search-select .cadp-search-select__search:focus {
-  outline: 2px solid #398455;
-  outline-offset: 2px;
+/* Highlight the existing border instead of drawing a second focus ring. */
+.cadp-kpi-field .cadp-search-select .cadp-search-select__trigger:focus-visible,
+.cadp-kpi-field .cadp-search-select input.cadp-search-select__search:focus {
+  border: 1px solid #398455 !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 .cadp-search-select .cadp-search-select__trigger:disabled { color: #84938b; background: #f0f4f1; cursor: not-allowed; }
 .cadp-search-select__placeholder { color: #74867b; }
