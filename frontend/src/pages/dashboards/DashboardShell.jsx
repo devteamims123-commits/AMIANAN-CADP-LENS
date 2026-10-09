@@ -32,11 +32,13 @@ function DashboardShell() {
     async function loadProfile() {
       setLoadingProfile(true);
       try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          navigate("/login", { replace: true });
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session?.user) {
+          // ProtectedRoute owns session redirects; never redirect from a profile fetch.
           return;
         }
+        const user = session.user;
         const { data, error } = await supabase
           .from("profiles")
           .select("id, full_name, username, email, role, agency")

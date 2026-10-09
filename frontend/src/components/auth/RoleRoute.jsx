@@ -4,67 +4,43 @@ import { supabase } from "../../services/supabase";
 
 const ALL_ROLES = ["super_admin", "admin", "user", "viewer"];
 
-function RoleRoute({ allowedRoles = ALL_ROLES, children }) {
-  // A stable string prevents a new inline allowedRoles array in App.jsx
-  // from restarting the access check on every parent render.
+export default function RoleRoute({ allowedRoles = ALL_ROLES, children }) {
   const allowedRolesKey = allowedRoles.join("|");
-  const [access, setAccess] = useState({ loading: true, role: null, signedIn: true });
+  const [retry, setRetry] = useState(0);
+  const [access, setAccess] = useState({ status: "checking", role: null });
 
   useEffect(() => {
     let active = true;
-
     async function checkAccess() {
-      setAccess((previous) => ({ ...previous, loading: true }));
+      setAccess({ status: "checking", role: null });
       try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-          if (active) setAccess({ loading: false, role: null, signedIn: false });
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!session) {
+          if (active) setAccess({ status: "signed_out", role: null });
           return;
         }
-
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-
-        if (error || !data?.role) {
-          console.error("Unable to load user role:", error);
-          if (active) setAccess({ loading: false, role: null, signedIn: true });
-          return;
-        }
-
-        if (active) setAccess({ loading: false, role: data.role, signedIn: true });
+        const { data, error } = await supabase.from("profiles")
+          .select("role").eq("id", session.user.id).single();
+        if (error) throw error;
+        if (!data?.role) throw new Error("Profile role is missing");
+        if (active) setAccess({ status: "ready", role: data.role });
       } catch (error) {
-        console.error("Unable to check access:", error);
-        if (active) setAccess({ loading: false, role: null, signedIn: true });
+        console.error("Unable to verify role:", error);
+        if (active) setAccess({ status: "error", role: null });
       }
     }
-
     checkAccess();
     return () => { active = false; };
-  }, [allowedRolesKey]);
+  }, [allowedRolesKey, retry]);
 
-  if (access.loading) {
-    return (
-      <div role="status" style={{ minHeight: 180, display: "grid", placeItems: "center", color: "#235e26", fontWeight: 600 }}>
-        Checking access...
-      </div>
-    );
-  }
-
-  if (!access.signedIn) return <Navigate to="/login" replace />;
-
-  if (!access.role || !allowedRolesKey.split("|").includes(access.role)) {
-    return (
-      <div role="alert" style={{ padding: "32px", color: "#174c2d" }}>
-        <h2>Access denied</h2>
-        <p>You do not have permission to view this page.</p>
-      </div>
-    );
-  }
-
+  if (access.status === "checking") return <div role="status" style={{ padding: 32 }}>Checking access...</div>;
+  if (access.status === "signed_out") return <Navigate to="/login" replace />;
+  if (access.status === "error") return <div role="alert" style={{ padding: 32 }}>
+    Unable to verify your permissions. <button type="button" onClick={() => setRetry((n) => n + 1)}>Retry</button>
+  </div>;
+  if (!allowedRolesKey.split("|").includes(access.role)) return <div role="alert" style={{ padding: 32 }}>
+    <h2>Access denied</h2><p>You do not have permission to view this page.</p>
+  </div>;
   return children;
 }
-
-export default RoleRoute;

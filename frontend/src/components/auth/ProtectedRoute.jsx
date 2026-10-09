@@ -2,46 +2,48 @@ import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { supabase } from "../../services/supabase";
 
-function ProtectedRoute() {
-  const [auth, setAuth] = useState({ loading: true, session: null });
+export default function ProtectedRoute() {
+  const [auth, setAuth] = useState({ status: "checking", session: null, error: "" });
 
   useEffect(() => {
     let active = true;
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (active) setAuth({ loading: false, session });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!active) return;
+      if (event === "SIGNED_OUT") {
+        setAuth({ status: "signed_out", session: null, error: "" });
+      } else if (session && ["INITIAL_SESSION", "SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED"].includes(event)) {
+        setAuth({ status: "authenticated", session, error: "" });
+      } else if (event === "INITIAL_SESSION" && !session) {
+        setAuth((previous) => previous.status === "authenticated" ? previous : { status: "signed_out", session: null, error: "" });
       }
-    );
+    });
 
-    supabase.auth.getSession()
-      .then(({ data, error }) => {
-        if (!active) return;
-        if (error) console.error("Unable to load session:", error);
-        setAuth((previous) => ({
-          loading: false,
-          session: data?.session ?? previous.session,
-        }));
-      })
-      .catch((error) => {
-        console.error("Unable to load session:", error);
-        if (active) setAuth((previous) => ({ ...previous, loading: false }));
-      });
+    // Initial check only. Temporary network errors must not be treated as sign-out.
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!active) return;
+      if (error) {
+        console.error("Session check failed:", error);
+        setAuth((previous) => previous.status === "authenticated" ? previous : { status: "error", session: null, error: "Unable to verify your session. Check your connection and retry." });
+      } else {
+        setAuth((previous) => previous.status === "authenticated" ? previous : data?.session
+          ? { status: "authenticated", session: data.session, error: "" }
+          : { status: "signed_out", session: null, error: "" });
+      }
+    }).catch((error) => {
+      console.error("Session check failed:", error);
+      if (active) setAuth((previous) => previous.status === "authenticated" ? previous : { status: "error", session: null, error: "Unable to verify your session. Check your connection and retry." });
+    });
 
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
+    return () => { active = false; subscription.unsubscribe(); };
   }, []);
 
-  // Only the first authentication check may use the full-screen loader.
-  if (auth.loading) {
-    return <div className="page-loader">Loading...</div>;
-  }
-
-  if (!auth.session) return <Navigate to="/login" replace />;
-
+  if (auth.status === "checking") return <div className="page-loader">Loading...</div>;
+  if (auth.status === "error") return (
+    <div role="alert" className="page-loader" style={{ flexDirection: "column", gap: 12 }}>
+      <p>{auth.error}</p>
+      <button type="button" onClick={() => window.location.reload()}>Retry</button>
+    </div>
+  );
+  if (auth.status === "signed_out") return <Navigate to="/login" replace />;
   return <Outlet />;
 }
-
-export default ProtectedRoute;
