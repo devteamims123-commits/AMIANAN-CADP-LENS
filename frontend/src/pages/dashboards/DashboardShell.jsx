@@ -285,8 +285,18 @@ function DashboardShell() {
           if (!loggingOut) closeLogoutDialog();
         }}
       >
-        <div className="logout-dialog-mark">A</div>
-        <p className="logout-dialog-eyebrow">AMIANAN-CADP L.E.N.S.</p>
+        <div className="logout-dialog-brand">
+          <img
+            src={amiananLogo}
+            alt="AMIANAN-CADP L.E.N.S. Logo"
+            className="logout-dialog-logo"
+          />
+
+          <div className="logout-dialog-brand-text">
+            <strong>AMIANAN-CADP</strong>
+            <span>L.E.N.S.</span>
+          </div>
+        </div>
         <h2>Sign out?</h2>
         <p className="logout-dialog-copy">Are you sure you want to sign out of your account?</p>
         {logoutError && <p className="logout-dialog-error">{logoutError}</p>}
