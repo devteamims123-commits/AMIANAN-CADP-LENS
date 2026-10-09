@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../../services/supabase";
 import "./DashboardShell.css";
-import amiananLogo from "../../assets/AMIANAN CADP L.E.N.S LOGO.png";
+import amiananLogo from "../../assets/amianan-logo.png";
 
 function DashboardShell() {
   const navigate = useNavigate();
