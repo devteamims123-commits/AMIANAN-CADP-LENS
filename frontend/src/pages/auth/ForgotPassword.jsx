@@ -10,26 +10,22 @@ function ForgotPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setLoading(true);
     setMessage("");
     setSuccess(false);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(
-      email.trim(),
-      {
-        redirectTo: `${window.location.origin}/login`,
-      }
-    );
-
-    if (error) {
-      setMessage(error.message);
-    } else {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
       setSuccess(true);
-      setMessage("Password reset instructions have been sent.");
+      setMessage("If an account exists for this email, password reset instructions have been sent.");
+    } catch (error) {
+      setMessage(error.message || "Unable to send the reset email. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -37,41 +33,28 @@ function ForgotPassword() {
       <div className="auth-card">
         <div className="auth-brand">
           <div className="brand-mark">L</div>
-
           <div>
             <h1>Forgot Password</h1>
             <p>Enter your registered email address.</p>
           </div>
         </div>
-
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="resetEmail">Email</label>
-
-            <input
-              id="resetEmail"
-              type="email"
-              value={email}
+            <input id="resetEmail" type="email" value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-            />
+              placeholder="Enter your email" required />
           </div>
-
           {message && (
             <div className={`form-message ${success ? "success" : "error"}`}>
               {message}
             </div>
           )}
-
           <button className="primary-button" type="submit" disabled={loading}>
             {loading ? "Sending..." : "Send Reset Link"}
           </button>
         </form>
-
-        <p className="auth-switch">
-          <Link to="/login">Back to Sign In</Link>
-        </p>
+        <p className="auth-switch"><Link to="/login">Back to Sign In</Link></p>
       </div>
     </main>
   );
