@@ -22,6 +22,7 @@ import CADPProfileView from "./pages/CADPProfileView";
 import ProgramsProjects from "./pages/ProgramsProjects";
 import UserManagement from "./pages/UserManagement";
 import MaintenanceLogs from "./pages/MaintenanceLogs";
+import Help from "./pages/Help";
 
 function App() {
   return (
@@ -57,6 +58,8 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardShell />}>
+          <Route path="/help" element={<Help />} />
+
           {/* ================= DASHBOARD ================= */}
 
           <Route
