@@ -1,15 +1,22 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { supabase } from "../../services/supabase";
 
 function ForgotPassword() {
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+  const email = typeof location.state?.email === "string"
+    ? location.state.email.trim()
+    : "";
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!email) {
+      setMessage("Enter your email on the Sign In page first.");
+      return;
+    }
     setLoading(true);
     setMessage("");
     setSuccess(false);
@@ -35,7 +42,7 @@ function ForgotPassword() {
           <div className="brand-mark">L</div>
           <div>
             <h1>Forgot Password</h1>
-            <p>Enter your registered email address.</p>
+            <p>Reset instructions will be sent to the email entered on Sign In.</p>
           </div>
         </div>
         <form onSubmit={handleSubmit}>
@@ -50,10 +57,11 @@ function ForgotPassword() {
               {message}
             </div>
           )}
-          <button className="primary-button" type="submit" disabled={loading}>
+          <button className="primary-button" type="submit" disabled={loading || !email}>
             {loading ? "Sending..." : "Send Reset Link"}
           </button>
         </form>
+        {!email && <p className="form-message error">Enter your email on the Sign In page, then select Forgot Password.</p>}
         <p className="auth-switch"><Link to="/login">Back to Sign In</Link></p>
       </div>
     </main>

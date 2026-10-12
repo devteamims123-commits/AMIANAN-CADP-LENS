@@ -21,7 +21,7 @@
       "source": "/(.*)",
       "destination": {
         "service": "frontend",
-        "path": "/$1"
+        "path": "/"
       }
     }
   ]

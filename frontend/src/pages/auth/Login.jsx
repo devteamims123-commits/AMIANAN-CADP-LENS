@@ -138,7 +138,10 @@ function Login() {
           </div>
 
           <div className="forgot-row">
-            <Link to="/forgot-password">
+            <Link
+              to="/forgot-password"
+              state={{ email: email.trim() }}
+            >
               Forgot Password?
             </Link>
           </div>
