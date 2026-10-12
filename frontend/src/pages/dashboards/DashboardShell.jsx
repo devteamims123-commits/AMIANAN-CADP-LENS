@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../../services/supabase";
+import { useProtectedAuth } from "../../components/auth/ProtectedRoute";
 import amiananLogo from "../../assets/amianan-logo.png";
 import "./DashboardShell.css";
 
@@ -9,8 +10,7 @@ function DashboardShell() {
   const location = useLocation();
   const logoutDialogRef = useRef(null);
 
-  const [profile, setProfile] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  const { profile } = useProtectedAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -26,35 +26,6 @@ function DashboardShell() {
       event.currentTarget.open = false;
     }
   };
-
-  useEffect(() => {
-    let active = true;
-    async function loadProfile() {
-      setLoadingProfile(true);
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        if (!session?.user) {
-          // ProtectedRoute owns session redirects; never redirect from a profile fetch.
-          return;
-        }
-        const user = session.user;
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("id, full_name, username, email, role, agency")
-          .eq("id", user.id)
-          .single();
-        if (error) throw error;
-        if (active) setProfile(data);
-      } catch (error) {
-        console.error("Unable to load profile:", error);
-      } finally {
-        if (active) setLoadingProfile(false);
-      }
-    }
-    loadProfile();
-    return () => { active = false; };
-  }, [navigate]);
 
   const role = profile?.role || "";
   const canViewCADPSites = role === "super_admin" || role === "admin";
@@ -270,7 +241,7 @@ function DashboardShell() {
       </header>
 
       <main className="dashboard-main">
-        {!loadingProfile && <Outlet />}
+        <Outlet />
       </main>
       <dialog
         ref={logoutDialogRef}
