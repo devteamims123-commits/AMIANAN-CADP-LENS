@@ -100,3 +100,16 @@
 .profile-cancel-button { min-height: 43px; padding: 0 18px; border: 1px solid #ccd8cf; border-radius: 8px; background: #fff; color: #46594d; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
 @media (max-width: 1000px) { .profile-page-header, .profile-view-header { padding: 24px; } .profile-page-content { padding: 24px; } .profile-table { min-width: 900px; } }
 @media (max-width: 700px) { .profile-page-header, .profile-view-header { flex-direction: column; align-items: stretch; padding: 20px; } .profile-page-header h1, .profile-view-header h1 { font-size: 24px; } .profile-page-header span, .profile-view-header span { font-size: 13px; } .profile-page-content { padding: 18px 14px 35px; } .profile-form-grid { grid-template-columns: 1fr; } .profile-grid-full { grid-column: auto; } .profile-card-header { padding: 17px; } }
+
+
+/* Match Administration / User Management page sizing */
+@media (min-width: 1001px) {
+  .profile-page-header, .profile-view-header { min-height: 154.6px; padding: 24px 34px; gap: 24px; }
+  .profile-page-header h1, .profile-view-header h1 { font-size: 30px; line-height: 1.15; }
+  .profile-page-content { padding: 28px 34px 50px; }
+}
+.profile-toolbar,
+.profile-sites-card,
+.profile-section,
+.profile-message,
+.profile-save-bar { max-width: none; }

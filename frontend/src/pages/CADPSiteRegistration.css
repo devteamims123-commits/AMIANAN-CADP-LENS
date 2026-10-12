@@ -1096,3 +1096,13 @@
     width: 100%;
   }
 }
+
+/* Match Administration / User Management page sizing */
+@media (min-width: 1001px) {
+  .cadp-header { min-height: 154.6px; padding: 24px 34px; gap: 24px; }
+  .cadp-header-text h1 { font-size: 30px; line-height: 1.15; }
+  .cadp-content { padding: 28px 34px 50px; }
+}
+.cadp-toolbar,
+.cadp-sites-card,
+.cadp-content > .cadp-message { max-width: none; }
