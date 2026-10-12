@@ -853,4 +853,29 @@ input {
   .dashboard-content {
     padding: 20px;
   }
+
+  /* Consistent page width across CADP and Administration */
+
+  .dashboard-main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* CADP Site Registration and CADP Profile */
+  .dashboard-main .cadp-page,
+  .dashboard-main .cadp-profile-page,
+  .dashboard-main .cadp-sites-page {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Make tables and search sections fill the available width */
+  .dashboard-main .cadp-page .table-container,
+  .dashboard-main .cadp-profile-page .table-container,
+  .dashboard-main .cadp-sites-page .table-container {
+    width: 100%;
+    max-width: none;
+  }
 }
