@@ -11,6 +11,17 @@ function Login() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const handleForgotPassword = (e) => {
+    e.preventDefault();
+    const enteredEmail = email.trim();
+    if (!enteredEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(enteredEmail)) {
+      setMessage("Enter a valid email address before selecting Forgot Password.");
+      return;
+    }
+    setMessage("");
+    navigate("/forgot-password", { state: { email: enteredEmail } });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -140,7 +151,7 @@ function Login() {
           <div className="forgot-row">
             <Link
               to="/forgot-password"
-              state={{ email: email.trim() }}
+              onClick={handleForgotPassword}
             >
               Forgot Password?
             </Link>

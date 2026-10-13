@@ -13,7 +13,7 @@ function ForgotPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email) {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setMessage("Enter your email on the Sign In page first.");
       return;
     }
@@ -29,7 +29,11 @@ function ForgotPassword() {
       setSuccess(true);
       setMessage("If an account exists for this email, password reset instructions have been sent.");
     } catch (error) {
-      setMessage(error.message || "Unable to send the reset email. Please try again.");
+      if (/rate limit/i.test(error?.message || "")) {
+        setMessage("Too many reset requests. Please wait before trying again.");
+      } else {
+        setMessage(error.message || "Unable to send the reset email. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -49,8 +53,9 @@ function ForgotPassword() {
           <div className="form-group">
             <label htmlFor="resetEmail">Email</label>
             <input id="resetEmail" type="email" value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email" required />
+              readOnly
+              aria-readonly="true"
+              placeholder="Email from Sign In" required />
           </div>
           {message && (
             <div className={`form-message ${success ? "success" : "error"}`}>
