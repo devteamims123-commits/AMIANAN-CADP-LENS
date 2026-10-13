@@ -81,7 +81,8 @@ app.get("/api/health", async (req, res) => {
 
 // ======================================================
 // Password recovery
-// Respond identically whether an account exists or not.
+// Check profiles and Auth before issuing a reset.
+// WARNING: explicit 404 responses disclose account registration status.
 // Never expose the service-role key to the frontend.
 // ======================================================
 
@@ -138,7 +139,11 @@ app.post("/api/auth/forgot-password", async (req, res) => {
 
     if (profileError) throw profileError;
 
-    if (profile && profile.email?.trim().toLowerCase() === email) {
+    if (!profile || profile.email?.trim().toLowerCase() !== email) {
+      return res.status(404).json({ success: false, code: "EMAIL_NOT_REGISTERED", message: "This email is not registered in AMIANAN-CADP L.E.N.S." });
+    }
+
+    {
       // Verify that this profile belongs to an actual Auth user.
       const { data: authData, error: authError } =
         await supabaseAdmin.auth.admin.getUserById(profile.id);
@@ -146,7 +151,10 @@ app.post("/api/auth/forgot-password", async (req, res) => {
       if (authError && authError.status !== 404) throw authError;
 
       const authEmail = authData?.user?.email?.trim().toLowerCase();
-      if (authEmail === email) {
+      if (authEmail !== email) {
+        return res.status(404).json({ success: false, code: "EMAIL_NOT_REGISTERED", message: "This email is not registered in AMIANAN-CADP L.E.N.S." });
+      }
+      {
         const configuredOrigin =
           process.env.FRONTEND_URL || "http://localhost:5173";
         const redirectTo = `${configuredOrigin.replace(/\/$/, "")}/reset-password`;
@@ -159,7 +167,7 @@ app.post("/api/auth/forgot-password", async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: recoveryMessage,
+      message: "Password reset link requested. Please check your inbox and spam folder.",
     });
   } catch (error) {
     console.error("Password recovery error:", error);

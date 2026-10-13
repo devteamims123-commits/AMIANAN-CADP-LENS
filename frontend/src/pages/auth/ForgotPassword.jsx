@@ -33,16 +33,15 @@ export default function ForgotPassword() {
         throw new Error(result.message || "Unable to process your request.");
       }
 
-      // Supabase intentionally does not reveal whether an email is registered.
       setSuccess(true);
-      setMessage(
-        "If an account is registered with this email, a password reset link will be sent. Please check your inbox and spam folder."
-      );
+      setMessage(result.message || "Password reset link requested. Check your inbox and spam folder.");
     } catch (error) {
       const detail = error?.message || "";
       setMessage(
         /rate limit|too many requests|wait a minute/i.test(detail)
           ? "Too many requests. Please wait before requesting another reset link."
+          : /not registered/i.test(detail)
+            ? "This email is not registered in AMIANAN-CADP L.E.N.S. Please return to Sign In and check the email address."
           : detail === "Enter a valid email address."
             ? detail
             : "Unable to process your request right now. Please try again later."
