@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../services/supabase";
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+
 function Login() {
   const navigate = useNavigate();
 
@@ -14,12 +16,12 @@ function Login() {
   const handleForgotPassword = (e) => {
     e.preventDefault();
     const enteredEmail = email.trim();
-    if (!enteredEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(enteredEmail)) {
+    if (!enteredEmail || !EMAIL_PATTERN.test(enteredEmail)) {
       setMessage("Enter a valid email address before selecting Forgot Password.");
       return;
     }
     setMessage("");
-    navigate("/forgot-password", { state: { email: enteredEmail } });
+    navigate("/forgot-password", { state: { email: enteredEmail.toLowerCase() } });
   };
 
   const handleSubmit = async (e) => {

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { supabase } from "../../services/supabase";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
 
 export default function ForgotPassword() {
   const location = useLocation();
@@ -24,10 +23,15 @@ export default function ForgotPassword() {
     setSuccess(false);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
-      if (error) throw error;
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.message || "Unable to process your request.");
+      }
 
       // Supabase intentionally does not reveal whether an email is registered.
       setSuccess(true);
@@ -37,9 +41,11 @@ export default function ForgotPassword() {
     } catch (error) {
       const detail = error?.message || "";
       setMessage(
-        /rate limit|too many requests/i.test(detail)
+        /rate limit|too many requests|wait a minute/i.test(detail)
           ? "Too many requests. Please wait before requesting another reset link."
-          : "Unable to process your request right now. Please try again later."
+          : detail === "Enter a valid email address."
+            ? detail
+            : "Unable to process your request right now. Please try again later."
       );
     } finally {
       setLoading(false);
