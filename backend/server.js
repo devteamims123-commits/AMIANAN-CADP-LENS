@@ -127,36 +127,34 @@ app.post("/api/auth/forgot-password", async (req, res) => {
   }
 
   try {
-    // Search Auth users, not just profiles: profiles may be missing or stale.
-    // Supabase Admin listUsers is paginated.
-    let exists = false;
-    let page = 1;
-    const perPage = 1000;
+    // Only accounts present in public.profiles are eligible for recovery.
+    // Escape LIKE wildcards so an email is always matched literally.
+    const safeEmail = email.replace(/[\\%_]/g, "\\$&");
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("id, email")
+      .ilike("email", safeEmail)
+      .maybeSingle();
 
-    while (true) {
-      const { data, error } = await supabaseAdmin.auth.admin.listUsers({
-        page,
-        perPage,
-      });
-      if (error) throw error;
+    if (profileError) throw profileError;
 
-      const users = data?.users ?? [];
-      exists = users.some(
-        (user) => user.email?.trim().toLowerCase() === email
-      );
-      if (exists || users.length < perPage) break;
-      page += 1;
-    }
+    if (profile && profile.email?.trim().toLowerCase() === email) {
+      // Verify that this profile belongs to an actual Auth user.
+      const { data: authData, error: authError } =
+        await supabaseAdmin.auth.admin.getUserById(profile.id);
 
-    if (exists) {
-      const configuredOrigin =
-        process.env.FRONTEND_URL || "http://localhost:5173";
-      const redirectTo = `${configuredOrigin.replace(/\/$/, "")}/reset-password`;
+      if (authError && authError.status !== 404) throw authError;
 
-      const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
-        redirectTo,
-      });
-      if (error) throw error;
+      const authEmail = authData?.user?.email?.trim().toLowerCase();
+      if (authEmail === email) {
+        const configuredOrigin =
+          process.env.FRONTEND_URL || "http://localhost:5173";
+        const redirectTo = `${configuredOrigin.replace(/\/$/, "")}/reset-password`;
+
+        const { error: resetError } =
+          await supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo });
+        if (resetError) throw resetError;
+      }
     }
 
     return res.status(200).json({
@@ -166,9 +164,9 @@ app.post("/api/auth/forgot-password", async (req, res) => {
   } catch (error) {
     console.error("Password recovery error:", error);
     // Do not disclose account existence or internal Supabase errors.
-    return res.status(200).json({
-      success: true,
-      message: recoveryMessage,
+    return res.status(503).json({
+      success: false,
+      message: "Password recovery is temporarily unavailable. Please try again later.",
     });
   }
 });
