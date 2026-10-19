@@ -5666,25 +5666,9 @@ function ProgramsProjects() {
 
 
                       value={site.id}
-
-
-
                     >
-
-
-
                       {site.municipality_city || "City / municipality not specified"}
-
-
-
-                      {site.barangay ? ` — ${site.barangay}` : ""}
-
-
-
-                      {site.province ? `, ${site.province}` : ""}
-
-
-
+                      {site.convergence_name ? ` — ${site.convergence_name}` : ""}
                     </option>
 
 
@@ -7423,5 +7407,4 @@ function ProgramsProjects() {
 
 
 export default ProgramsProjects;
-
 
