@@ -356,10 +356,10 @@ function CADPProfileView() {
             type="button"
             className="profile-back"
             onClick={() =>
-              navigate("/cadp-profile")
+              navigate("/cadp-sites/register")
             }
           >
-            ← Back to CADP Profiles
+            ← Back to CADP Sites
           </button>
 
           <p>AMIANAN-CADP L.E.N.S.</p>
@@ -369,7 +369,7 @@ function CADPProfileView() {
           </h1>
 
           <span>
-            Convergence Area Profile
+            CADP Site Details
           </span>
         </div>
 

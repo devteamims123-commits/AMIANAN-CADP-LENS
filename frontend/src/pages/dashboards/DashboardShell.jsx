@@ -60,17 +60,15 @@ function DashboardShell() {
 
   const canViewCADPSites = role === "super_admin" || role === "admin";
 
-  const canViewCADPProfile = canViewCADPSites || role === "user";
+  
 
-  const canViewPrograms = canViewCADPProfile;
+  const canViewPrograms = canViewCADPSites || role === "user";
 
   const canViewUserManagement = role === "super_admin";
 
   const canViewMaintenanceLogs = canViewCADPSites;
 
   const isActive = (path) => location.pathname === path;
-
-  const isCADPProfileActive = location.pathname === "/cadp-profile" || location.pathname.startsWith("/cadp-profile/");
 
 
 
@@ -202,75 +200,20 @@ function DashboardShell() {
 
 
 
-          {role === "user" ? (
-
+          {canViewCADPSites && (
             <button
-
               type="button"
-
-              className={`sidebar-link ${isCADPProfileActive ? "active" : ""}`}
-
-              onClick={() => goTo("/cadp-profile")}
-
+              className={`sidebar-link ${
+                isActive("/cadp-sites/register") ||
+                location.pathname.startsWith("/cadp-sites/")
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() => goTo("/cadp-sites/register")}
             >
-
-              CADP Profile
-
+              CADP Site Registration
             </button>
-
-          ) : (
-
-            (canViewCADPSites || canViewCADPProfile) && (
-
-              <details
-
-                className="nav-dropdown"
-
-
-
-                onMouseEnter={openOnHover}
-
-                onMouseLeave={closeOnLeave}
-
-              >
-
-                <summary className={`sidebar-link ${isActive("/cadp-sites/register") || isCADPProfileActive ? "active" : ""}`}>
-
-                  CADP Management <span className="nav-chevron" aria-hidden="true" />
-
-                </summary>
-
-                <div className="nav-dropdown-menu">
-
-                  {canViewCADPSites && (
-
-                    <button type="button" className={`dropdown-link ${isActive("/cadp-sites/register") ? "active" : ""}`} onClick={() => goTo("/cadp-sites/register")}>
-
-                      CADP Site Registration
-
-                    </button>
-
-                  )}
-
-                  {canViewCADPProfile && (
-
-                    <button type="button" className={`dropdown-link ${isCADPProfileActive ? "active" : ""}`} onClick={() => goTo("/cadp-profile")}>
-
-                      CADP Profile
-
-                    </button>
-
-                  )}
-
-                </div>
-
-              </details>
-
-            )
-
           )}
-
-
 
           {canViewPrograms && (
 

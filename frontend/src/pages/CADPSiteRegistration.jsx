@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../services/supabase";
+import { useNavigate } from "react-router-dom";
 import { region1Locations } from "../data/region1Locations";
 import "./CADPSiteRegistration.css";
 import "./BarangaySelection.css";
@@ -23,6 +24,7 @@ const barangayKey = (value) => parseBarangays(value)
   .map((name) => name.toLowerCase()).sort().join(";");
 
 function CADPSiteRegistration() {
+  const navigate = useNavigate();
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -684,6 +686,14 @@ function CADPSiteRegistration() {
                       </td>
 
                       <td className="cadp-row-actions">
+                        <button
+                          type="button"
+                          className="cadp-view-button"
+                          onClick={() => navigate(`/cadp-sites/${site.id}`)}
+                        >
+                          View
+                        </button>
+
                         <button
                           type="button"
                           className="cadp-edit-button"

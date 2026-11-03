@@ -469,13 +469,13 @@
 ========================================================= */
 
 .cadp-actions-column {
-  width: 170px;
+  width: 235px;
 
   text-align: center !important;
 }
 
 .cadp-row-actions {
-  width: 170px;
+  width: 235px;
 
   text-align: center;
 
@@ -501,6 +501,20 @@
     transform 0.15s ease;
 }
 
+
+/* View registered CADP site details */
+.cadp-view-button {
+  margin-right: 7px;
+  border: 1px solid #bfd5eb;
+  background: #eff6ff;
+  color: #235a91;
+}
+
+.cadp-view-button:hover {
+  border-color: #528ac0;
+  background: #dceeff;
+  transform: translateY(-1px);
+}
 
 /* =========================================================
    EDIT BUTTON
