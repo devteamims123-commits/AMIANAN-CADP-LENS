@@ -18,6 +18,7 @@ import DashboardShell from "./pages/dashboards/DashboardShell";
 import Dashboard from "./pages/dashboards/Dashboard";
 
 import CADPSiteRegistration from "./pages/CADPSiteRegistration";
+import CADPProfile from "./pages/CADPProfile";
 import CADPProfileView from "./pages/CADPProfileView";
 import ProgramsProjects from "./pages/ProgramsProjects";
 import UserManagement from "./pages/UserManagement";
@@ -131,6 +132,26 @@ function App() {
             }
           />
 
+
+          {/* ================= CADP PROFILE (USER ONLY) ================= */}
+          <Route
+            path="/cadp-profile"
+            element={
+              <RoleRoute allowedRoles={["user"]}>
+                <CADPProfile />
+              </RoleRoute>
+            }
+          />
+
+          {/* Keep the existing CADPProfile listing's View links working. */}
+          <Route
+            path="/cadp-profile/:siteId"
+            element={
+              <RoleRoute allowedRoles={["user"]}>
+                <CADPProfileView />
+              </RoleRoute>
+            }
+          />
 
           {/* ================= CADP SITE DETAILS ================= */}
           {/* Super Admin + Admin + User */}

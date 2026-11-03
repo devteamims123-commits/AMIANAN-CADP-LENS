@@ -215,6 +215,22 @@ function DashboardShell() {
             </button>
           )}
 
+          {/* CADP Profile is available to the User role only. */}
+          {role === "user" && (
+            <button
+              type="button"
+              className={`sidebar-link ${
+                location.pathname === "/cadp-profile" ||
+                location.pathname.startsWith("/cadp-profile/")
+                  ? "active"
+                  : ""
+              }`}
+              onClick={() => goTo("/cadp-profile")}
+            >
+              CADP Profile
+            </button>
+          )}
+
           {canViewPrograms && (
 
             <button
