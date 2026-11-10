@@ -68,6 +68,11 @@ function Register() {
       return;
     }
 
+    if (!form.username.trim()) {
+      setMessage("Please enter a username.");
+      return;
+    }
+
     if (form.password.length < 6) {
       setMessage("Password must contain at least 6 characters.");
       return;
@@ -81,6 +86,21 @@ function Register() {
     setLoading(true);
 
     try {
+      // Check usernames without exposing public.profiles to anonymous users.
+      const { data: usernameTaken, error: usernameError } = await supabase.rpc(
+        "is_username_taken",
+        { requested_username: form.username.trim() }
+      );
+
+      if (usernameError) {
+        throw new Error("Unable to check username availability. Please try again.");
+      }
+
+      if (usernameTaken) {
+        setMessage("This username is already taken. Please choose another username.");
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: form.email.trim(),
         password: form.password,
@@ -96,6 +116,16 @@ function Register() {
       });
 
       if (error) {
+        // A concurrent signup can still claim a username after the availability check.
+        if (/database error saving new user/i.test(error.message || "")) {
+          const { data: takenNow, error: recheckError } = await supabase.rpc(
+            "is_username_taken",
+            { requested_username: form.username.trim() }
+          );
+          if (!recheckError && takenNow) {
+            throw new Error("This username is already taken. Please choose another username.");
+          }
+        }
         throw error;
       }
 
