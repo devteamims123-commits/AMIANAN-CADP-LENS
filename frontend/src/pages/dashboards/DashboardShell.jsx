@@ -58,6 +58,13 @@ function DashboardShell() {
 
   const role = profile?.role || "";
 
+  const organizationType = (profile?.organization_type || "").trim().toLowerCase();
+  const organizationLabel = organizationType === "lgu"
+    ? "LGU"
+    : organizationType === "agency"
+      ? "AGENCY"
+      : "ORGANIZATION";
+
   const canViewCADPSites = role === "super_admin" || role === "admin";
 
   
@@ -410,7 +417,7 @@ function DashboardShell() {
 
           <div className="navbar-user-info">
 
-            <span className="navbar-user-label">{profile?.organization_type || "ORGANIZATION"}</span>
+            <span className="navbar-user-label">{organizationLabel}</span>
 
             <strong className="navbar-user-name" title={profile?.organization || "No Organization Assigned"}>
 
