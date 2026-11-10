@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../services/supabase";
 
@@ -10,9 +10,41 @@ function Register() {
     username: "",
     email: "",
     agency: "",
+    organizationType: "",
+    organizationId: "",
     password: "",
     confirmPassword: "",
   });
+
+  const [organizations, setOrganizations] = useState([]);
+  const [organizationsLoading, setOrganizationsLoading] = useState(true);
+  const [organizationsError, setOrganizationsError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data, error } = await supabase.from("agencies_lgus")
+        .select("id, organization_type, name")
+        .order("name", { ascending: true });
+      if (!active) return;
+      if (error) setOrganizationsError("Unable to load registered organizations.");
+      else setOrganizations(data || []);
+      setOrganizationsLoading(false);
+    })();
+    return () => { active = false; };
+  }, []);
+
+  const filteredOrganizations = organizations.filter(
+    (organization) => organization.organization_type === form.organizationType
+  );
+
+  const handleOrganizationType = (event) => {
+    setForm((current) => ({ ...current, organizationType: event.target.value, organizationId: "", agency: "" }));
+  };
+  const handleOrganization = (event) => {
+    const selected = organizations.find((item) => item.id === event.target.value && item.organization_type === form.organizationType);
+    setForm((current) => ({ ...current, organizationId: selected?.id || "", agency: selected?.name || "" }));
+  };
 
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
@@ -31,8 +63,8 @@ function Register() {
     setMessage("");
     setSuccess(false);
 
-    if (!form.agency.trim()) {
-      setMessage("Agency is required.");
+    if (!form.organizationType || !form.organizationId || !organizations.some((item) => item.id === form.organizationId && item.organization_type === form.organizationType)) {
+      setMessage("Select a registered agency or LGU.");
       return;
     }
 
@@ -57,6 +89,8 @@ function Register() {
             full_name: form.fullName.trim(),
             username: form.username.trim(),
             agency: form.agency.trim(),
+            organization_type: form.organizationType,
+            agency_lgu_id: form.organizationId,
           },
         },
       });
@@ -142,20 +176,24 @@ function Register() {
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="agency">Agency</label>
-
-            <input
-              id="agency"
-              name="agency"
-              type="text"
-              value={form.agency}
-              onChange={handleChange}
-              placeholder="Enter your agency"
-              autoComplete="organization"
-              required
-            />
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="organizationType">Organization Type</label>
+              <select id="organizationType" value={form.organizationType} onChange={handleOrganizationType} required>
+                <option value="">Select organization type</option>
+                <option value="Agency">Agency</option>
+                <option value="LGU">LGU</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="organizationId">Registered Agency / LGU</label>
+              <select id="organizationId" value={form.organizationId} onChange={handleOrganization} disabled={!form.organizationType || organizationsLoading || Boolean(organizationsError)} required>
+                <option value="">{organizationsLoading ? "Loading organizations..." : "Select registered organization"}</option>
+                {filteredOrganizations.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+              </select>
+            </div>
           </div>
+          {organizationsError && <div className="form-message error">{organizationsError}</div>}
 
           <div className="form-grid">
             <div className="form-group">
@@ -202,7 +240,7 @@ function Register() {
           <button
             className="primary-button"
             type="submit"
-            disabled={loading}
+            disabled={loading || organizationsLoading || Boolean(organizationsError)}
           >
             {loading ? "Creating Account..." : "Create Account"}
           </button>
