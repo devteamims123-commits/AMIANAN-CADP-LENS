@@ -22,6 +22,7 @@ import CADPProfile from "./pages/CADPProfile";
 import CADPProfileView from "./pages/CADPProfileView";
 import ProgramsProjects from "./pages/ProgramsProjects";
 import UserManagement from "./pages/UserManagement";
+import AgencyLGURegistration from "./pages/AgencyLGURegistration";
 import MaintenanceLogs from "./pages/MaintenanceLogs";
 import Help from "./pages/Help";
 
@@ -200,6 +201,17 @@ function App() {
                 ]}
               >
                 <UserManagement />
+              </RoleRoute>
+            }
+          />
+
+          {/* ================= AGENCY / LGU REGISTRATION ================= */}
+          {/* Super Admin only */}
+          <Route
+            path="/agency-lgu-registration"
+            element={
+              <RoleRoute allowedRoles={["super_admin"]}>
+                <AgencyLGURegistration />
               </RoleRoute>
             }
           />

@@ -65,6 +65,7 @@ function DashboardShell() {
   const canViewPrograms = canViewCADPSites || role === "user";
 
   const canViewUserManagement = role === "super_admin";
+  const canRegisterAgencyLGU = role === "super_admin";
 
   const canViewMaintenanceLogs = canViewCADPSites;
 
@@ -352,6 +353,16 @@ function DashboardShell() {
                     )}
 
 
+
+                     {canRegisterAgencyLGU && (
+                       <button
+                         type="button"
+                         className={`dropdown-link ${isActive("/agency-lgu-registration") ? "active" : ""}`}
+                         onClick={() => goTo("/agency-lgu-registration")}
+                       >
+                         Registration of Agency or LGU
+                       </button>
+                     )}
 
                     {canViewMaintenanceLogs && (
 
