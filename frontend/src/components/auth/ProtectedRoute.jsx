@@ -36,13 +36,13 @@ export default function ProtectedRoute() {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, full_name, username, email, role, agency")
+          .select("id, full_name, username, email, role, organization, organization_type, agency_lgu_id")
           .eq("id", userId)
           .single();
         if (error) throw error;
         if (!data?.role) throw new Error("Your profile has no assigned role.");
         if (active && request === requestId.current) {
-          setAuth({ status: "ready", profile: data, error: "" });
+          setAuth({ status: "ready", profile: { ...data, agency: data.organization ?? "" }, error: "" });
         }
       } catch (error) {
         console.error("Unable to load profile:", error);

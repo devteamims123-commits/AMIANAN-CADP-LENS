@@ -702,7 +702,7 @@ function ProgramsProjects() {
 
 
 
-            .select("id, role, agency")
+            .select("id, role, agency:organization")
 
 
 
@@ -1622,7 +1622,7 @@ function ProgramsProjects() {
 
 
 
-        .select("id, role, agency")
+        .select("id, role, agency:organization")
 
 
 
@@ -3232,7 +3232,7 @@ function ProgramsProjects() {
 
 
 
-        .from("profiles").select("id, role, agency").eq("id", user.id).single();
+        .from("profiles").select("id, role, agency:organization").eq("id", user.id).single();
 
 
 
