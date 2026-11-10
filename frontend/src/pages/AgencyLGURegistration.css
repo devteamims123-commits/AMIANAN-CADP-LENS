@@ -5,7 +5,7 @@
 .agency-heading h1 { margin: 0 0 8px; color: #11462d; font-size: clamp(26px, 2.3vw, 34px); line-height: 1.2; font-weight: 800; }
 .agency-subtitle { margin: 0; color: #63746b; font-size: 15px; }
 .agency-content { padding: 30px 40px 48px; }
-.agency-form { width: 100%; max-width: 1200px; background: #fff; border: 1px solid #dce6df; border-radius: 12px; box-shadow: 0 4px 18px rgba(20, 58, 37, .035); overflow: hidden; }
+.agency-form { width: 100%; max-width: none; box-sizing: border-box; background: #fff; border: 1px solid #dce6df; border-radius: 12px; box-shadow: 0 4px 18px rgba(20, 58, 37, .035); overflow: hidden; }
 .agency-form-header { padding: 24px 28px 20px; border-bottom: 1px solid #e6ede8; }
 .agency-form-header h2 { margin: 0 0 5px; font-size: 19px; font-weight: 750; color: #12452e; }
 .agency-form-header p { margin: 0; font-size: 13px; color: #74837a; }
