@@ -9,7 +9,7 @@ function Register() {
     fullName: "",
     username: "",
     email: "",
-    agency: "",
+    organization: "",
     organizationType: "",
     organizationId: "",
     password: "",
@@ -39,11 +39,11 @@ function Register() {
   );
 
   const handleOrganizationType = (event) => {
-    setForm((current) => ({ ...current, organizationType: event.target.value, organizationId: "", agency: "" }));
+    setForm((current) => ({ ...current, organizationType: event.target.value, organizationId: "", organization: "" }));
   };
   const handleOrganization = (event) => {
     const selected = organizations.find((item) => item.id === event.target.value && item.organization_type === form.organizationType);
-    setForm((current) => ({ ...current, organizationId: selected?.id || "", agency: selected?.name || "" }));
+    setForm((current) => ({ ...current, organizationId: selected?.id || "", organization: selected?.name || "" }));
   };
 
   const [message, setMessage] = useState("");
@@ -88,7 +88,7 @@ function Register() {
           data: {
             full_name: form.fullName.trim(),
             username: form.username.trim(),
-            agency: form.agency.trim(),
+            organization: form.organization.trim(),
             organization_type: form.organizationType,
             agency_lgu_id: form.organizationId,
           },

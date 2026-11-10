@@ -11,6 +11,8 @@ const EMPTY_FORM = {
   username: "",
   email: "",
   role: "",
+  organizationType: "",
+  organizationId: "",
   password: "",
   confirmPassword: "",
 };
@@ -78,6 +80,8 @@ function EyeIcon({ visible }) {
 
 function UserManagement() {
   const [users, setUsers] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
+  const [organizationError, setOrganizationError] = useState("");
   const [currentUserId, setCurrentUserId] =
     useState("");
 
@@ -203,6 +207,14 @@ function UserManagement() {
 
   useEffect(() => {
     loadUsers();
+    let active = true;
+    supabase.from("agencies_lgus").select("id, name, organization_type")
+      .order("name", { ascending: true }).then(({ data, error }) => {
+        if (!active) return;
+        if (error) setOrganizationError("Unable to load registered organizations.");
+        else setOrganizations(data || []);
+      });
+    return () => { active = false; };
   }, []);
 
   /* =========================================
@@ -233,7 +245,8 @@ function UserManagement() {
               .includes(term) ||
             user.email
               ?.toLowerCase()
-              .includes(term);
+              .includes(term) ||
+            user.organization?.toLowerCase().includes(term);
 
           return (
             matchesRole &&
@@ -351,6 +364,7 @@ function UserManagement() {
     setForm((current) => ({
       ...current,
       [name]: value,
+      ...(name === "organizationType" ? { organizationId: "" } : {}),
     }));
 
     if (modalError) {
@@ -450,6 +464,15 @@ function UserManagement() {
       return;
     }
 
+    if (form.organizationType && !organizations.some((item) =>
+      item.id === form.organizationId && item.organization_type === form.organizationType)) {
+      setModalError("Select a registered Agency / LGU.");
+      return;
+    }
+    if (!form.organizationType && form.organizationId) {
+      setModalError("Select an organization type.");
+      return;
+    }
     setSaving(true);
 
     try {
@@ -644,7 +667,7 @@ function UserManagement() {
         <div className="um-toolbar">
           <input
             type="search"
-            placeholder="Search name, username, or email..."
+            placeholder="Search name, username, email, or organization..."
             value={search}
             onChange={(event) =>
               setSearch(
@@ -714,6 +737,8 @@ function UserManagement() {
                       Email
                     </th>
 
+                    <th>Organization</th>
+                    <th>Type</th>
                     <th>
                       Role
                     </th>
@@ -765,6 +790,8 @@ function UserManagement() {
                               "—"}
                           </td>
 
+                          <td>{user.organization || "—"}</td>
+                          <td>{user.organization_type || "—"}</td>
                           <td>
                             <span
                               className={`um-role ${user.role}`}

@@ -12,11 +12,25 @@ async function usernameExists(username, excludeId = null) {
   return Boolean(data?.length);
 }
 
+async function resolveOrganization(organizationType, organizationId) {
+  const type = clean(organizationType);
+  const id = clean(organizationId);
+  if (!type && !id) return { organization: null, organization_type: null, agency_lgu_id: null };
+  if (!id || !["Agency", "LGU"].includes(type)) {
+    throw new Error("Select a valid organization type and registered Agency / LGU.");
+  }
+  const { data, error } = await supabaseAdmin.from("agencies_lgus")
+    .select("id, name, organization_type").eq("id", id).eq("organization_type", type).maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("The selected Agency / LGU is not registered.");
+  return { organization: data.name, organization_type: data.organization_type, agency_lgu_id: data.id };
+}
+
 export async function listUsers(req, res) {
   try {
     const { data, error } = await supabaseAdmin
       .from("profiles")
-      .select("id, full_name, username, email, role, created_at, updated_at")
+      .select("id, full_name, username, email, role, organization, organization_type, agency_lgu_id, created_at, updated_at")
       .order("created_at", { ascending: false });
     if (error) throw error;
 
@@ -35,6 +49,7 @@ export async function createUser(req, res) {
     const email = clean(req.body.email).toLowerCase();
     const password = req.body.password || "";
     const role = clean(req.body.role);
+    const organizationFields = await resolveOrganization(req.body.organizationType, req.body.organizationId);
 
     if (!fullName || !username || !email || !password || !role) {
       return res.status(400).json({ success: false, message: "All fields are required." });
@@ -54,7 +69,7 @@ export async function createUser(req, res) {
         email,
         password,
         email_confirm: true,
-        user_metadata: { full_name: fullName, username },
+        user_metadata: { full_name: fullName, username, ...organizationFields },
       });
 
     if (authError) throw authError;
@@ -68,6 +83,7 @@ export async function createUser(req, res) {
         username,
         email,
         role,
+        ...organizationFields,
         updated_at: new Date().toISOString(),
       }, { onConflict: "id" });
 
@@ -96,6 +112,8 @@ export async function updateUser(req, res) {
     const username = clean(req.body.username);
     const email = clean(req.body.email).toLowerCase();
     const role = clean(req.body.role);
+    const organizationFields = ("organizationType" in req.body || "organizationId" in req.body)
+      ? await resolveOrganization(req.body.organizationType, req.body.organizationId) : null;
 
     if (!fullName || !username || !email || !role) {
       return res.status(400).json({ success: false, message: "All fields are required." });
@@ -112,7 +130,7 @@ export async function updateUser(req, res) {
 
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(id, {
       email,
-      user_metadata: { full_name: fullName, username },
+      user_metadata: { full_name: fullName, username, ...(organizationFields || {}) },
     });
     if (authError) throw authError;
 
@@ -123,6 +141,7 @@ export async function updateUser(req, res) {
         username,
         email,
         role,
+        ...(organizationFields || {}),
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);

@@ -410,11 +410,11 @@ function DashboardShell() {
 
           <div className="navbar-user-info">
 
-            <span className="navbar-user-label">AGENCY</span>
+            <span className="navbar-user-label">{profile?.organization_type || "ORGANIZATION"}</span>
 
-            <strong className="navbar-user-name" title={profile?.agency || "No Agency Assigned"}>
+            <strong className="navbar-user-name" title={profile?.organization || "No Organization Assigned"}>
 
-              {profile?.agency || "No Agency Assigned"}
+              {profile?.organization || "No Organization Assigned"}
 
             </strong>
 
