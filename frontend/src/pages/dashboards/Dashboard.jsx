@@ -102,6 +102,8 @@ function Dashboard() {
 
   const [period, setPeriod] = useState("all");
 
+  const [selectedStatus, setSelectedStatus] = useState("Ongoing");
+
   const [loading, setLoading] = useState(true);
 
   const [errorMessage, setErrorMessage] = useState("");
@@ -315,19 +317,15 @@ function Dashboard() {
     );
   }, [siteFilteredRecords, period]);
 
-  const ongoingCount = useMemo(() => {
-
+  // Only the status KPI changes when the dropdown selection changes.
+  // Existing province, CADP site, and year filters still apply.
+  const selectedStatusCount = useMemo(() => {
     return filteredRecords.filter(
-
       (record) =>
-
-        String(record.status || "").toLowerCase() ===
-
-        "ongoing"
-
+        String(record.status || "").trim().toLowerCase() ===
+        selectedStatus.toLowerCase()
     ).length;
-
-  }, [filteredRecords]);
+  }, [filteredRecords, selectedStatus]);
 
   const statusData = useMemo(() => {
 
@@ -976,15 +974,35 @@ function Dashboard() {
 
           <div className="dashboard-card-content">
 
-            <span>Ongoing</span>
+            <span>Program Status</span>
 
-            <strong>{ongoingCount}</strong>
+            <strong>{selectedStatusCount}</strong>
 
-            <small>
-
-              Active programs / projects
-
-            </small>
+            <select
+              aria-label="Select program or project status"
+              value={selectedStatus}
+              onChange={(event) => setSelectedStatus(event.target.value)}
+              style={{
+                display: "block",
+                width: "100%",
+                maxWidth: "190px",
+                marginTop: "9px",
+                padding: "5px 25px 5px 8px",
+                border: "1px solid #d2dcd4",
+                borderRadius: "7px",
+                background: "#fbfcfb",
+                color: "#2b4031",
+                fontSize: "11px",
+                fontFamily: "inherit",
+                cursor: "pointer",
+              }}
+            >
+              {STATUS_ORDER.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
 
           </div>
 
