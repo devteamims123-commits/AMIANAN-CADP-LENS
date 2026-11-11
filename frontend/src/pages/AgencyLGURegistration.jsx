@@ -83,11 +83,11 @@ export default function AgencyLGURegistration() {
       <form className="agency-form" onSubmit={handleSubmit}>
         <div className="agency-section-heading"><h2>Registration Details</h2><p>Enter the agency or LGU information below.</p></div>
         <div className="agency-grid">
-          <label>Organization Type <span>*</span><select value={form.organization_type} onChange={(e) => update("organization_type", e.target.value)} required><option value="LGU">LGU</option><option value="Agency">Agency</option></select></label>
-          <label>Agency / LGU Name <span>*</span><input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Enter agency or LGU name" required maxLength={200}/></label>
+          <label>Organization Type <span className="agency-required">*</span><select value={form.organization_type} onChange={(e) => update("organization_type", e.target.value)} required><option value="LGU">LGU</option><option value="Agency">Agency</option></select></label>
+          <label>Agency / LGU Name <span className="agency-required">*</span><input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Enter agency or LGU name" required maxLength={200}/></label>
           <label>Region<input value={REGION} readOnly aria-readonly="true" /></label>
-          <label>Province <span>*</span><select value={form.province} onChange={(e) => update("province", e.target.value)} required><option value="">Select province</option>{Object.keys(LOCATIONS).map((province) => <option key={province} value={province}>{province}</option>)}</select></label>
-          <label>City / Municipality <span>*</span><select value={form.municipality} onChange={(e) => update("municipality", e.target.value)} disabled={!form.province} required><option value="">{form.province ? "Select city or municipality" : "Select a province first"}</option>{(LOCATIONS[form.province] || []).map((municipality) => <option key={municipality} value={municipality}>{municipality}</option>)}</select></label>
+          <label>Province <span className="agency-required">*</span><select value={form.province} onChange={(e) => update("province", e.target.value)} required><option value="">Select province</option>{Object.keys(LOCATIONS).map((province) => <option key={province} value={province}>{province}</option>)}</select></label>
+          <label>City / Municipality <span className="agency-required">*</span><select value={form.municipality} onChange={(e) => update("municipality", e.target.value)} disabled={!form.province} required><option value="">{form.province ? "Select city or municipality" : "Select a province first"}</option>{(LOCATIONS[form.province] || []).map((municipality) => <option key={municipality} value={municipality}>{municipality}</option>)}</select></label>
         </div>
         {error && <p className="agency-error" role="alert">{error}</p>}
         {notice && <p className="agency-success" role="status">{notice}</p>}

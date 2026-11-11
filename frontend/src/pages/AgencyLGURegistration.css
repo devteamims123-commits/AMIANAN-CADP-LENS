@@ -85,20 +85,22 @@
   padding: 22px 24px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  column-gap: 22px;
+  row-gap: 20px;
+  align-items: start;
 }
 
 .agency-grid label {
-  display: flex;
+  display: block;
   min-width: 0;
-  flex-direction: column;
-  gap: 7px;
   color: #2d4535;
   font-size: 13px;
   font-weight: 700;
 }
 
-.agency-grid label span {
+.agency-grid label .agency-required {
+  display: inline;
+  margin-left: 3px;
   color: #c12b35;
 }
 
@@ -107,6 +109,8 @@
   width: 100%;
   height: 46px;
   min-width: 0;
+  display: block;
+  margin-top: 9px;
   box-sizing: border-box;
   padding: 0 13px;
   border: 1px solid #ccd7cf;
@@ -293,3 +297,9 @@
     width: 100%;
   }
 }
+
+/* Consistent registration field alignment */
+.agency-grid label { line-height: 1.4; }
+.agency-grid input[readonly] { background: #f7faf7; color: #536459; }
+.agency-grid select:disabled { background: #f7f9f7; color: #87958b; cursor: not-allowed; }
+.agency-actions button:hover:not(:disabled) { filter: brightness(.96); }
