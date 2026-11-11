@@ -4079,24 +4079,57 @@ function ProgramsProjects() {
     setErrorMessage("");
 
     try {
-      // Import on demand so the Excel library does not slow initial page loading.
-      const XLSX = await import("xlsx");
+      // Use ExcelJS's browser bundle; the previous xlsx dependency is not required.
+      const excelModule = await import("exceljs/dist/exceljs.min.js");
+      const ExcelJS = excelModule.default || excelModule;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Programs and Projects", {
+        views: [{ state: "frozen", ySplit: 1 }],
+      });
+
+      const columns = [
+        ["Province", 22],
+        ["City / Municipality", 26],
+        ["Barangay", 24],
+        ["CADP Site / Convergence Name", 34],
+        ["Proposed Inputs, Activities, Interventions", 55],
+        ["KPI Category", 32],
+        ["KPI (Key Performance Indicators)", 55],
+        ["Source of Fund", 35],
+        ["Project Status", 19],
+        ["Target Year", 18],
+        ["Physical Target", 35],
+        ["Financial Target (PHP)", 23],
+        ["Current Fund (PHP)", 23],
+        ["Funding Gap (PHP)", 23],
+        ["Funding Percentage", 21],
+        ["Funding Status", 22],
+        ["Funding Contributions", 55],
+        ["Remarks", 50],
+      ];
+      worksheet.columns = columns.map(([header, width]) => ({ header, key: header, width }));
+      worksheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+      worksheet.getRow(1).fill = {
+        type: "pattern", pattern: "solid", fgColor: { argb: "FF217346" },
+      };
+      worksheet.getRow(1).alignment = { vertical: "middle", wrapText: true };
+      worksheet.getRow(1).height = 32;
+
       const periods = selectedPeriodData ? [selectedPeriodData] : TARGET_PERIODS;
       const siteById = new Map(sites.map((site) => [String(site.id), site]));
 
-      const rows = filteredRecords.flatMap((record) => {
+      filteredRecords.forEach((record) => {
         const site = siteById.get(String(record.cadp_site_id));
-        const sourceNames = selectedAgency
-          ? [selectedAgencyLabel || selectedAgency]
+        const sourceNames = selectedOrganization
+          ? [selectedOrganizationLabel || selectedOrganization]
           : getSourcesOfFund(record, selectedPeriodData?.year);
 
-        return periods.map((period) => {
+        periods.forEach((period) => {
           const funding = getDisplayedFundingInfo(record, period);
           const contributions = getDisplayedAgencyFunding(record, period.year);
           const physical = record[period.physicalField];
           const financial = record[period.financialField];
-
-          return {
+          worksheet.addRow({
             "Province": site?.province || "",
             "City / Municipality": site?.municipality_city || "",
             "Barangay": site?.barangay || "",
@@ -4115,33 +4148,34 @@ function ProgramsProjects() {
             "Funding Status": Number(financial || 0) > 0 ? funding.status : "No financial target",
             "Funding Contributions": contributions.map((item) => `${item.agency}: PHP ${item.amount.toFixed(2)}`).join("; "),
             "Remarks": record.remarks || "",
-          };
+          });
         });
       });
 
-      const worksheet = XLSX.utils.json_to_sheet(rows);
-      const headers = Object.keys(rows[0]);
-      worksheet["!cols"] = headers.map((header) => ({
-        wch: Math.min(60, Math.max(18, header.length + 2)),
-      }));
-      worksheet["!autofilter"] = { ref: worksheet["!ref"] };
-
-      // Keep monetary amounts numeric for Excel formulas and totals.
-      const moneyColumns = ["Financial Target (PHP)", "Current Fund (PHP)", "Funding Gap (PHP)"];
-      for (let row = 1; row <= rows.length; row += 1) {
-        moneyColumns.forEach((header) => {
-          const address = XLSX.utils.encode_cell({ r: row, c: headers.indexOf(header) });
-          if (worksheet[address]?.t === "n") worksheet[address].z = '#,##0.00';
+      for (let index = 2; index <= worksheet.rowCount; index += 1) {
+        const row = worksheet.getRow(index);
+        [12, 13, 14].forEach((column) => {
+          row.getCell(column).numFmt = "#,##0.00";
         });
-        const percentageAddress = XLSX.utils.encode_cell({ r: row, c: headers.indexOf("Funding Percentage") });
-        if (worksheet[percentageAddress]?.t === "n") worksheet[percentageAddress].z = "0.00%";
+        row.getCell(15).numFmt = "0.00%";
+        row.alignment = { vertical: "top", wrapText: true };
       }
+      worksheet.autoFilter = { from: "A1", to: "R1" };
 
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Programs and Projects");
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
       const date = new Date();
       const dateStamp = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      XLSX.writeFile(workbook, `CADP_Programs_Projects_${dateStamp}.xlsx`);
+      link.href = url;
+      link.download = `CADP_Programs_Projects_${dateStamp}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) {
       console.error("Unable to export Programs and Projects:", error);
       setErrorMessage(error.message || "Unable to generate the Excel file.");
