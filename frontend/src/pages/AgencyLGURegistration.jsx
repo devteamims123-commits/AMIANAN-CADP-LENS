@@ -2,7 +2,15 @@ import { useEffect, useState } from "react";
 import { supabase } from "../services/supabase";
 import "./AgencyLGURegistration.css";
 
-const empty = { organization_type: "LGU", name: "", region: "", province: "", municipality: "" };
+const REGION = "Region I - Ilocos Region";
+const LOCATIONS = {
+  'Ilocos Norte': ['Adams', 'Bacarra', 'Badoc', 'Bangui', 'Banna', 'Batac City', 'Burgos', 'Carasi', 'Currimao', 'Dingras', 'Dumalneg', 'Laoag City', 'Marcos', 'Nueva Era', 'Pagudpud', 'Paoay', 'Pasuquin', 'Piddig', 'Pinili', 'San Nicolas', 'Sarrat', 'Solsona', 'Vintar'],
+  'Ilocos Sur': ['Alilem', 'Banayoyo', 'Bantay', 'Burgos', 'Cabugao', 'Candon City', 'Caoayan', 'Cervantes', 'Galimuyod', 'Gregorio del Pilar', 'Lidlidda', 'Magsingal', 'Nagbukel', 'Narvacan', 'Quirino', 'Salcedo', 'San Emilio', 'San Esteban', 'San Ildefonso', 'San Juan', 'San Vicente', 'Santa', 'Santa Catalina', 'Santa Cruz', 'Santa Lucia', 'Santa Maria', 'Santiago', 'Santo Domingo', 'Sigay', 'Sinait', 'Sugpon', 'Suyo', 'Tagudin', 'Vigan City'],
+  'La Union': ['Agoo', 'Aringay', 'Bacnotan', 'Bagulin', 'Balaoan', 'Bangar', 'Bauang', 'Burgos', 'Caba', 'Luna', 'Naguilian', 'Pugo', 'Rosario', 'San Fernando City', 'San Gabriel', 'San Juan', 'Santo Tomas', 'Santol', 'Sudipen', 'Tubao'],
+  'Pangasinan': ['Agno', 'Aguilar', 'Alaminos City', 'Alcala', 'Anda', 'Asingan', 'Balungao', 'Bani', 'Basista', 'Bautista', 'Bayambang', 'Binalonan', 'Binmaley', 'Bolinao', 'Bugallon', 'Burgos', 'Calasiao', 'Dagupan City', 'Dasol', 'Infanta', 'Labrador', 'Laoac', 'Lingayen', 'Mabini', 'Malasiqui', 'Manaoag', 'Mangaldan', 'Mangatarem', 'Mapandan', 'Natividad', 'Pozorrubio', 'Rosales', 'San Carlos City', 'San Fabian', 'San Jacinto', 'San Manuel', 'San Nicolas', 'San Quintin', 'Santa Barbara', 'Santa Maria', 'Santo Tomas', 'Sison', 'Sual', 'Tayug', 'Umingan', 'Urbiztondo', 'Urdaneta City', 'Villasis'],
+};
+
+const empty = { organization_type: "LGU", name: "", region: REGION, province: "", municipality: "" };
 
 export default function AgencyLGURegistration() {
   const [form, setForm] = useState(empty);
@@ -20,7 +28,11 @@ export default function AgencyLGURegistration() {
     else { setItems(data || []); setError(""); }
   }
   useEffect(() => { refresh(); }, []);
-  const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+  const update = (key, value) => setForm((prev) => ({
+    ...prev,
+    [key]: value,
+    ...(key === "province" ? { municipality: "" } : {}),
+  }));
   const clear = () => { setForm(empty); setEditingId(null); setNotice(""); setError(""); };
 
   async function handleSubmit(event) {
@@ -29,6 +41,9 @@ export default function AgencyLGURegistration() {
     const payload = Object.fromEntries(Object.entries(form).map(([key, value]) => [key, value.trim()]));
     try {
       if (!payload.name || !payload.organization_type) throw new Error("Organization type and name are required.");
+      if (!LOCATIONS[payload.province]) throw new Error("Please select a province in Region I.");
+      if (!LOCATIONS[payload.province].includes(payload.municipality)) throw new Error("Please select a city or municipality under the chosen province.");
+      payload.region = REGION;
       let result;
       if (editingId) {
         result = await supabase.from("agencies_lgus").update(payload).eq("id", editingId).select("id").single();
@@ -46,7 +61,7 @@ export default function AgencyLGURegistration() {
   }
   function edit(item) {
     setEditingId(item.id);
-    setForm({ organization_type: item.organization_type, name: item.name, region: item.region || "", province: item.province || "", municipality: item.municipality || "" });
+    setForm({ organization_type: item.organization_type, name: item.name, region: REGION, province: LOCATIONS[item.province] ? item.province : "", municipality: LOCATIONS[item.province]?.includes(item.municipality) ? item.municipality : "" });
     setNotice(""); setError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -70,9 +85,9 @@ export default function AgencyLGURegistration() {
         <div className="agency-grid">
           <label>Organization Type <span>*</span><select value={form.organization_type} onChange={(e) => update("organization_type", e.target.value)} required><option value="LGU">LGU</option><option value="Agency">Agency</option></select></label>
           <label>Agency / LGU Name <span>*</span><input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Enter agency or LGU name" required maxLength={200}/></label>
-          <label>Region<input value={form.region} onChange={(e) => update("region", e.target.value)} placeholder="Enter region" /></label>
-          <label>Province<input value={form.province} onChange={(e) => update("province", e.target.value)} placeholder="Enter province" /></label>
-          <label>City / Municipality<input value={form.municipality} onChange={(e) => update("municipality", e.target.value)} placeholder="Enter city or municipality" /></label>
+          <label>Region<input value={REGION} readOnly aria-readonly="true" /></label>
+          <label>Province <span>*</span><select value={form.province} onChange={(e) => update("province", e.target.value)} required><option value="">Select province</option>{Object.keys(LOCATIONS).map((province) => <option key={province} value={province}>{province}</option>)}</select></label>
+          <label>City / Municipality <span>*</span><select value={form.municipality} onChange={(e) => update("municipality", e.target.value)} disabled={!form.province} required><option value="">{form.province ? "Select city or municipality" : "Select a province first"}</option>{(LOCATIONS[form.province] || []).map((municipality) => <option key={municipality} value={municipality}>{municipality}</option>)}</select></label>
         </div>
         {error && <p className="agency-error" role="alert">{error}</p>}
         {notice && <p className="agency-success" role="status">{notice}</p>}
