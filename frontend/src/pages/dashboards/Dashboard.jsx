@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { supabase } from "../../services/supabase";
+import { useProtectedAuth } from "../../components/auth/ProtectedRoute";
 
 import "./Dashboard.css";
 
@@ -57,7 +58,7 @@ const getFinancialTarget = (record, selectedPeriod = "all") => {
   const fields = selectedPeriod === "all"
     ? FINANCIAL_TARGET_FIELDS
     : [selectedPeriod.replace("physical_target_", "financial_target_")];
-  return fields.reduce((sum, field) => sum + parseFinancialTarget(record[field]), 0);
+  return fields.reduce((sum, field) => sum + parseFinancialTarget(record[`financial_${FINANCIAL_TARGET_FIELDS.indexOf(field) + 1}`]), 0);
 };
 
 const STATUS_ORDER = [
@@ -91,98 +92,56 @@ const STATUS_COLORS = {
 };
 
 function Dashboard() {
+  const { profile } = useProtectedAuth();
 
   const [sites, setSites] = useState([]);
-
   const [records, setRecords] = useState([]);
-
   const [province, setProvince] = useState("all");
-
   const [siteId, setSiteId] = useState("all");
-
   const [period, setPeriod] = useState("all");
-
   const [selectedStatus, setSelectedStatus] = useState("Ongoing");
-
   const [loading, setLoading] = useState(true);
-
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-
-    loadDashboard();
-
-  }, []);
+    void loadDashboard();
+  }, [profile?.id]);
 
   async function loadDashboard() {
-
     setLoading(true);
-
     setErrorMessage("");
-
     try {
-
-      const [sitesResult, programsResult] = await Promise.all([
-
-        supabase
-
-          .from("cadp_sites")
-
-          .select(
-
-            "id, convergence_name, province, municipality_city, barangay"
-
-          )
-
-          .order("convergence_name"),
-
-        supabase
-
-          .from("programs_projects")
-
-          .select("*")
-
-          .order("created_at", {
-
-            ascending: false,
-
-          }),
-
-      ]);
-
-      if (sitesResult.error) {
-
-        throw sitesResult.error;
-
+      // The dedicated, read-only reporting RPC returns global aggregates.
+      // Other CADP pages continue using municipality-scoped table RLS.
+      const { data, error } = await supabase.rpc("cadp_overall_dashboard");
+      if (error) throw error;
+      if (!data || !Array.isArray(data.sites) || !Array.isArray(data.project_groups)) {
+        throw new Error("Unexpected dashboard reporting response.");
       }
 
-      if (programsResult.error) {
-
-        throw programsResult.error;
-
-      }
-
-      setSites(sitesResult.data || []);
-
-      setRecords(programsResult.data || []);
-
+      setSites(data.sites);
+      setRecords(data.project_groups);
+      setProvince("all");
+      setSiteId("all");
     } catch (error) {
-
-      console.error(error);
-
-      setErrorMessage(
-
-        error.message || "Unable to load dashboard."
-
-      );
-
+      console.error("Unable to load dashboard:", error);
+      setSites([]);
+      setRecords([]);
+      setErrorMessage(error.message || "Unable to load dashboard.");
     } finally {
-
       setLoading(false);
-
     }
-
   }
+
+  // Each row is a grouped set of programs/projects, not one individual project.
+  const countPrograms = (items) => items.reduce(
+    (total, record) => total + Number(record.program_count || 0), 0
+  );
+
+  const hasPhysicalTarget = (record, field) => {
+    const index = TARGET_PERIODS.findIndex((item) => item.field === field);
+    return index >= 0 && record[`target_${index + 1}`] === true;
+  };
 
   const provinces = useMemo(() => {
 
@@ -294,17 +253,7 @@ function Dashboard() {
 
       }
 
-      const target = record[period];
-
-      return (
-
-        target !== null &&
-
-        target !== undefined &&
-
-        String(target).trim() !== ""
-
-      );
+      return hasPhysicalTarget(record, period);
 
     });
 
@@ -320,11 +269,11 @@ function Dashboard() {
   // Only the status KPI changes when the dropdown selection changes.
   // Existing province, CADP site, and year filters still apply.
   const selectedStatusCount = useMemo(() => {
-    return filteredRecords.filter(
+    return countPrograms(filteredRecords.filter(
       (record) =>
         String(record.status || "").trim().toLowerCase() ===
         selectedStatus.toLowerCase()
-    ).length;
+    ));
   }, [filteredRecords, selectedStatus]);
 
   const statusData = useMemo(() => {
@@ -339,7 +288,7 @@ function Dashboard() {
 
       counts[status] =
 
-        (counts[status] || 0) + 1;
+        (counts[status] || 0) + Number(record.program_count || 0);
 
     });
 
@@ -428,51 +377,17 @@ function Dashboard() {
 
           let hasTarget = false;
 
-          if (period === "all") {
-
-            hasTarget = TARGET_PERIODS.some(
-
-              (targetPeriod) => {
-
-                const value =
-
-                  record[targetPeriod.field];
-
-                return (
-
-                  value !== null &&
-
-                  value !== undefined &&
-
-                  String(value).trim() !== ""
-
-                );
-
-              }
-
-            );
-
-          } else {
-
-            const value = record[period];
-
-            hasTarget =
-
-              value !== null &&
-
-              value !== undefined &&
-
-              String(value).trim() !== "";
-
-          }
+          hasTarget = period === "all"
+            ? TARGET_PERIODS.some((item) => hasPhysicalTarget(record, item.field))
+            : hasPhysicalTarget(record, period);
 
           if (hasTarget) {
 
-            withTarget += 1;
+            withTarget += Number(record.program_count || 0);
 
           } else {
 
-            withoutTarget += 1;
+            withoutTarget += Number(record.program_count || 0);
 
           }
 
@@ -484,9 +399,9 @@ function Dashboard() {
 
           programCount:
 
-            displayedSiteRecords.length,
+            countPrograms(displayedSiteRecords),
 
-          totalPrograms: allSiteRecords.length,
+          totalPrograms: countPrograms(allSiteRecords),
 
           financial,
 
@@ -940,7 +855,7 @@ function Dashboard() {
 
             <strong>
 
-              {filteredRecords.length}
+              {countPrograms(filteredRecords)}
 
             </strong>
 
