@@ -964,7 +964,13 @@ function ProgramsProjects() {
     ]));
   }, [records, fundingContributions, acceptedProjectIds, currentProfile?.agency, registeredOrganizations]);
   const agencyOptions = organizationOptions.agency;
-  const lguOptions = organizationOptions.lgu;
+  const lguOptions = isLGU
+  ? organizationOptions.lgu.filter(
+      (lgu) =>
+        lgu.value ===
+        normalize(authenticatedProfile?.organization)
+    )
+  : organizationOptions.lgu;
   const selectedOrganizationLabel = [...agencyOptions, ...lguOptions]
     .find((item) => item.value === selectedOrganization)?.label || "";
   const siteMunicipalities = useMemo(() => {
