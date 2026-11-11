@@ -4071,6 +4071,85 @@ function ProgramsProjects() {
 
 
 
+  const [exportingExcel, setExportingExcel] = useState(false);
+
+  const handleExportExcel = async () => {
+    if (loading || exportingExcel || filteredRecords.length === 0) return;
+    setExportingExcel(true);
+    setErrorMessage("");
+
+    try {
+      // Import on demand so the Excel library does not slow initial page loading.
+      const XLSX = await import("xlsx");
+      const periods = selectedPeriodData ? [selectedPeriodData] : TARGET_PERIODS;
+      const siteById = new Map(sites.map((site) => [String(site.id), site]));
+
+      const rows = filteredRecords.flatMap((record) => {
+        const site = siteById.get(String(record.cadp_site_id));
+        const sourceNames = selectedAgency
+          ? [selectedAgencyLabel || selectedAgency]
+          : getSourcesOfFund(record, selectedPeriodData?.year);
+
+        return periods.map((period) => {
+          const funding = getDisplayedFundingInfo(record, period);
+          const contributions = getDisplayedAgencyFunding(record, period.year);
+          const physical = record[period.physicalField];
+          const financial = record[period.financialField];
+
+          return {
+            "Province": site?.province || "",
+            "City / Municipality": site?.municipality_city || "",
+            "Barangay": site?.barangay || "",
+            "CADP Site / Convergence Name": site?.convergence_name || "",
+            "Proposed Inputs, Activities, Interventions": record.intervention || "",
+            "KPI Category": record.kpi_category || "",
+            "KPI (Key Performance Indicators)": record.kpi || "",
+            "Source of Fund": sourceNames.join(", "),
+            "Project Status": record.status || "",
+            "Target Year": period.label,
+            "Physical Target": physical == null ? "" : String(physical),
+            "Financial Target (PHP)": financial == null || financial === "" ? null : Number(financial),
+            "Current Fund (PHP)": funding.currentFund,
+            "Funding Gap (PHP)": funding.gap,
+            "Funding Percentage": Number(funding.percentage.toFixed(2)) / 100,
+            "Funding Status": Number(financial || 0) > 0 ? funding.status : "No financial target",
+            "Funding Contributions": contributions.map((item) => `${item.agency}: PHP ${item.amount.toFixed(2)}`).join("; "),
+            "Remarks": record.remarks || "",
+          };
+        });
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const headers = Object.keys(rows[0]);
+      worksheet["!cols"] = headers.map((header) => ({
+        wch: Math.min(60, Math.max(18, header.length + 2)),
+      }));
+      worksheet["!autofilter"] = { ref: worksheet["!ref"] };
+
+      // Keep monetary amounts numeric for Excel formulas and totals.
+      const moneyColumns = ["Financial Target (PHP)", "Current Fund (PHP)", "Funding Gap (PHP)"];
+      for (let row = 1; row <= rows.length; row += 1) {
+        moneyColumns.forEach((header) => {
+          const address = XLSX.utils.encode_cell({ r: row, c: headers.indexOf(header) });
+          if (worksheet[address]?.t === "n") worksheet[address].z = '#,##0.00';
+        });
+        const percentageAddress = XLSX.utils.encode_cell({ r: row, c: headers.indexOf("Funding Percentage") });
+        if (worksheet[percentageAddress]?.t === "n") worksheet[percentageAddress].z = "0.00%";
+      }
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Programs and Projects");
+      const date = new Date();
+      const dateStamp = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      XLSX.writeFile(workbook, `CADP_Programs_Projects_${dateStamp}.xlsx`);
+    } catch (error) {
+      console.error("Unable to export Programs and Projects:", error);
+      setErrorMessage(error.message || "Unable to generate the Excel file.");
+    } finally {
+      setExportingExcel(false);
+    }
+  };
+
   const renderAgencyFunding = (record, period) => (
 
     <div>
@@ -4605,6 +4684,16 @@ function ProgramsProjects() {
 
         </div>
         <div className="cadp-header-actions">
+          <button
+            type="button"
+            className="programs-add-button"
+            onClick={handleExportExcel}
+            disabled={loading || exportingExcel || filteredRecords.length === 0}
+            title="Download the currently filtered Programs and Projects as Excel"
+            style={{ background: "#217346", opacity: loading || exportingExcel || filteredRecords.length === 0 ? 0.55 : 1 }}
+          >
+            {exportingExcel ? "Generating Excel..." : "Export to Excel"}
+          </button>
           <FundingRequests profile={currentProfile} endorsementProject={endorsementProject} onCloseEndorsement={closeEndorsement} onAccepted={async () => {
             setSelectedSite(""); setSelectedPeriod("all"); setSelectedAgency(""); setSelectedLGU(""); setSearch("");
             await loadData();
