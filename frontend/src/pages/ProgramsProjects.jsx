@@ -307,6 +307,10 @@ function ProgramsProjects() {
   const [lguScope, setLguScope] = useState(null);
   const isLGU = authenticatedProfile?.role === "user" &&
     authenticatedProfile?.organization_type?.trim().toLowerCase() === "lgu";
+  const isAgency = authenticatedProfile?.role === "user" &&
+    authenticatedProfile?.organization_type?.trim().toLowerCase() === "agency";
+  const canCreateProject = ["super_admin", "admin"].includes(authenticatedProfile?.role) ||
+    ((isLGU || isAgency) && Boolean(authenticatedProfile?.agency_lgu_id));
   const normalize = (value) => String(value ?? "").trim().toLowerCase();
   const isAuthorizedSite = (site, scope = lguScope) =>
     !isLGU || Boolean(scope &&
@@ -326,6 +330,14 @@ function ProgramsProjects() {
 
 
   const [sites, setSites] = useState([]);
+  // Viewing and adding projects have different CADP-site scopes.
+  // Agency users can choose any site; LGUs can choose only their registered location.
+  const selectableSites = useMemo(() => {
+    if (!canCreateProject) return [];
+    if (!isLGU) return sites;
+    if (!lguScope) return [];
+    return sites.filter((site) => isAuthorizedSite(site, lguScope));
+  }, [sites, lguScope, isLGU, canCreateProject]);
   const [kpiCategories, setKpiCategories] = useState([]);
   const [kpiOptions, setKpiOptions] = useState([]);
   const kpiByCategory = useMemo(() => {
@@ -356,6 +368,9 @@ function ProgramsProjects() {
 
 
   const [selectedAgency, setSelectedAgency] = useState("");
+  const [selectedLGU, setSelectedLGU] = useState("");
+  const [registeredOrganizations, setRegisteredOrganizations] = useState([]);
+  const selectedOrganization = selectedAgency || selectedLGU;
   const [acceptedProjectIds, setAcceptedProjectIds] = useState([]);
 
 
@@ -634,11 +649,23 @@ function ProgramsProjects() {
         scope = lgu;
       }
       setLguScope(scope);
+      if (isAgency) {
+        if (!authenticatedProfile?.agency_lgu_id) {
+          throw new Error("Your account is not linked to a registered Agency.");
+        }
+        const { data: agency, error: agencyError } = await supabase
+          .from("agencies_lgus")
+          .select("name, organization_type")
+          .eq("id", authenticatedProfile.agency_lgu_id)
+          .single();
+        if (agencyError) throw agencyError;
+        if (normalize(agency?.organization_type) !== "agency" ||
+            normalize(agency?.name) !== normalize(authenticatedProfile?.organization)) {
+          throw new Error("Your registered Agency assignment does not match your account.");
+        }
+      }
 
-      const [sitesResult, recordsResult, fundingResult, profileResult, acceptedResult, categoriesResult, kpisResult] =
-
-
-
+      const [sitesResult, recordsResult, fundingResult, profileResult, acceptedResult, categoriesResult, kpisResult, organizationsResult] =
         await Promise.all([
 
 
@@ -751,6 +778,7 @@ function ProgramsProjects() {
 
 
 
+          supabase.from("agencies_lgus").select("name, organization_type"),
         ]);
 
 
@@ -773,6 +801,8 @@ function ProgramsProjects() {
 
       if (profileResult.error) throw profileResult.error;
       if (acceptedResult.error) throw acceptedResult.error;
+      if (organizationsResult.error) throw organizationsResult.error;
+      setRegisteredOrganizations(organizationsResult.data || []);
       if (categoriesResult.error || kpisResult.error) {
         throw new Error("Unable to load the KPI catalogue. Run database/kpi_catalogue.sql and try again.");
       }
@@ -782,7 +812,6 @@ function ProgramsProjects() {
       setKpiCategories(categoriesResult.data);
       setKpiOptions(kpisResult.data);
       const acceptedData = acceptedResult.data || {};
-      const mergeById = (first, second) => Array.from(new Map([...first, ...second].map((item) => [String(item.id), item])).values());
       // Accepted project IDs are scoped below, after resolving allowed CADP sites.
 
 
@@ -791,34 +820,27 @@ function ProgramsProjects() {
 
 
 
-      // Apply LGU scope AFTER merging RPC data as well; accepted projects cannot bypass it.
-      const registeredSites = mergeById(sitesResult.data || [], acceptedData.sites || [])
-        .filter((site) => !isLGU || (normalize(site.province) === normalize(scope.province) &&
-          normalize(site.municipality_city) === normalize(scope.municipality)));
-      const allowedSiteIds = new Set(registeredSites.map((site) => String(site.id)));
-      const allowedProjects = mergeById(recordsResult.data || [], acceptedData.projects || [])
+      // The direct Supabase queries are RLS-filtered. Do not reintroduce
+      // otherwise-hidden projects from the accepted-projects RPC.
+      const registeredSites = sitesResult.data || [];
+      const allowedSiteIds = new Set(registeredSites
+        .filter((site) => !isLGU || (scope && normalize(site.province) === normalize(scope.province) &&
+          normalize(site.municipality_city) === normalize(scope.municipality)))
+        .map((site) => String(site.id)));
+      const allowedProjects = (recordsResult.data || [])
         .filter((record) => !isLGU || allowedSiteIds.has(String(record.cadp_site_id)));
       const allowedProjectIds = new Set(allowedProjects.map((record) => String(record.id)));
       setAcceptedProjectIds((acceptedData.projects || [])
-        .filter((item) => !isLGU || allowedProjectIds.has(String(item.id)))
+        .filter((item) => allowedProjectIds.has(String(item.id)))
         .map((item) => String(item.id)));
 
       setSites(registeredSites);
-
-
-
       setSelectedSite((current) =>
         current && !registeredSites.some((site) => normalize(site.municipality_city) === current)
           ? "" : current);
-
-
-
       setRecords(allowedProjects.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
-
-
-
-      setFundingContributions(mergeById(fundingResult.data || [], acceptedData.funding || [])
-        .filter((item) => !isLGU || allowedProjectIds.has(String(item.program_project_id))));
+      setFundingContributions((fundingResult.data || [])
+        .filter((item) => allowedProjectIds.has(String(item.program_project_id))));
 
 
 
@@ -914,36 +936,38 @@ function ProgramsProjects() {
 
 
 
-  const agencyOptions = useMemo(() => {
-
-    const agencies = new Map();
-
+  // Distinguish registered Agencies and LGUs, while listing only organizations
+  // represented in visible projects, contributions, or accepted endorsements.
+  const organizationOptions = useMemo(() => {
+    const visibleNames = new Set();
     records.forEach((record) => {
-      const agency = record.source_of_fund?.trim();
-      if (agency && !agencies.has(agency.toLowerCase())) agencies.set(agency.toLowerCase(), agency);
+      if (record.source_of_fund?.trim()) visibleNames.add(normalize(record.source_of_fund));
     });
 
     fundingContributions.forEach((item) => {
 
-      const agency = item.funding_institution?.trim();
-
-      if (agency && !agencies.has(agency.toLowerCase())) agencies.set(agency.toLowerCase(), agency);
-
+      if (item.funding_institution?.trim()) visibleNames.add(normalize(item.funding_institution));
     });
 
-    const acceptedAgency = currentProfile?.agency?.trim();
-    if (acceptedProjectIds.length && acceptedAgency) agencies.set(acceptedAgency.toLowerCase(), acceptedAgency);
-
-    return Array.from(agencies, ([value, label]) => ({ value, label }))
-
-      .sort((a, b) => a.label.localeCompare(b.label));
-
-  }, [records, fundingContributions, acceptedProjectIds, currentProfile?.agency]);
-
-  const selectedAgencyLabel = agencyOptions.find((item) => item.value === selectedAgency)?.label || "";
-
-
-
+    if (acceptedProjectIds.length && currentProfile?.agency?.trim()) {
+      visibleNames.add(normalize(currentProfile.agency));
+    }
+    const options = { agency: new Map(), lgu: new Map() };
+    registeredOrganizations.forEach(({ name, organization_type }) => {
+      const kind = normalize(organization_type);
+      const key = normalize(name);
+      if (options[kind] && key && visibleNames.has(key)) {
+        options[kind].set(key, { value: key, label: name.trim() });
+      }
+    });
+    return Object.fromEntries(Object.entries(options).map(([kind, items]) => [
+      kind, Array.from(items.values()).sort((a, b) => a.label.localeCompare(b.label)),
+    ]));
+  }, [records, fundingContributions, acceptedProjectIds, currentProfile?.agency, registeredOrganizations]);
+  const agencyOptions = organizationOptions.agency;
+  const lguOptions = organizationOptions.lgu;
+  const selectedOrganizationLabel = [...agencyOptions, ...lguOptions]
+    .find((item) => item.value === selectedOrganization)?.label || "";
   const siteMunicipalities = useMemo(() => {
 
 
@@ -952,7 +976,7 @@ function ProgramsProjects() {
 
 
 
-    sites.forEach((site) => {
+    sites.filter((site) => records.some((record) => String(record.cadp_site_id) === String(site.id))).forEach((site) => {
 
 
 
@@ -976,13 +1000,13 @@ function ProgramsProjects() {
 
 
 
-  }, [sites]);
+  }, [sites, records]);
 
 
 
   const getDefaultSiteId = () => {
-    const selected = sites.find((site) => normalize(site.municipality_city) === selectedSite);
-    return (selected || sites[0])?.id || "";
+    const selected = selectableSites.find((site) => normalize(site.municipality_city) === selectedSite);
+    return (selected || selectableSites[0])?.id || "";
   };
 
   const filteredRecords = useMemo(() => {
@@ -1136,13 +1160,13 @@ function ProgramsProjects() {
 
 
 
-      const matchesAgency = !selectedAgency
-        || record.source_of_fund?.trim().toLowerCase() === selectedAgency
-        || (selectedAgency === currentProfile?.agency?.trim().toLowerCase()
+      const matchesAgency = !selectedOrganization
+        || record.source_of_fund?.trim().toLowerCase() === selectedOrganization
+        || (selectedOrganization === currentProfile?.agency?.trim().toLowerCase()
           && acceptedProjectIds.includes(String(record.id)))
         || fundingContributions.some((item) =>
           String(item.program_project_id) === String(record.id)
-          && item.funding_institution?.trim().toLowerCase() === selectedAgency
+          && item.funding_institution?.trim().toLowerCase() === selectedOrganization
           && (!selectedPeriodData || item.target_year === selectedPeriodData.year)
         );
 
@@ -1169,6 +1193,7 @@ function ProgramsProjects() {
 
 
     selectedAgency,
+    selectedLGU,
     acceptedProjectIds,
     currentProfile?.agency,
 
@@ -1236,8 +1261,14 @@ function ProgramsProjects() {
 
 
   const openAddForm = () => {
-    if (isLGU && !sites.length) {
-      setErrorMessage("No CADP sites are registered under your LGU. You cannot add a project yet.");
+    if (!canCreateProject) {
+      setErrorMessage("Your account must be assigned to a registered Agency or LGU to add projects.");
+      return;
+    }
+    if (!selectableSites.length) {
+      setErrorMessage(isLGU
+        ? "No CADP sites are registered within your LGU's municipality."
+        : "No registered CADP sites are available.");
       return;
     }
 
@@ -1669,8 +1700,9 @@ function ProgramsProjects() {
 
 
       if (profileError) throw profileError;
-
-
+      if (!canCreateProject) {
+        throw new Error("Your account is not assigned to an authorized Agency or LGU.");
+      }
 
       if (!["super_admin", "admin", "user"].includes(freshProfile?.role)) {
 
@@ -1751,6 +1783,10 @@ function ProgramsProjects() {
 
 
 
+      // Validate against the form's authorized site choices before saving.
+      if (!selectableSites.some((site) => String(site.id) === String(form.cadpSiteId))) {
+        throw new Error("The selected CADP site is not authorized for your account.");
+      }
       // Recheck the selected CADP site against the authenticated LGU before saving.
       if (isLGU) {
         const { data: selectedSiteRecord, error: siteError } = await supabase
@@ -4017,14 +4053,12 @@ function ProgramsProjects() {
 
   const getDisplayedAgencyFunding = (record, year) => getAgencyFunding(record, year)
 
-    .filter((item) => !selectedAgency || item.agency.toLowerCase() === selectedAgency);
-
+    .filter((item) => !selectedOrganization || item.agency.toLowerCase() === selectedOrganization);
   const getDisplayedFundingInfo = (record, period) => {
 
     const info = getFundingInfo(record, period);
 
-    if (!selectedAgency) return info;
-
+    if (!selectedOrganization) return info;
     const currentFund = getDisplayedAgencyFunding(record, period.year).reduce((total, item) => total + item.amount, 0);
 
     const percentage = info.financialTarget > 0 ? Math.min(currentFund / info.financialTarget * 100, 100) : 0;
@@ -4572,7 +4606,7 @@ function ProgramsProjects() {
         </div>
         <div className="cadp-header-actions">
           <FundingRequests profile={currentProfile} endorsementProject={endorsementProject} onCloseEndorsement={closeEndorsement} onAccepted={async () => {
-            setSelectedSite(""); setSelectedPeriod("all"); setSelectedAgency(""); setSearch("");
+            setSelectedSite(""); setSelectedPeriod("all"); setSelectedAgency(""); setSelectedLGU(""); setSearch("");
             await loadData();
           }} />
 
@@ -4591,7 +4625,7 @@ function ProgramsProjects() {
 
 
           className="programs-add-button"
-          disabled={loading || (isLGU && !sites.length)}
+          disabled={loading || !canCreateProject || !selectableSites.length}
 
 
 
@@ -4820,12 +4854,18 @@ function ProgramsProjects() {
 
             <span>Agency</span>
 
-            <select value={selectedAgency} onChange={(event) => setSelectedAgency(event.target.value)}>
-
+            <select value={selectedAgency} onChange={(event) => { setSelectedAgency(event.target.value); setSelectedLGU(""); }}>
               <option value="">All Agencies</option>
 
               {agencyOptions.map((agency) => <option key={agency.value} value={agency.value}>{agency.label}</option>)}
 
+            </select>
+          </label>
+          <label className="programs-period-field">
+            <span>LGU</span>
+            <select value={selectedLGU} onChange={(event) => { setSelectedLGU(event.target.value); setSelectedAgency(""); }}>
+              <option value="">All LGUs</option>
+              {lguOptions.map((lgu) => <option key={lgu.value} value={lgu.value}>{lgu.label}</option>)}
             </select>
 
           </label>
@@ -5164,10 +5204,7 @@ function ProgramsProjects() {
 
 
 
-                    {selectedAgency ? "Agency Contribution" : "Current Fund"}
-
-
-
+                    {selectedOrganization ? "Organization Contribution" : "Current Fund"}
                     <span className="programs-period-label">
 
 
@@ -5192,10 +5229,7 @@ function ProgramsProjects() {
 
 
 
-                    {selectedAgency ? "Agency Funding Status" : "Funding Status"}
-
-
-
+                    {selectedOrganization ? "Organization Funding Status" : "Funding Status"}
                     <span className="programs-period-label">
 
 
@@ -5284,10 +5318,8 @@ function ProgramsProjects() {
 
                       >
 
-                        {(selectedAgency
-
-                          ? [selectedAgencyLabel]
-
+                        {(selectedOrganization
+                          ? [selectedOrganizationLabel]
                           : getSourcesOfFund(
 
                               record,
@@ -5709,7 +5741,7 @@ function ProgramsProjects() {
 
 
 
-                  {sites.map((site) => (
+                  {selectableSites.map((site) => (
 
 
 
