@@ -4838,25 +4838,6 @@ function ProgramsProjects() {
 
         </div>
         <div className="cadp-header-actions">
-          <div style={{ position: "relative" }}>
-            <button
-              type="button"
-              className="programs-add-button"
-              onClick={() => setShowReportOptions((open) => !open)}
-              disabled={loading || exportingExcel || exportingPdf || filteredRecords.length === 0}
-              aria-expanded={showReportOptions}
-              aria-haspopup="true"
-              style={{ background: "#217346", opacity: loading || exportingExcel || exportingPdf || !filteredRecords.length ? 0.55 : 1 }}
-            >
-              {exportingExcel ? "Generating Excel..." : exportingPdf ? "Generating PDF..." : "Generate Report ▾"}
-            </button>
-            {showReportOptions && (
-              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 100, minWidth: 190, background: "#fff", border: "1px solid #d6e1d9", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: 6 }}>
-                <button type="button" onClick={handleExportExcel} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 5, background: "transparent", cursor: "pointer", color: "#1f2937" }}>Excel (.xlsx)</button>
-                <button type="button" onClick={handleExportPdf} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 5, background: "transparent", cursor: "pointer", color: "#1f2937" }}>PDF (.pdf)</button>
-              </div>
-            )}
-          </div>
           <FundingRequests profile={currentProfile} endorsementProject={endorsementProject} onCloseEndorsement={closeEndorsement} onAccepted={async () => {
             setSelectedSite(""); setSelectedPeriod("all"); setSelectedAgency(""); setSelectedLGU(""); setSearch("");
             await loadData();
@@ -5176,6 +5157,25 @@ function ProgramsProjects() {
 
 
 
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              className="programs-add-button"
+              onClick={() => setShowReportOptions((open) => !open)}
+              disabled={loading || exportingExcel || exportingPdf || filteredRecords.length === 0}
+              aria-expanded={showReportOptions}
+              aria-haspopup="true"
+              style={{ background: "#217346", opacity: loading || exportingExcel || exportingPdf || !filteredRecords.length ? 0.55 : 1 }}
+            >
+              {exportingExcel ? "Generating Excel..." : exportingPdf ? "Generating PDF..." : "Generate Report ▾"}
+            </button>
+            {showReportOptions && (
+              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 100, minWidth: 190, background: "#fff", border: "1px solid #d6e1d9", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: 6 }}>
+                <button type="button" onClick={handleExportExcel} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 5, background: "transparent", cursor: "pointer", color: "#1f2937" }}>Excel (.xlsx)</button>
+                <button type="button" onClick={handleExportPdf} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 5, background: "transparent", cursor: "pointer", color: "#1f2937" }}>PDF (.pdf)</button>
+              </div>
+            )}
+          </div>
           <p className="programs-result-count">
 
 
