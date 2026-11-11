@@ -4891,11 +4891,20 @@ function ProgramsProjects() {
 
 
 
-        <div className="programs-toolbar" style={{ display: "flex", flexWrap: "wrap", alignItems: "end", gap: 16 }}>
+        <style>{`
+          .programs-report-toolbar > label { min-width: 0; }
+          .programs-report-toolbar > label select,
+          .programs-report-toolbar > label input { width: 100%; min-width: 0; }
+          @media (max-width: 1150px) {
+            .programs-report-toolbar { flex-wrap: wrap !important; }
+            .programs-report-toolbar > label { flex: 1 1 190px !important; }
+          }
+        `}</style>
+        <div className="programs-toolbar programs-report-toolbar" style={{ display: "flex", flexWrap: "nowrap", alignItems: "end", gap: 16, width: "100%" }}>
 
 
 
-          <label className="programs-site-field" style={{ flex: "1 1 180px", minWidth: 160 }}>
+          <label className="programs-site-field" style={{ flex: "1 1 0", minWidth: 0 }}>
 
 
 
@@ -4979,7 +4988,7 @@ function ProgramsProjects() {
 
 
 
-          <label className="programs-period-field" style={{ flex: "1 1 180px", minWidth: 160 }}>
+          <label className="programs-period-field" style={{ flex: "1 1 0", minWidth: 0 }}>
 
 
 
@@ -5083,7 +5092,7 @@ function ProgramsProjects() {
 
 
 
-          <label className="programs-period-field">
+          <label className="programs-period-field" style={{ flex: "1 1 0", minWidth: 0 }}>
 
             <span>Agency</span>
 
@@ -5094,7 +5103,7 @@ function ProgramsProjects() {
 
             </select>
           </label>
-          <label className="programs-period-field">
+          <label className="programs-period-field" style={{ flex: "1 1 0", minWidth: 0 }}>
             <span>LGU</span>
             <select value={selectedLGU} onChange={(event) => { setSelectedLGU(event.target.value); setSelectedAgency(""); }}>
               <option value="">All LGUs</option>
@@ -5105,7 +5114,7 @@ function ProgramsProjects() {
 
 
 
-          <label className="programs-search-field" style={{ flex: "1 1 180px", minWidth: 160 }}>
+          <label className="programs-search-field" style={{ flex: "1 1 0", minWidth: 0 }}>
 
 
 
@@ -5157,7 +5166,7 @@ function ProgramsProjects() {
 
 
 
-          <p className="programs-result-count" style={{ flexShrink: 0 }}>
+          <p className="programs-result-count" style={{ flex: "0 0 auto", whiteSpace: "nowrap" }}>
 
 
 
@@ -5178,7 +5187,7 @@ function ProgramsProjects() {
 
 
           </p>
-          <div style={{ position: "relative", marginLeft: "auto", flexShrink: 0 }}>
+          <div style={{ position: "relative", marginLeft: "auto", flex: "0 0 auto" }}>
             <button
               type="button"
               className="programs-add-button"
