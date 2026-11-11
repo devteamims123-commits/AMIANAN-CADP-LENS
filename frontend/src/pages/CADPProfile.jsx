@@ -44,7 +44,7 @@ function CADPProfile() {
 
         const { data: registeredLGU, error: lguError } =
           await supabase
-            .from("agency_lgu")
+            .from("agency_lgus")
             .select("province, municipality_city")
             .eq("id", profile.agency_lgu_id)
             .single();
