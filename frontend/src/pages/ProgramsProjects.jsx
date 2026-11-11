@@ -5200,9 +5200,9 @@ function ProgramsProjects() {
               {exportingExcel ? "Generating Excel..." : exportingPdf ? "Generating PDF..." : "Generate Report ▾"}
             </button>
             {showReportOptions && (
-              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 100, minWidth: 190, background: "#fff", border: "1px solid #d6e1d9", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: 6 }}>
-                <button type="button" onClick={handleExportExcel} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 5, background: "transparent", cursor: "pointer", color: "#1f2937" }}>Excel (.xlsx)</button>
-                <button type="button" onClick={handleExportPdf} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 5, background: "transparent", cursor: "pointer", color: "#1f2937" }}>PDF (.pdf)</button>
+              <div style={{ position: "absolute", top: "100%", right: 0, zIndex: 100, width: "100%", minWidth: 180, background: "#fff", border: "1px solid #888", borderRadius: 0, boxShadow: "0 2px 5px rgba(0,0,0,0.12)", padding: 0, overflow: "hidden" }}>
+                <button type="button" onClick={handleExportExcel} onMouseEnter={(event) => { event.currentTarget.style.background = "#1e66cf"; event.currentTarget.style.color = "#fff"; }} onMouseLeave={(event) => { event.currentTarget.style.background = "#fff"; event.currentTarget.style.color = "#172b25"; }} style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 12px", border: 0, borderRadius: 0, background: "#fff", cursor: "pointer", color: "#172b25", fontSize: 14, fontWeight: 400, lineHeight: "20px" }}>Excel (.xlsx)</button>
+                <button type="button" onClick={handleExportPdf} onMouseEnter={(event) => { event.currentTarget.style.background = "#1e66cf"; event.currentTarget.style.color = "#fff"; }} onMouseLeave={(event) => { event.currentTarget.style.background = "#fff"; event.currentTarget.style.color = "#172b25"; }} style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 12px", border: 0, borderRadius: 0, background: "#fff", cursor: "pointer", color: "#172b25", fontSize: 14, fontWeight: 400, lineHeight: "20px" }}>PDF (.pdf)</button>
               </div>
             )}
           </div>
