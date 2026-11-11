@@ -1288,7 +1288,7 @@ function ProgramsProjects() {
 
       cadpSiteId: getDefaultSiteId(),
 
-      sourceOfFund: currentProfile?.agency || "",
+      sourceOfFund: "",
 
 
 
@@ -1925,11 +1925,11 @@ function ProgramsProjects() {
 
 
 
-          : freshProfile.agency.trim(),
+          : form.sourceOfFund.trim() || null,
 
 
 
-        status: form.status,
+        status: editingId ? form.status : "Proposed",
 
 
 
@@ -6165,7 +6165,7 @@ function ProgramsProjects() {
 
 
 
-                <span>Source of Fund *</span>
+                <span>Source of Fund (Optional)</span>
 
 
 
@@ -6193,7 +6193,7 @@ function ProgramsProjects() {
 
 
 
-                      : currentProfile?.agency || ""
+                      : form.sourceOfFund
 
 
 
@@ -6201,11 +6201,9 @@ function ProgramsProjects() {
 
 
 
-                  readOnly
-
-
-
-                  required
+                  readOnly={Boolean(editingId)}
+                  onChange={(event) => updateForm("sourceOfFund", event.target.value)}
+                  placeholder={editingId ? "" : "Enter source of fund (optional)"}
 
 
 
@@ -6217,7 +6215,7 @@ function ProgramsProjects() {
 
 
 
-                  {editingId ? "Agencies associated with this project's funding." : "Automatically based on the account agency."}
+                  {editingId ? "Agencies associated with this project's funding." : "Leave blank if no funding source has been identified yet."}
 
 
 
@@ -6245,7 +6243,7 @@ function ProgramsProjects() {
 
 
 
-                <select
+                <select disabled={!editingId}
 
 
 
