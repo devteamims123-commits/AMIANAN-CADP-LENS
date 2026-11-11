@@ -309,6 +309,16 @@ function UserManagement() {
       role:
         user.role || "user",
 
+      organizationType:
+        user.organization_type || "",
+
+      organizationId:
+        user.agency_lgu_id ||
+        organizations.find((item) =>
+          item.name === user.organization &&
+          item.organization_type?.toLowerCase() === user.organization_type?.toLowerCase()
+        )?.id || "",
+
       password: "",
 
       confirmPassword: "",
@@ -465,7 +475,8 @@ function UserManagement() {
     }
 
     if (form.organizationType && !organizations.some((item) =>
-      item.id === form.organizationId && item.organization_type === form.organizationType)) {
+      String(item.id) === String(form.organizationId) &&
+      item.organization_type?.toLowerCase() === form.organizationType.toLowerCase())) {
       setModalError("Select a registered Agency / LGU.");
       return;
     }
@@ -497,6 +508,9 @@ function UserManagement() {
               role:
                 form.role,
 
+              organizationType: form.organizationType || null,
+              organizationId: form.organizationId || null,
+
               password:
                 form.password,
             }),
@@ -522,6 +536,8 @@ function UserManagement() {
             currentUserId
               ? "super_admin"
               : form.role,
+          organizationType: form.organizationType || null,
+          organizationId: form.organizationId || null,
         };
 
         /*
@@ -1024,6 +1040,47 @@ function UserManagement() {
                         Viewer
                       </option>
                     </select>
+                  )}
+                </label>
+
+                {/* ORGANIZATION TYPE */}
+                <label>
+                  <span>Organization Type</span>
+                  <select
+                    name="organizationType"
+                    value={form.organizationType}
+                    onChange={handleChange}
+                  >
+                    <option value="">None</option>
+                    <option value="Agency">Agency</option>
+                    <option value="LGU">LGU</option>
+                  </select>
+                </label>
+
+                {/* REGISTERED ORGANIZATION */}
+                <label>
+                  <span>Registered Agency / LGU</span>
+                  <select
+                    name="organizationId"
+                    value={form.organizationId}
+                    onChange={handleChange}
+                    disabled={!form.organizationType || Boolean(organizationError)}
+                    required={Boolean(form.organizationType)}
+                  >
+                    <option value="">Select Organization</option>
+                    {organizations
+                      .filter((item) =>
+                        item.organization_type?.toLowerCase() ===
+                        form.organizationType.toLowerCase()
+                      )
+                      .map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                  </select>
+                  {organizationError && (
+                    <small role="alert">{organizationError}</small>
                   )}
                 </label>
 
