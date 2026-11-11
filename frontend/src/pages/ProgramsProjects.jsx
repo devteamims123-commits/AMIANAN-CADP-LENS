@@ -936,30 +936,30 @@ function ProgramsProjects() {
 
 
 
-  // Distinguish registered Agencies and LGUs, while listing only organizations
-  // represented in visible projects, contributions, or accepted endorsements.
+  // Populate Agency and LGU filters from registered organizations, regardless
+  // of whether they currently have a visible project or funding contribution.
+  // Older project funding sources absent from the registry remain filterable.
   const organizationOptions = useMemo(() => {
-    const visibleNames = new Set();
-    records.forEach((record) => {
-      if (record.source_of_fund?.trim()) visibleNames.add(normalize(record.source_of_fund));
-    });
-
-    fundingContributions.forEach((item) => {
-
-      if (item.funding_institution?.trim()) visibleNames.add(normalize(item.funding_institution));
-    });
-
-    if (acceptedProjectIds.length && currentProfile?.agency?.trim()) {
-      visibleNames.add(normalize(currentProfile.agency));
-    }
     const options = { agency: new Map(), lgu: new Map() };
     registeredOrganizations.forEach(({ name, organization_type }) => {
       const kind = normalize(organization_type);
       const key = normalize(name);
-      if (options[kind] && key && visibleNames.has(key)) {
+      if (options[kind] && key) {
         options[kind].set(key, { value: key, label: name.trim() });
       }
     });
+
+    const includeUnregisteredSource = (name) => {
+      const key = normalize(name);
+      if (!key || options.agency.has(key) || options.lgu.has(key)) return;
+      // Legacy source_of_fund values do not record organization type.
+      // Show them under Agency as an uncategorized funding-source fallback.
+      options.agency.set(key, { value: key, label: String(name).trim() });
+    };
+    records.forEach((record) => includeUnregisteredSource(record.source_of_fund));
+    fundingContributions.forEach((item) => includeUnregisteredSource(item.funding_institution));
+    if (acceptedProjectIds.length) includeUnregisteredSource(currentProfile?.agency);
+
     return Object.fromEntries(Object.entries(options).map(([kind, items]) => [
       kind, Array.from(items.values()).sort((a, b) => a.label.localeCompare(b.label)),
     ]));
