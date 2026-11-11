@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 
 
@@ -4074,6 +4074,25 @@ function ProgramsProjects() {
   const [exportingExcel, setExportingExcel] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [showReportOptions, setShowReportOptions] = useState(false);
+  const reportDropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (!showReportOptions) return;
+    const closeOnOutsideClick = (event) => {
+      if (!reportDropdownRef.current?.contains(event.target)) {
+        setShowReportOptions(false);
+      }
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setShowReportOptions(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [showReportOptions]);
 
   const handleExportPdf = async () => {
     if (loading || exportingPdf || exportingExcel || !filteredRecords.length) return;
@@ -5187,7 +5206,7 @@ function ProgramsProjects() {
 
 
           </p>
-          <div style={{ position: "relative", marginLeft: "auto", flex: "0 0 auto" }}>
+          <div ref={reportDropdownRef} style={{ position: "relative", marginLeft: "auto", flex: "0 0 auto", alignSelf: "end" }}>
             <button
               type="button"
               className="programs-add-button"
@@ -5200,9 +5219,9 @@ function ProgramsProjects() {
               {exportingExcel ? "Generating Excel..." : exportingPdf ? "Generating PDF..." : "Generate Report ▾"}
             </button>
             {showReportOptions && (
-              <div style={{ position: "absolute", top: "100%", right: 0, zIndex: 100, width: "100%", minWidth: 180, background: "#fff", border: "1px solid #888", borderRadius: 0, boxShadow: "0 2px 5px rgba(0,0,0,0.12)", padding: 0, overflow: "hidden" }}>
-                <button type="button" onClick={handleExportExcel} onMouseEnter={(event) => { event.currentTarget.style.background = "#1e66cf"; event.currentTarget.style.color = "#fff"; }} onMouseLeave={(event) => { event.currentTarget.style.background = "#fff"; event.currentTarget.style.color = "#172b25"; }} style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 12px", border: 0, borderRadius: 0, background: "#fff", cursor: "pointer", color: "#172b25", fontSize: 14, fontWeight: 400, lineHeight: "20px" }}>Excel (.xlsx)</button>
-                <button type="button" onClick={handleExportPdf} onMouseEnter={(event) => { event.currentTarget.style.background = "#1e66cf"; event.currentTarget.style.color = "#fff"; }} onMouseLeave={(event) => { event.currentTarget.style.background = "#fff"; event.currentTarget.style.color = "#172b25"; }} style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 12px", border: 0, borderRadius: 0, background: "#fff", cursor: "pointer", color: "#172b25", fontSize: 14, fontWeight: 400, lineHeight: "20px" }}>PDF (.pdf)</button>
+              <div style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 100, width: "100%", minWidth: 0, background: "#fff", border: "1px solid #888", borderRadius: 0, boxShadow: "0 2px 5px rgba(0,0,0,0.12)", padding: 0, overflow: "hidden" }}>
+                <button type="button" onClick={() => { setShowReportOptions(false); handleExportExcel(); }} onMouseEnter={(event) => { event.currentTarget.style.background = "#1e66cf"; event.currentTarget.style.color = "#fff"; }} onMouseLeave={(event) => { event.currentTarget.style.background = "#fff"; event.currentTarget.style.color = "#172b25"; }} style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 12px", border: 0, borderRadius: 0, background: "#fff", cursor: "pointer", color: "#172b25", fontSize: 14, fontWeight: 400, lineHeight: "20px" }}>Excel (.xlsx)</button>
+                <button type="button" onClick={() => { setShowReportOptions(false); handleExportPdf(); }} onMouseEnter={(event) => { event.currentTarget.style.background = "#1e66cf"; event.currentTarget.style.color = "#fff"; }} onMouseLeave={(event) => { event.currentTarget.style.background = "#fff"; event.currentTarget.style.color = "#172b25"; }} style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 12px", border: 0, borderRadius: 0, background: "#fff", cursor: "pointer", color: "#172b25", fontSize: 14, fontWeight: 400, lineHeight: "20px" }}>PDF (.pdf)</button>
               </div>
             )}
           </div>
