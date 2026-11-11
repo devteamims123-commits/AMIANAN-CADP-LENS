@@ -372,6 +372,7 @@ function ProgramsProjects() {
   const [registeredOrganizations, setRegisteredOrganizations] = useState([]);
   const selectedOrganization = selectedAgency || selectedLGU;
   const [acceptedProjectIds, setAcceptedProjectIds] = useState([]);
+  const [ownedProjectIds, setOwnedProjectIds] = useState([]);
 
 
 
@@ -468,15 +469,17 @@ function ProgramsProjects() {
 
 
   const canFund = ["super_admin", "admin", "user"].includes(currentProfile?.role);
+  const isProjectOwner = (record) => Boolean(record && ownedProjectIds.includes(String(record.id)));
   const canAddProjectFund = (record) => {
+    if (!canFund || !record || !isAuthorizedProject(record)) return false;
+    if (["super_admin", "admin"].includes(currentProfile?.role)) return true;
     const agency = currentProfile?.agency?.trim().toLowerCase();
-    return Boolean(canFund && agency && record && (
-      agency === record.source_of_fund?.trim().toLowerCase()
+    return Boolean(agency && (
+      isProjectOwner(record)
+      || agency === record.source_of_fund?.trim().toLowerCase()
       || acceptedProjectIds.includes(String(record.id))
     ));
   };
-
-
 
 
   const canEditContribution = (contribution, profile = currentProfile) => {
@@ -530,33 +533,12 @@ function ProgramsProjects() {
 
 
   const canEdit = (record, profile = currentProfile) => {
-
-
-
-    if (!record || !profile) return false;
-
-
-
+    if (!record || !profile || !isAuthorizedProject(record)) return false;
     if (["super_admin", "admin"].includes(profile.role)) return true;
-
-
-
     if (profile.role !== "user") return false;
-
-
-
-    const agency = profile.agency?.trim().toLowerCase();
-
-
-
-    const recordAgency = record.source_of_fund?.trim().toLowerCase();
-
-
-
-    return Boolean(agency && agency === recordAgency);
-
-
-
+    // Ownership is verified by the database using the creator's registered organization.
+    // Never infer project ownership from source_of_fund or an endorsement.
+    return isProjectOwner(record);
   };
 
   useEffect(() => {
@@ -838,6 +820,23 @@ function ProgramsProjects() {
       setSelectedSite((current) =>
         current && !registeredSites.some((site) => normalize(site.municipality_city) === current)
           ? "" : current);
+      // Resolve ownership with the SECURITY DEFINER RPC. The profiles table only
+      // exposes the signed-in user's profile, so client-side creator joins are unsafe.
+      // Failed checks default to no ownership; RLS remains the final authority.
+      const ownershipChecks = await Promise.allSettled(allowedProjects.map(async (record) => {
+        const { data, error } = await supabase.rpc("cadp_is_project_owner", {
+          target_project_id: record.id,
+        });
+        if (error) throw error;
+        return data === true ? String(record.id) : null;
+      }));
+      const ownershipFailures = ownershipChecks.filter((result) => result.status === "rejected");
+      if (ownershipFailures.length) {
+        console.warn("Some project ownership checks failed:", ownershipFailures[0].reason);
+      }
+      setOwnedProjectIds(ownershipChecks
+        .filter((result) => result.status === "fulfilled" && result.value)
+        .map((result) => result.value));
       setRecords(allowedProjects.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
       setFundingContributions((fundingResult.data || [])
         .filter((item) => allowedProjectIds.has(String(item.program_project_id))));
@@ -5753,7 +5752,7 @@ function ProgramsProjects() {
 
                     <td>
                       <ProjectActions
-                        disabled={!canAddProjectFund(record)} canFund={canFund} canAddFund={canAddProjectFund(record)} canEdit={canEdit(record)} canDelete={canDelete}
+                        disabled={!canFund} canFund={canFund} canAddFund={canAddProjectFund(record)} canEdit={canEdit(record)} canDelete={canDelete}
                         onFund={() => openFundingForm(record)}
                         onEdit={() => openEditForm(record)}
                         onEndorse={() => setEndorsementProject(record)}
