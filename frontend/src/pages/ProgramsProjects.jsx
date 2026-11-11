@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 
 import { supabase } from "../services/supabase";
+import { useProtectedAuth } from "../components/auth/ProtectedRoute";
 
 
 
@@ -302,6 +303,19 @@ const initialFundingForm = {
 
 
 function ProgramsProjects() {
+  const { profile: authenticatedProfile } = useProtectedAuth();
+  const [lguScope, setLguScope] = useState(null);
+  const isLGU = authenticatedProfile?.role === "user" &&
+    authenticatedProfile?.organization_type?.trim().toLowerCase() === "lgu";
+  const normalize = (value) => String(value ?? "").trim().toLowerCase();
+  const isAuthorizedSite = (site, scope = lguScope) =>
+    !isLGU || Boolean(scope &&
+      normalize(site?.province) === normalize(scope.province) &&
+      normalize(site?.municipality_city) === normalize(scope.municipality));
+  const isAuthorizedProject = (record) =>
+    !isLGU || sites.some((site) =>
+      String(site.id) === String(record?.cadp_site_id) && isAuthorizedSite(site));
+
   const [endorsementProject, setEndorsementProject] = useState(null);
   const closeEndorsement = useCallback(() => setEndorsementProject(null), []);
 
@@ -337,7 +351,7 @@ function ProgramsProjects() {
 
 
 
-  const [selectedSite, setSelectedSite] = useState("vintar");
+  const [selectedSite, setSelectedSite] = useState("");
 
 
 
@@ -602,6 +616,25 @@ function ProgramsProjects() {
 
 
 
+      // Resolve the registered LGU from its canonical ID, not the free-text organization name.
+      let scope = null;
+      if (isLGU) {
+        if (!authenticatedProfile?.agency_lgu_id) {
+          throw new Error("Your account is not linked to a registered LGU.");
+        }
+        const { data: lgu, error: lguError } = await supabase
+          .from("agencies_lgus")
+          .select("province, municipality")
+          .eq("id", authenticatedProfile.agency_lgu_id)
+          .single();
+        if (lguError) throw lguError;
+        if (!lgu?.province || !lgu?.municipality) {
+          throw new Error("Your registered LGU has incomplete province or municipality information.");
+        }
+        scope = lgu;
+      }
+      setLguScope(scope);
+
       const [sitesResult, recordsResult, fundingResult, profileResult, acceptedResult, categoriesResult, kpisResult] =
 
 
@@ -750,7 +783,7 @@ function ProgramsProjects() {
       setKpiOptions(kpisResult.data);
       const acceptedData = acceptedResult.data || {};
       const mergeById = (first, second) => Array.from(new Map([...first, ...second].map((item) => [String(item.id), item])).values());
-      setAcceptedProjectIds((acceptedData.projects || []).map((item) => String(item.id)));
+      // Accepted project IDs are scoped below, after resolving allowed CADP sites.
 
 
 
@@ -758,27 +791,34 @@ function ProgramsProjects() {
 
 
 
-      const registeredSites = mergeById(sitesResult.data || [], acceptedData.sites || []);
-
-
+      // Apply LGU scope AFTER merging RPC data as well; accepted projects cannot bypass it.
+      const registeredSites = mergeById(sitesResult.data || [], acceptedData.sites || [])
+        .filter((site) => !isLGU || (normalize(site.province) === normalize(scope.province) &&
+          normalize(site.municipality_city) === normalize(scope.municipality)));
+      const allowedSiteIds = new Set(registeredSites.map((site) => String(site.id)));
+      const allowedProjects = mergeById(recordsResult.data || [], acceptedData.projects || [])
+        .filter((record) => !isLGU || allowedSiteIds.has(String(record.cadp_site_id)));
+      const allowedProjectIds = new Set(allowedProjects.map((record) => String(record.id)));
+      setAcceptedProjectIds((acceptedData.projects || [])
+        .filter((item) => !isLGU || allowedProjectIds.has(String(item.id)))
+        .map((item) => String(item.id)));
 
       setSites(registeredSites);
 
 
 
-      setSelectedSite((current) => current === "vintar" && !registeredSites.some((site) =>
+      setSelectedSite((current) =>
+        current && !registeredSites.some((site) => normalize(site.municipality_city) === current)
+          ? "" : current);
 
 
 
-        site.municipality_city?.trim().toLowerCase() === "vintar") ? "" : current);
+      setRecords(allowedProjects.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
 
 
 
-      setRecords(mergeById(recordsResult.data || [], acceptedData.projects || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
-
-
-
-      setFundingContributions(mergeById(fundingResult.data || [], acceptedData.funding || []));
+      setFundingContributions(mergeById(fundingResult.data || [], acceptedData.funding || [])
+        .filter((item) => !isLGU || allowedProjectIds.has(String(item.program_project_id))));
 
 
 
@@ -941,21 +981,8 @@ function ProgramsProjects() {
 
 
   const getDefaultSiteId = () => {
-
-
-
-    const selected = sites.find((site) => site.municipality_city?.trim().toLowerCase() === selectedSite);
-
-
-
-    const vintar = sites.find((site) => site.municipality_city?.trim().toLowerCase() === "vintar");
-
-
-
-    return (selected || vintar)?.id || "";
-
-
-
+    const selected = sites.find((site) => normalize(site.municipality_city) === selectedSite);
+    return (selected || sites[0])?.id || "";
   };
 
   const filteredRecords = useMemo(() => {
@@ -971,8 +998,7 @@ function ProgramsProjects() {
 
 
     return records.filter((record) => {
-
-
+      if (!isAuthorizedProject(record)) return false;
 
       const matchesSite =
 
@@ -1210,6 +1236,10 @@ function ProgramsProjects() {
 
 
   const openAddForm = () => {
+    if (isLGU && !sites.length) {
+      setErrorMessage("No CADP sites are registered under your LGU. You cannot add a project yet.");
+      return;
+    }
 
 
 
@@ -1256,6 +1286,10 @@ function ProgramsProjects() {
 
 
   const openEditForm = (record) => {
+    if (!isAuthorizedProject(record)) {
+      setErrorMessage("You cannot edit a project outside your registered LGU.");
+      return;
+    }
 
 
 
@@ -1716,6 +1750,19 @@ function ProgramsProjects() {
 
 
 
+
+      // Recheck the selected CADP site against the authenticated LGU before saving.
+      if (isLGU) {
+        const { data: selectedSiteRecord, error: siteError } = await supabase
+          .from("cadp_sites")
+          .select("id, province, municipality_city")
+          .eq("id", form.cadpSiteId)
+          .maybeSingle();
+        if (siteError) throw siteError;
+        if (!selectedSiteRecord || !isAuthorizedSite(selectedSiteRecord)) {
+          throw new Error("You may only save projects for CADP sites in your registered LGU.");
+        }
+      }
 
       if (!editingId && !freshProfile?.agency?.trim()) {
 
@@ -2713,6 +2760,10 @@ function ProgramsProjects() {
 
 
   const openFundingForm = (record) => {
+    if (!isAuthorizedProject(record)) {
+      setErrorMessage("You cannot fund a project outside your registered LGU.");
+      return;
+    }
 
 
 
@@ -3197,6 +3248,10 @@ function ProgramsProjects() {
 
 
     if (!fundingRecord || !selectedFundingPeriod || fundingSaving) return;
+    if (!isAuthorizedProject(fundingRecord)) {
+      setFundingError("You cannot modify funding for a project outside your registered LGU.");
+      return;
+    }
 
 
 
@@ -4536,6 +4591,7 @@ function ProgramsProjects() {
 
 
           className="programs-add-button"
+          disabled={loading || (isLGU && !sites.length)}
 
 
 

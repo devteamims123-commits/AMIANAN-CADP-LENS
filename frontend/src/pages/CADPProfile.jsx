@@ -1,22 +1,29 @@
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase";
+import { useProtectedAuth } from "../components/auth/ProtectedRoute";
 import "./CADPProfile.css";
 
 function CADPProfile() {
   const navigate = useNavigate();
+  const { profile, role } = useProtectedAuth();
 
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
+  const isLGU =
+    role === "user" &&
+    profile?.organization_type?.toLowerCase() === "lgu";
+
   const loadSites = useCallback(async () => {
     setLoading(true);
     setErrorMessage("");
 
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("cadp_sites")
         .select(`
           id,
@@ -26,22 +33,58 @@ function CADPProfile() {
           year_started,
           convergence_name,
           created_at
-        `)
-        .order("created_at", { ascending: false });
+        `);
+
+      if (isLGU) {
+        if (!profile?.agency_lgu_id) {
+          throw new Error(
+            "Your account is not linked to a registered LGU."
+          );
+        }
+
+        const { data: registeredLGU, error: lguError } =
+          await supabase
+            .from("agency_lgu")
+            .select("province, municipality_city")
+            .eq("id", profile.agency_lgu_id)
+            .single();
+
+        if (lguError) throw lguError;
+
+        if (
+          !registeredLGU?.province ||
+          !registeredLGU?.municipality_city
+        ) {
+          throw new Error(
+            "Your LGU registration has incomplete location information."
+          );
+        }
+
+        query = query
+          .eq("province", registeredLGU.province)
+          .eq(
+            "municipality_city",
+            registeredLGU.municipality_city
+          );
+      }
+
+      const { data, error } = await query.order("created_at", {
+        ascending: false,
+      });
 
       if (error) throw error;
 
       setSites(data || []);
     } catch (error) {
-      console.error(error);
-
+      console.error("Unable to load CADP sites:", error);
+      setSites([]);
       setErrorMessage(
         error.message || "Unable to load registered CADP sites."
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isLGU, profile?.agency_lgu_id]);
 
   useEffect(() => {
     loadSites();
@@ -52,8 +95,8 @@ function CADPProfile() {
 
     if (!keyword) return sites;
 
-    return sites.filter((site) => {
-      return [
+    return sites.filter((site) =>
+      [
         site.province,
         site.municipality_city,
         site.barangay,
@@ -63,8 +106,8 @@ function CADPProfile() {
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
-        .includes(keyword);
-    });
+        .includes(keyword)
+    );
   }, [sites, search]);
 
   return (
@@ -149,7 +192,9 @@ function CADPProfile() {
                 ) : filteredSites.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="profile-empty">
-                      No registered CADP sites found.
+                      {errorMessage
+                        ? "Unable to display CADP sites."
+                        : "No registered CADP sites found."}
                     </td>
                   </tr>
                 ) : (
@@ -162,9 +207,7 @@ function CADPProfile() {
                       </td>
 
                       <td>{site.municipality_city}</td>
-
                       <td>{site.barangay}</td>
-
                       <td>{site.year_started}</td>
 
                       <td>
