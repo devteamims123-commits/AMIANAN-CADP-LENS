@@ -4072,10 +4072,130 @@ function ProgramsProjects() {
 
 
   const [exportingExcel, setExportingExcel] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [showReportOptions, setShowReportOptions] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (loading || exportingPdf || exportingExcel || !filteredRecords.length) return;
+    setExportingPdf(true);
+    setShowReportOptions(false);
+    setErrorMessage("");
+    try {
+      const [{ jsPDF }, autoTableModule] = await Promise.all([
+        import("jspdf"),
+        import("jspdf-autotable"),
+      ]);
+      const autoTable = autoTableModule.default || autoTableModule.autoTable;
+      const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 14;
+      const right = pageWidth - margin;
+      const periods = selectedPeriodData ? [selectedPeriodData] : TARGET_PERIODS;
+      const siteById = new Map(sites.map((site) => [String(site.id), site]));
+      const stamp = new Date();
+      const dateStamp = `${stamp.getFullYear()}-${String(stamp.getMonth() + 1).padStart(2, "0")}-${String(stamp.getDate()).padStart(2, "0")}`;
+      const safeText = (value) => String(value ?? "").replace(/[\u2013\u2014]/g, "-").replace(/\u20b1/g, "PHP ");
+      const amount = (value) => value == null || value === "" ? "-" : `PHP ${Number(value).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const newPageIfNeeded = (height, y) => {
+        if (y + height > pageHeight - 18) {
+          doc.addPage();
+          return 20;
+        }
+        return y;
+      };
+      const writeField = (label, value, y) => {
+        const lines = doc.splitTextToSize(`${label}: ${safeText(value || "-")}`, pageWidth - margin * 2);
+        y = newPageIfNeeded(lines.length * 4.2 + 2, y);
+        doc.text(lines, margin, y);
+        return y + lines.length * 4.2 + 2;
+      };
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(30, 95, 57);
+      doc.text("CADP PROGRAMS AND PROJECTS REPORT", margin, 17);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(75, 85, 95);
+      doc.setFontSize(9);
+      doc.text(`Generated: ${dateStamp}   |   Target year: ${selectedPeriodData?.label || "All Years"}   |   Projects: ${filteredRecords.length}`, margin, 24);
+      const filters = [selectedSite && `Site: ${selectedSite}`, selectedOrganization && `Organization: ${selectedOrganizationLabel || selectedOrganization}`, search.trim() && `Search: ${search.trim()}`].filter(Boolean);
+      let y = 30;
+      if (filters.length) y = writeField("Filters", filters.join(" | "), y);
+
+      filteredRecords.forEach((record, index) => {
+        const site = siteById.get(String(record.cadp_site_id));
+        y = newPageIfNeeded(48, y);
+        doc.setDrawColor(210, 220, 215);
+        doc.line(margin, y - 3, right, y - 3);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(30, 95, 57);
+        doc.setFontSize(11);
+        const heading = doc.splitTextToSize(`${index + 1}. ${safeText(record.intervention || "Program / Project")}`, pageWidth - margin * 2);
+        doc.text(heading, margin, y + 2);
+        y += heading.length * 5 + 4;
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(45, 55, 60);
+        doc.setFontSize(9);
+        y = writeField("Location", [site?.barangay, site?.municipality_city, site?.province].filter(Boolean).join(", "), y);
+        y = writeField("CADP Site", site?.convergence_name, y);
+        y = writeField("KPI Category", record.kpi_category, y);
+        y = writeField("KPI", record.kpi, y);
+        y = writeField("Source of Fund", selectedOrganization ? (selectedOrganizationLabel || selectedOrganization) : getSourcesOfFund(record, selectedPeriodData?.year).join(", "), y);
+        y = writeField("Project Status", record.status, y);
+
+        const body = periods.map((period) => {
+          const info = getDisplayedFundingInfo(record, period);
+          const contributions = getDisplayedAgencyFunding(record, period.year);
+          return [
+            period.label.replace("–", "-"),
+            safeText(record[period.physicalField] || "-"),
+            amount(record[period.financialField]),
+            amount(info.currentFund),
+            amount(info.gap),
+            `${info.percentage.toFixed(2)}%`,
+            Number(record[period.financialField] || 0) > 0 ? info.status : "No target",
+            safeText(contributions.map((item) => `${item.agency}: ${amount(item.amount)}`).join("; ") || "-"),
+          ];
+        });
+        autoTable(doc, {
+          startY: y + 1,
+          head: [["Year", "Physical Target", "Financial Target", "Current Fund", "Funding Gap", "Funded", "Funding Status", "Contributions"]],
+          body,
+          margin: { left: margin, right: margin, top: 18, bottom: 18 },
+          theme: "grid",
+          styles: { font: "helvetica", fontSize: 7, cellPadding: 2, overflow: "linebreak", valign: "top" },
+          headStyles: { fillColor: [33, 115, 70], textColor: 255, fontStyle: "bold" },
+          columnStyles: { 0: { cellWidth: 21 }, 1: { cellWidth: 34 }, 2: { cellWidth: 32 }, 3: { cellWidth: 30 }, 4: { cellWidth: 30 }, 5: { cellWidth: 18 }, 6: { cellWidth: 28 } },
+        });
+        y = doc.lastAutoTable.finalY + 7;
+        doc.setFontSize(9);
+        y = writeField("Remarks", record.remarks, y);
+        y += 5;
+      });
+
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let page = 1; page <= totalPages; page += 1) {
+        doc.setPage(page);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(110, 110, 110);
+        doc.text(`CADP Programs and Projects | ${dateStamp}`, margin, pageHeight - 9);
+        doc.text(`Page ${page} of ${totalPages}`, right, pageHeight - 9, { align: "right" });
+      }
+      doc.save(`CADP_Programs_Projects_${dateStamp}.pdf`);
+    } catch (error) {
+      console.error("Unable to generate PDF report:", error);
+      setErrorMessage(error.message || "Unable to generate the PDF report.");
+    } finally {
+      setExportingPdf(false);
+    }
+  };
 
   const handleExportExcel = async () => {
     if (loading || exportingExcel || filteredRecords.length === 0) return;
     setExportingExcel(true);
+    setShowReportOptions(false);
     setErrorMessage("");
 
     try {
@@ -4718,16 +4838,25 @@ function ProgramsProjects() {
 
         </div>
         <div className="cadp-header-actions">
-          <button
-            type="button"
-            className="programs-add-button"
-            onClick={handleExportExcel}
-            disabled={loading || exportingExcel || filteredRecords.length === 0}
-            title="Download the currently filtered Programs and Projects as Excel"
-            style={{ background: "#217346", opacity: loading || exportingExcel || filteredRecords.length === 0 ? 0.55 : 1 }}
-          >
-            {exportingExcel ? "Generating Excel..." : "Export to Excel"}
-          </button>
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              className="programs-add-button"
+              onClick={() => setShowReportOptions((open) => !open)}
+              disabled={loading || exportingExcel || exportingPdf || filteredRecords.length === 0}
+              aria-expanded={showReportOptions}
+              aria-haspopup="true"
+              style={{ background: "#217346", opacity: loading || exportingExcel || exportingPdf || !filteredRecords.length ? 0.55 : 1 }}
+            >
+              {exportingExcel ? "Generating Excel..." : exportingPdf ? "Generating PDF..." : "Generate Report ▾"}
+            </button>
+            {showReportOptions && (
+              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 100, minWidth: 190, background: "#fff", border: "1px solid #d6e1d9", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: 6 }}>
+                <button type="button" onClick={handleExportExcel} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 5, background: "transparent", cursor: "pointer", color: "#1f2937" }}>Excel (.xlsx)</button>
+                <button type="button" onClick={handleExportPdf} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 5, background: "transparent", cursor: "pointer", color: "#1f2937" }}>PDF (.pdf)</button>
+              </div>
+            )}
+          </div>
           <FundingRequests profile={currentProfile} endorsementProject={endorsementProject} onCloseEndorsement={closeEndorsement} onAccepted={async () => {
             setSelectedSite(""); setSelectedPeriod("all"); setSelectedAgency(""); setSelectedLGU(""); setSearch("");
             await loadData();
