@@ -16,7 +16,7 @@ function CADPProfile() {
 
   const isLGU =
     role === "user" &&
-    profile?.organization_type?.toLowerCase() === "lgu";
+    String(profile?.organization_type || "").trim().toLowerCase() === "lgu";
 
   const loadSites = useCallback(async () => {
     setLoading(true);
@@ -42,30 +42,37 @@ function CADPProfile() {
           );
         }
 
+        // Correct table: agencies_lgus
+        // Correct column: municipality
         const { data: registeredLGU, error: lguError } =
           await supabase
-            .from("agency_lgus")
-            .select("province, municipality_city")
+            .from("agencies_lgus")
+            .select("province, municipality")
             .eq("id", profile.agency_lgu_id)
+            .eq("organization_type", "LGU")
             .single();
 
         if (lguError) throw lguError;
 
-        if (
-          !registeredLGU?.province ||
-          !registeredLGU?.municipality_city
-        ) {
+        const provinceName = String(
+          registeredLGU?.province || ""
+        ).trim();
+
+        const municipalityName = String(
+          registeredLGU?.municipality || ""
+        ).trim();
+
+        if (!provinceName || !municipalityName) {
           throw new Error(
             "Your LGU registration has incomplete location information."
           );
         }
 
+        // Only display CADP sites from the LGU's
+        // registered province and municipality.
         query = query
-          .eq("province", registeredLGU.province)
-          .eq(
-            "municipality_city",
-            registeredLGU.municipality_city
-          );
+          .ilike("province", provinceName)
+          .ilike("municipality_city", municipalityName);
       }
 
       const { data, error } = await query.order("created_at", {
@@ -87,7 +94,7 @@ function CADPProfile() {
   }, [isLGU, profile?.agency_lgu_id]);
 
   useEffect(() => {
-    loadSites();
+    void loadSites();
   }, [loadSites]);
 
   const filteredSites = useMemo(() => {
