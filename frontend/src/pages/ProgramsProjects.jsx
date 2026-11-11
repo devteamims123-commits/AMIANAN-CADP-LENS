@@ -4891,11 +4891,11 @@ function ProgramsProjects() {
 
 
 
-        <div className="programs-toolbar" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", alignItems: "end" }}>
+        <div className="programs-toolbar" style={{ display: "flex", flexWrap: "wrap", alignItems: "end", gap: 16 }}>
 
 
 
-          <label className="programs-site-field">
+          <label className="programs-site-field" style={{ flex: "1 1 180px", minWidth: 160 }}>
 
 
 
@@ -4979,7 +4979,7 @@ function ProgramsProjects() {
 
 
 
-          <label className="programs-period-field">
+          <label className="programs-period-field" style={{ flex: "1 1 180px", minWidth: 160 }}>
 
 
 
@@ -5105,7 +5105,7 @@ function ProgramsProjects() {
 
 
 
-          <label className="programs-search-field">
+          <label className="programs-search-field" style={{ flex: "1 1 180px", minWidth: 160 }}>
 
 
 
@@ -5157,26 +5157,7 @@ function ProgramsProjects() {
 
 
 
-          <div style={{ position: "relative" }}>
-            <button
-              type="button"
-              className="programs-add-button"
-              onClick={() => setShowReportOptions((open) => !open)}
-              disabled={loading || exportingExcel || exportingPdf || filteredRecords.length === 0}
-              aria-expanded={showReportOptions}
-              aria-haspopup="true"
-              style={{ background: "#217346", opacity: loading || exportingExcel || exportingPdf || !filteredRecords.length ? 0.55 : 1 }}
-            >
-              {exportingExcel ? "Generating Excel..." : exportingPdf ? "Generating PDF..." : "Generate Report ▾"}
-            </button>
-            {showReportOptions && (
-              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 100, minWidth: 190, background: "#fff", border: "1px solid #d6e1d9", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: 6 }}>
-                <button type="button" onClick={handleExportExcel} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 5, background: "transparent", cursor: "pointer", color: "#1f2937" }}>Excel (.xlsx)</button>
-                <button type="button" onClick={handleExportPdf} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 5, background: "transparent", cursor: "pointer", color: "#1f2937" }}>PDF (.pdf)</button>
-              </div>
-            )}
-          </div>
-          <p className="programs-result-count">
+          <p className="programs-result-count" style={{ flexShrink: 0 }}>
 
 
 
@@ -5197,6 +5178,26 @@ function ProgramsProjects() {
 
 
           </p>
+          <div style={{ position: "relative", marginLeft: "auto", flexShrink: 0 }}>
+            <button
+              type="button"
+              className="programs-add-button"
+              onClick={() => setShowReportOptions((open) => !open)}
+              disabled={loading || exportingExcel || exportingPdf || filteredRecords.length === 0}
+              aria-expanded={showReportOptions}
+              aria-haspopup="true"
+              style={{ background: "#217346", opacity: loading || exportingExcel || exportingPdf || !filteredRecords.length ? 0.55 : 1 }}
+            >
+              {exportingExcel ? "Generating Excel..." : exportingPdf ? "Generating PDF..." : "Generate Report ▾"}
+            </button>
+            {showReportOptions && (
+              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 100, minWidth: 190, background: "#fff", border: "1px solid #d6e1d9", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", padding: 6 }}>
+                <button type="button" onClick={handleExportExcel} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 5, background: "transparent", cursor: "pointer", color: "#1f2937" }}>Excel (.xlsx)</button>
+                <button type="button" onClick={handleExportPdf} style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, borderRadius: 5, background: "transparent", cursor: "pointer", color: "#1f2937" }}>PDF (.pdf)</button>
+              </div>
+            )}
+          </div>
+
 
 
 
