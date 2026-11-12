@@ -2,17 +2,32 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "./FundingRequests.css";
 
-export default function ProjectActions({ disabled = false, canFund, canAddFund = canFund, canEdit, canDelete, onFund, onEdit, onEndorse, onDelete }) {
+export default function ProjectActions({
+  disabled = false,
+  canFund = false,
+  canAddFund = canFund,
+  canEdit = false,
+  canEndorse = false,
+  canDelete = false,
+  onFund,
+  onEdit,
+  onEndorse,
+  onDelete,
+}) {
   const anchor = useRef(null);
   const menu = useRef(null);
   const [position, setPosition] = useState(null);
+
   useEffect(() => {
     if (!position) return;
     const close = (event) => {
       if (!anchor.current?.contains(event.target) && !menu.current?.contains(event.target)) setPosition(null);
     };
     const escape = (event) => {
-      if (event.key === "Escape") { setPosition(null); anchor.current?.focus(); }
+      if (event.key === "Escape") {
+        setPosition(null);
+        anchor.current?.focus();
+      }
     };
     const scroll = () => setPosition(null);
     document.addEventListener("pointerdown", close);
@@ -27,11 +42,23 @@ export default function ProjectActions({ disabled = false, canFund, canAddFund =
       window.removeEventListener("scroll", scroll, true);
     };
   }, [position]);
-  const run = (callback) => { if (disabled) return; setPosition(null); callback(); };
-  const canEndorse = canFund;
+
+  const run = (callback) => {
+    if (disabled || typeof callback !== "function") return;
+    setPosition(null);
+    callback();
+  };
+
   if (!canFund && !canEdit && !canEndorse && !canDelete) return <span>—</span>;
+
   return <>
-    <button type="button" className="cadp-action-toggle" ref={anchor} aria-expanded={Boolean(position)} aria-haspopup="true" disabled={disabled} title={disabled ? "Your agency must accept the funding request to use these actions." : undefined}
+    <button
+      type="button"
+      className="cadp-action-toggle"
+      ref={anchor}
+      aria-expanded={Boolean(position)}
+      aria-haspopup="true"
+      disabled={disabled}
       onClick={() => {
         if (disabled) return;
         const rect = anchor.current.getBoundingClientRect();
@@ -40,12 +67,15 @@ export default function ProjectActions({ disabled = false, canFund, canAddFund =
           left: Math.max(8, Math.min(rect.right - 210, window.innerWidth - 218)),
           top: rect.bottom + height > window.innerHeight ? Math.max(8, rect.top - height) : rect.bottom + 6,
         });
-      }}>Actions ▾</button>
-    {!disabled && position && createPortal(<div ref={menu} className="cadp-action-menu" style={position}>
-      {canFund && <button type="button" disabled={!canAddFund} title={!canAddFund ? "Accept the funding request first to add funds." : undefined} onClick={() => run(onFund)}>Add Fund</button>}
-      {canEdit && <button type="button" onClick={() => run(onEdit)}>Edit Project</button>}
-      {canEndorse && <button type="button" onClick={() => run(onEndorse)}>Endorse for Funding</button>}
-      {canDelete && <button type="button" className="cadp-danger" onClick={() => run(onDelete)}>Delete</button>}
-    </div>, document.body)}
+      }}
+    >Actions ▾</button>
+    {!disabled && position && createPortal(
+      <div ref={menu} className="cadp-action-menu" style={position}>
+        {canFund && <button type="button" disabled={!canAddFund} onClick={() => run(onFund)}>Add Fund</button>}
+        {canEdit && <button type="button" onClick={() => run(onEdit)}>Edit Project</button>}
+        {canEndorse && <button type="button" onClick={() => run(onEndorse)}>Endorse for Funding</button>}
+        {canDelete && <button type="button" className="cadp-danger" onClick={() => run(onDelete)}>Delete</button>}
+      </div>, document.body
+    )}
   </>;
 }

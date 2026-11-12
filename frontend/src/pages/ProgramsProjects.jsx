@@ -471,7 +471,8 @@ function ProgramsProjects() {
   const canFund = ["super_admin", "admin", "user"].includes(currentProfile?.role);
   const isProjectOwner = (record) => Boolean(record && ownedProjectIds.includes(String(record.id)));
   const canAddProjectFund = (record) => {
-    if (!canFund || !record || !isAuthorizedProject(record)) return false;
+    if (!canFund || !record) return false;
+    if (isLGU && !isAuthorizedProject(record) && !acceptedProjectIds.includes(String(record.id))) return false;
     if (["super_admin", "admin"].includes(currentProfile?.role)) return true;
     const agency = currentProfile?.agency?.trim().toLowerCase();
     return Boolean(agency && (
@@ -805,12 +806,9 @@ function ProgramsProjects() {
       // The direct Supabase queries are RLS-filtered. Do not reintroduce
       // otherwise-hidden projects from the accepted-projects RPC.
       const registeredSites = sitesResult.data || [];
-      const allowedSiteIds = new Set(registeredSites
-        .filter((site) => !isLGU || (scope && normalize(site.province) === normalize(scope.province) &&
-          normalize(site.municipality_city) === normalize(scope.municipality)))
-        .map((site) => String(site.id)));
-      const allowedProjects = (recordsResult.data || [])
-        .filter((record) => !isLGU || allowedSiteIds.has(String(record.cadp_site_id)));
+      // Supabase RLS determines which projects can be read, including accepted
+      // endorsements outside an LGU's registered municipality.
+      const allowedProjects = recordsResult.data || [];
       const allowedProjectIds = new Set(allowedProjects.map((record) => String(record.id)));
       setAcceptedProjectIds((acceptedData.projects || [])
         .filter((item) => allowedProjectIds.has(String(item.id)))
@@ -1027,8 +1025,6 @@ function ProgramsProjects() {
 
 
     return records.filter((record) => {
-      if (!isAuthorizedProject(record)) return false;
-
       const matchesSite =
 
 
@@ -2801,13 +2797,6 @@ function ProgramsProjects() {
 
 
   const openFundingForm = (record) => {
-    if (!isAuthorizedProject(record)) {
-      setErrorMessage("You cannot fund a project outside your registered LGU.");
-      return;
-    }
-
-
-
     if (!canAddProjectFund(record)) {
 
 
@@ -3289,8 +3278,8 @@ function ProgramsProjects() {
 
 
     if (!fundingRecord || !selectedFundingPeriod || fundingSaving) return;
-    if (!isAuthorizedProject(fundingRecord)) {
-      setFundingError("You cannot modify funding for a project outside your registered LGU.");
+    if (!editingContribution && !canAddProjectFund(fundingRecord)) {
+      setFundingError("You are not authorized to fund this project. Accept the endorsement first.");
       return;
     }
 
@@ -5758,7 +5747,7 @@ function ProgramsProjects() {
 
                     <td>
                       <ProjectActions
-                        disabled={!canFund} canFund={canFund} canAddFund={canAddProjectFund(record)} canEdit={canEdit(record)} canDelete={canDelete}
+                        disabled={loading} canFund={canAddProjectFund(record)} canAddFund={canAddProjectFund(record)} canEdit={canEdit(record)} canEndorse={canEdit(record)} canDelete={canDelete}
                         onFund={() => openFundingForm(record)}
                         onEdit={() => openEditForm(record)}
                         onEndorse={() => setEndorsementProject(record)}
