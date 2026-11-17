@@ -3857,15 +3857,7 @@ function ProgramsProjects() {
 
 
 
-      return formatMoney(
-
-
-
-        record[selectedPeriodData.financialField]
-
-
-
-      );
+      return <span style={{ color: "#DC2626" }}>{formatMoney(record[selectedPeriodData.financialField])}</span>;
 
 
 
@@ -3953,23 +3945,7 @@ function ProgramsProjects() {
 
 
 
-            <span>
-
-
-
-              {formatMoney(
-
-
-
-                record[period.financialField]
-
-
-
-              )}
-
-
-
-            </span>
+            <span style={{ color: "#DC2626" }}>{formatMoney(record[period.financialField])}</span>
 
 
 
