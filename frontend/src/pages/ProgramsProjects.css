@@ -3082,41 +3082,59 @@
    PROGRAMS & PROJECTS - FONT SIZE UPDATE
    ========================================= */
 
-.programs-table {
-  font-size: 13px;
-}
+/* Programs & Projects - Improved Readability */
 
-.programs-table th {
-  font-size: 12px;
-}
+  .programs-table {
+    font-size: 15px;
+  }
 
-.programs-status {
-  font-size: 11px;
-}
+  .programs-table th {
+    font-size: 14px;
+    line-height: 1.5;
+  }
 
-.programs-target-row strong,
-.programs-target-row span {
-  font-size: 12px;
-}
+  .programs-table td {
+    font-size: 15px;
+    line-height: 1.6;
+  }
 
-.programs-financial-row strong,
-.programs-financial-row span {
-  font-size: 12px;
-}
+  .programs-period-label {
+    font-size: 12px;
+  }
 
-.programs-year-funding > strong {
-  font-size: 11px;
-}
+  .programs-status {
+    font-size: 12px;
+  }
 
-.programs-funding-status {
-  font-size: 10px;
-}
+  .programs-target-row strong,
+  .programs-target-row span,
+  .programs-financial-row strong,
+  .programs-financial-row span {
+    font-size: 13px;
+  }
 
-.programs-percentage {
-  font-size: 13px;
-}
+  .programs-current-fund small {
+    font-size: 12px;
+  }
 
-.programs-actions button {
-  font-size: 12px;
-}
+  .programs-year-funding > strong {
+    font-size: 13px;
+  }
+
+  .programs-funding-status {
+    font-size: 12px;
+  }
+
+  .programs-percentage {
+    font-size: 15px;
+  }
+
+  .programs-funding-numbers {
+    font-size: 12px;
+  }
+
+  .programs-no-funding {
+    font-size: 13px;
+  }
+
 }
