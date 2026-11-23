@@ -3078,4 +3078,45 @@
     display: block;
     line-height: 1.4;
   }
+  /* =========================================
+   PROGRAMS & PROJECTS - FONT SIZE UPDATE
+   ========================================= */
+
+.programs-table {
+  font-size: 13px;
+}
+
+.programs-table th {
+  font-size: 12px;
+}
+
+.programs-status {
+  font-size: 11px;
+}
+
+.programs-target-row strong,
+.programs-target-row span {
+  font-size: 12px;
+}
+
+.programs-financial-row strong,
+.programs-financial-row span {
+  font-size: 12px;
+}
+
+.programs-year-funding > strong {
+  font-size: 11px;
+}
+
+.programs-funding-status {
+  font-size: 10px;
+}
+
+.programs-percentage {
+  font-size: 13px;
+}
+
+.programs-actions button {
+  font-size: 12px;
+}
 }
