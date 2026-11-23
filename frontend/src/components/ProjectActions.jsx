@@ -49,7 +49,7 @@ export default function ProjectActions({
     callback();
   };
 
-  if (!canFund && !canEdit && !canEndorse && !canDelete) return <span>—</span>;
+  if (!canFund && !canAddFund && !canEdit && !canEndorse && !canDelete) return <span>—</span>;
 
   return <>
     <button
@@ -71,7 +71,7 @@ export default function ProjectActions({
     >Actions ▾</button>
     {!disabled && position && createPortal(
       <div ref={menu} className="cadp-action-menu" style={position}>
-        {canFund && <button type="button" disabled={!canAddFund} onClick={() => run(onFund)}>Add Fund</button>}
+        {canAddFund && <button type="button" onClick={() => run(onFund)}>Add Fund</button>}
         {canEdit && <button type="button" onClick={() => run(onEdit)}>Edit Project</button>}
         {canEndorse && <button type="button" onClick={() => run(onEndorse)}>Endorse for Funding</button>}
         {canDelete && <button type="button" className="cadp-danger" onClick={() => run(onDelete)}>Delete</button>}

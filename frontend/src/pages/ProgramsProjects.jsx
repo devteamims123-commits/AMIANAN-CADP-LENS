@@ -529,6 +529,16 @@ function ProgramsProjects() {
 
       : error.message || "Unable to save funding contribution.";
 
+  // Endorsement is a separate action from editing and contributing funds.
+  // Agency and LGU users can initiate requests for projects visible under RLS.
+  // The send_funding_endorsement RPC must independently authorize the sender.
+  const canEndorseProject = (record) => Boolean(
+    record && ["super_admin", "admin", "user"].includes(currentProfile?.role) &&
+    (currentProfile?.role !== "user" ||
+      (["agency", "lgu"].includes(normalize(currentProfile?.organization_type)) &&
+       Boolean(currentProfile?.agency?.trim())))
+  );
+
   const canDelete = currentProfile?.role === "super_admin";
 
 
@@ -5733,7 +5743,7 @@ function ProgramsProjects() {
 
                     <td>
                       <ProjectActions
-                        disabled={loading} canFund={canAddProjectFund(record)} canAddFund={canAddProjectFund(record)} canEdit={canEdit(record)} canEndorse={canEdit(record)} canDelete={canDelete}
+                        disabled={loading} canFund={canFund} canAddFund={canAddProjectFund(record)} canEdit={canEdit(record)} canEndorse={canEndorseProject(record)} canDelete={canDelete}
                         onFund={() => openFundingForm(record)}
                         onEdit={() => openEditForm(record)}
                         onEndorse={() => setEndorsementProject(record)}
