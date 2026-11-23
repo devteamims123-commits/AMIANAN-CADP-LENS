@@ -4881,6 +4881,16 @@ function ProgramsProjects() {
 
 
         <style>{`
+          /* Readable Programs / Projects table typography */
+          .programs-page .programs-table tbody td,
+          .programs-page .programs-table tbody td :is(div, span, strong, small),
+          .programs-page .programs-table thead th {
+            font-size: 12px !important;
+            line-height: 1.5;
+          }
+          .programs-page .programs-table .programs-period-label {
+            font-size: 12px !important;
+          }
           .programs-report-toolbar > label { min-width: 0; }
           .programs-report-toolbar > label select,
           .programs-report-toolbar > label input { width: 100%; min-width: 0; }
