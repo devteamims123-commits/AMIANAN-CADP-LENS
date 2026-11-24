@@ -78,8 +78,76 @@ function EyeIcon({ visible }) {
   );
 }
 
+function canRetryVerification(application, status, now) {
+  if (application.status !== "approved" || !application.auth_user_id || status !== "approved") return false;
+  const last = Date.parse(application.last_invitation_attempt_at || "");
+  if (Number.isFinite(last) && now - last < 60000) return false;
+  if (["failed", "not_sent"].includes(application.invitation_status)) return true;
+  if (application.invitation_status === "sent") return now - Date.parse(application.invitation_sent_at || "") >= 3600000;
+  if (application.invitation_status === "sending") return now - last >= 300000;
+  return false;
+}
+
 function UserManagement() {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
   const [users, setUsers] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [applicationFilter, setApplicationFilter] = useState("pending");
+  const [applicationLoading, setApplicationLoading] = useState(true);
+  const [applicationError, setApplicationError] = useState("");
+  const [review, setReview] = useState(null);
+  const [reason, setReason] = useState("");
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [accountStatuses, setAccountStatuses] = useState({});
+
+  const loadApplications = async () => {
+    setApplicationLoading(true);
+    setApplicationError("");
+    try {
+      const { data, error } = await supabase.from("pending_registrations")
+        .select("id,full_name,username,email,organization_type,agency_lgu_id,status,invitation_status,rejection_reason,created_at,auth_user_id,invitation_attempts,invitation_sent_at,last_invitation_attempt_at,invitation_error")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setApplications(data || []);
+      const profiles = await supabase.from("profiles").select("id,account_status");
+      if (profiles.error) { setAccountStatuses({}); throw profiles.error; }
+      setAccountStatuses(Object.fromEntries((profiles.data || []).map(p => [p.id, p.account_status])));
+    } catch (error) {
+      setApplicationError(error.message || "Unable to load applications.");
+    } finally { setApplicationLoading(false); }
+  };
+
+  const openReview = (application, action) => {
+    setReview({ application, action }); setReason(""); setReviewError("");
+  };
+
+  const submitReview = async (event) => {
+    event.preventDefault();
+    if (!review || reviewBusy) return;
+    if (review.action === "rejected" && !reason.trim()) { setReviewError("Rejection reason is required."); return; }
+    setReviewBusy(true); setReviewError("");
+    try {
+      const { data, error } = await supabase.functions.invoke("review-account", {
+        body: { registration_id: review.application.id, action: review.action, reason: reason.trim() || null }
+      });
+      if (error) {
+        let detail;
+        try { detail = await error.context?.json(); } catch { /* no JSON response */ }
+        throw new Error(detail?.error || error.message);
+      }
+      if (data?.success !== true) throw new Error(data?.error || data?.message || "Review failed.");
+      setMessage(data?.message || "Registration review completed.");
+      setMessageType((data?.requires_attention || (data?.email_sent === false && data?.account_status !== "active" && review.action !== "rejected")) ? "error" : "success");
+      setReview(null);
+      await Promise.all([loadApplications(), loadUsers()]);
+    } catch (error) { setReviewError(error.message || "Review failed."); await Promise.all([loadApplications(), loadUsers()]); }
+    finally { setReviewBusy(false); }
+  };
   const [organizations, setOrganizations] = useState([]);
   const [organizationError, setOrganizationError] = useState("");
   const [currentUserId, setCurrentUserId] =
@@ -207,6 +275,7 @@ function UserManagement() {
 
   useEffect(() => {
     loadUsers();
+    loadApplications();
     let active = true;
     supabase.from("agencies_lgus").select("id, name, organization_type")
       .order("name", { ascending: true }).then(({ data, error }) => {
@@ -584,7 +653,7 @@ function UserManagement() {
 
       resetModalState();
 
-      await loadUsers();
+      await Promise.all([loadUsers(), loadApplications()]);
     } catch (error) {
       /*
         API errors while modal is open
@@ -626,7 +695,7 @@ function UserManagement() {
         setModalMode(null);
         setSelectedUser(null);
 
-        await loadUsers();
+        await Promise.all([loadUsers(), loadApplications()]);
       } catch (error) {
         setModalError(
           error.message
@@ -680,6 +749,41 @@ function UserManagement() {
           </div>
         )}
 
+        <div className="um-table-card" style={{ marginBottom: 24 }}>
+          <div style={{ padding: 16 }}>
+            <h2 style={{ margin: "0 0 8px", fontSize: 19 }}>Registration Applications</h2>
+            <p style={{ margin: "0 0 12px" }}>Approve or reject registrations. Approved applicants must verify their email before accessing CADP.</p>
+            <div className="um-toolbar">
+              <select aria-label="Application status" value={applicationFilter} onChange={e => setApplicationFilter(e.target.value)}>
+                { ["pending", "approved", "rejected", "all"].map(status => <option key={status} value={status}>{status === "all" ? "All applications" : status[0].toUpperCase() + status.slice(1)} ({applications.filter(a => status === "all" || a.status === status).length})</option>) }
+              </select>
+              <button type="button" className="um-edit" onClick={loadApplications} disabled={applicationLoading || reviewBusy}>Refresh</button>
+            </div>
+          </div>
+          {applicationError ? <div className="um-message error" role="alert">{applicationError}</div> : applicationLoading ? <div className="um-state">Loading applications...</div> : (
+            <div className="um-table-wrap"><table className="um-table">
+              <thead><tr><th>Applicant</th><th>Email</th><th>Organization</th><th>Status</th><th>Verification Email</th><th>Actions</th></tr></thead>
+              <tbody>{applications.filter(a => applicationFilter === "all" || a.status === applicationFilter).map(a => (
+                <tr key={a.id}>
+                  <td><strong>{a.full_name}</strong><br/><small>{a.username}</small></td>
+                  <td>{a.email}</td>
+                  <td>{organizations.find(o => o.id === a.agency_lgu_id)?.name || "—"}<br/><small>{a.organization_type}</small></td>
+                  <td>{a.status === "approved" && accountStatuses[a.auth_user_id] === "active" ? "Active" : a.status === "approved" ? "Approved — awaiting verification" : a.status === "pending" ? "Pending approval" : "Rejected"}{a.rejection_reason && <><br/><small>{a.rejection_reason}</small></>}</td>
+                  <td>{accountStatuses[a.auth_user_id] === "active" ? "Verified" : (a.invitation_status || "not_sent").replaceAll("_", " ")}
+                    {accountStatuses[a.auth_user_id] !== "active" && a.invitation_status === "sent" && <><br/><small>Request accepted; delivery not guaranteed</small></>}
+                    {a.invitation_error && accountStatuses[a.auth_user_id] !== "active" && <><br/><small>{a.invitation_error}</small></>}
+                    {a.invitation_attempts > 0 && <><br/><small>Attempts: {a.invitation_attempts}</small></>}
+                  </td>
+                  <td><div className="um-actions">
+                    {a.status === "pending" && <><button type="button" className="um-edit" disabled={reviewBusy || !a.auth_user_id || accountStatuses[a.auth_user_id] !== "pending"} onClick={() => openReview(a, "approved")}>Approve</button><button type="button" className="um-delete" disabled={reviewBusy || !a.auth_user_id || accountStatuses[a.auth_user_id] !== "pending"} onClick={() => openReview(a, "rejected")}>Reject</button></>}
+                    {canRetryVerification(a, accountStatuses[a.auth_user_id], now) && <button type="button" className="um-edit" disabled={reviewBusy} onClick={() => openReview(a, "retry_invitation")}>Retry Verification Email</button>}
+                  </div></td>
+                </tr>
+              ))}{!applications.some(a => applicationFilter === "all" || a.status === applicationFilter) && <tr><td colSpan={6}>No applications found.</td></tr>}</tbody>
+            </table></div>
+          )}
+        </div>
+        <h2 style={{ fontSize: 19 }}>System Accounts</h2>
         <div className="um-toolbar">
           <input
             type="search"
@@ -755,6 +859,7 @@ function UserManagement() {
 
                     <th>Organization</th>
                     <th>Type</th>
+                    <th>Account Status</th>
                     <th>
                       Role
                     </th>
@@ -772,7 +877,9 @@ function UserManagement() {
                         user.id ===
                         currentUserId;
 
-                      const protectedSuperAdmin =
+                      const reviewManaged = applications.some(a => a.auth_user_id === user.id) && accountStatuses[user.id] !== "active";
+
+                       const protectedSuperAdmin =
                         user.role ===
                           "super_admin" &&
                         !isSelf;
@@ -808,6 +915,7 @@ function UserManagement() {
 
                           <td>{user.organization || "—"}</td>
                           <td>{user.organization_type || "—"}</td>
+                          <td>{accountStatuses[user.id] || user.account_status || "—"}</td>
                           <td>
                             <span
                               className={`um-role ${user.role}`}
@@ -824,6 +932,7 @@ function UserManagement() {
                               <button
                                 type="button"
                                 className="um-edit"
+                                disabled={reviewManaged || applicationLoading || Boolean(applicationError)}
                                 onClick={() =>
                                   openEdit(
                                     user
@@ -837,7 +946,7 @@ function UserManagement() {
                                 type="button"
                                 className="um-delete"
                                 disabled={
-                                  isSelf ||
+                                  isSelf || reviewManaged || applicationLoading || Boolean(applicationError) ||
                                   protectedSuperAdmin
                                 }
                                 onClick={() =>
@@ -1375,6 +1484,17 @@ function UserManagement() {
             </div>
           </div>
         )}
+      {review && <div className="um-modal-backdrop" onMouseDown={() => !reviewBusy && setReview(null)}>
+        <div className="um-modal" role="dialog" aria-modal="true" aria-label="Review registration" onMouseDown={e => e.stopPropagation()}>
+          <div className="um-modal-head"><h2>{review.action === "approved" ? "Approve Registration" : review.action === "rejected" ? "Reject Registration" : "Retry Verification Email"}</h2></div>
+          <p>{review.application.full_name} — {review.application.email}</p>
+          {reviewError && <div className="um-modal-error" role="alert">{reviewError}</div>}
+          <form onSubmit={submitReview}>
+            {review.action === "rejected" ? <label>Rejection reason<textarea style={{ width: "100%", minHeight: 90 }} required maxLength={2000} value={reason} onChange={e => setReason(e.target.value)} disabled={reviewBusy}/></label> : <p>This will request a verification email if the account is approved and not yet verified. The applicant keeps their original password.</p>}
+            <div className="um-modal-actions"><button type="button" className="um-cancel" disabled={reviewBusy} onClick={() => setReview(null)}>Cancel</button><button type="submit" className={review.action === "rejected" ? "um-confirm-delete" : "um-save"} disabled={reviewBusy}>{reviewBusy ? "Processing..." : "Confirm"}</button></div>
+          </form>
+        </div>
+      </div>}
     </section>
   );
 }

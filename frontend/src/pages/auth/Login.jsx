@@ -27,56 +27,83 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (loading) return;
     setLoading(true);
     setMessage("");
+    let authenticated = false;
 
     try {
-      const { data, error } =
-        await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === "email_not_confirmed") {
+          throw new Error("Your email is not verified. If your registration is still pending, please wait for Super Admin approval. If approved, check your verification email.");
+        }
+        throw error;
+      }
 
-      const { data: profile, error: profileError } =
-        await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", data.user.id)
-          .single();
+      authenticated = Boolean(data.session);
+      if (!data.user || !data.session) {
+        throw new Error("Unable to establish a valid session.");
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role, account_status")
+        .eq("id", data.user.id)
+        .single();
 
       if (profileError || !profile) {
-        await supabase.auth.signOut();
-
-        throw new Error(
-          "Your account profile could not be loaded."
-        );
+        throw new Error("Your account profile could not be loaded.");
       }
 
-      const allowedRoles = [
-        "super_admin",
-        "admin",
-        "user",
-        "viewer",
-      ];
+      switch (profile.account_status) {
+        case "pending":
+          throw new Error("Your account is awaiting Super Admin approval.");
+        case "approved":
+          throw new Error("Your account is approved but not yet active. Please verify your email or contact the administrator.");
+        case "rejected":
+          throw new Error("Your registration has been rejected. Please contact the administrator.");
+        case "suspended":
+          throw new Error("Your account is suspended. Please contact the administrator.");
+        case "active":
+          break;
+        default:
+          throw new Error("Your account is not authorized to access the system.");
+      }
 
+      if (!data.user.email_confirmed_at) {
+        throw new Error("Please verify your email address before signing in.");
+      }
+
+      const allowedRoles = ["super_admin", "admin", "user", "viewer"];
       if (!allowedRoles.includes(profile.role)) {
-        await supabase.auth.signOut();
-
-        throw new Error(
-          "Your account does not have a valid role."
-        );
+        throw new Error("Your account does not have a valid role.");
       }
 
-      // All roles now use one Dashboard.
-      navigate("/dashboard", {
-        replace: true,
-      });
+      // Enforce the same active-account rule used by database RLS.
+      const { data: allowed, error: accessError } = await supabase.rpc("cadp_is_active_account");
+      if (accessError || allowed !== true) {
+        throw new Error("Your account access could not be authorized. Please contact the administrator.");
+      }
+
+      setPassword("");
+      navigate("/dashboard", { replace: true });
     } catch (error) {
-      setMessage(
-        error.message || "Unable to sign in."
-      );
+      let cleanupFailed = false;
+      if (authenticated) {
+        try {
+          const { error: signOutError } = await supabase.auth.signOut({ scope: "local" });
+          cleanupFailed = Boolean(signOutError);
+        } catch {
+          cleanupFailed = true;
+        }
+      }
+      setPassword("");
+      setMessage((error.message || "Unable to sign in.") + (cleanupFailed ? " Session cleanup failed. Please close the page and contact the administrator." : ""));
     } finally {
       setLoading(false);
     }
@@ -160,7 +187,7 @@ function Login() {
           </div>
 
           {message && (
-            <div className="login-message">
+            <div className="login-message" role="alert">
               {message}
             </div>
           )}

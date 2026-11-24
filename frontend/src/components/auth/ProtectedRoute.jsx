@@ -19,7 +19,8 @@ export default function ProtectedRoute() {
     let active = true;
     let currentUserId = null;
 
-    async function loadProfile(session) {
+    async function loadProfile(session, force = false) {
+      if (!active) return;
       if (!session?.user?.id) {
         currentUserId = null;
         requestId.current += 1;
@@ -28,7 +29,7 @@ export default function ProtectedRoute() {
       }
 
       const userId = session.user.id;
-      if (currentUserId === userId) return;
+      if (currentUserId === userId && !force) return;
       currentUserId = userId;
       const request = ++requestId.current;
       setAuth({ status: "checking", profile: null, error: "" });
@@ -36,11 +37,18 @@ export default function ProtectedRoute() {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, full_name, username, email, role, organization, organization_type, agency_lgu_id")
+          .select("id, full_name, username, email, role, organization, organization_type, agency_lgu_id, account_status")
           .eq("id", userId)
           .single();
         if (error) throw error;
-        if (!data?.role) throw new Error("Your profile has no assigned role.");
+        const { data: permitted, error: permissionError } = await supabase.rpc("cadp_is_active_account");
+        if (permissionError) throw permissionError;
+        if (!active || request !== requestId.current) return;
+        if (data?.account_status !== "active" || permitted !== true ||
+            !["super_admin", "admin", "user", "viewer"].includes(data?.role)) {
+          setAuth({ status: "denied", profile: null, error: "Your account must be approved, active and email verified before accessing CADP." });
+          return;
+        }
         if (active && request === requestId.current) {
           setAuth({ status: "ready", profile: { ...data, agency: data.organization ?? "" }, error: "" });
         }
@@ -63,9 +71,10 @@ export default function ProtectedRoute() {
         currentUserId = null;
         requestId.current += 1;
         setAuth({ status: "signed_out", profile: null, error: "" });
-      } else if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
-        // A token refresh does not restart the profile check or hide the page.
-        void loadProfile(session);
+      } else if (["INITIAL_SESSION", "SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED"].includes(event)) {
+        // Defer Supabase queries until the auth callback has returned.
+        const force = event === "TOKEN_REFRESHED" || event === "USER_UPDATED";
+        setTimeout(() => { if (active) void loadProfile(session, force); }, 0);
       }
     });
 
@@ -90,14 +99,20 @@ export default function ProtectedRoute() {
 
   if (auth.status === "checking") return null;
   if (auth.status === "signed_out") return <Navigate to="/login" replace />;
-  if (auth.status === "error") {
+  if (auth.status === "error" || auth.status === "denied") {
     return (
       <div role="alert" style={{ padding: 32 }}>
         <p>{auth.error}</p>
         <button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button>
+        <button type="button" onClick={async () => {
+          const { error } = await supabase.auth.signOut({ scope: "local" });
+          if (error) setAuth({ status: "error", profile: null, error: "Unable to sign out. Please retry." });
+        }}>Sign Out</button>
       </div>
     );
   }
+
+  if (auth.status !== "ready" || !auth.profile) return null;
 
   return (
     <ProtectedAuthContext.Provider value={{ profile: auth.profile, role: auth.profile.role }}>

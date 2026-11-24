@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { supabase } from "../../services/supabase";
 
 function Register() {
-  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     fullName: "",
@@ -49,6 +48,8 @@ function Register() {
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => {
     setForm((current) => ({
@@ -60,6 +61,7 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (loading || success) return;
     setMessage("");
     setSuccess(false);
 
@@ -73,76 +75,40 @@ function Register() {
       return;
     }
 
-    if (form.password.length < 6) {
-      setMessage("Password must contain at least 6 characters.");
+    if (form.password.length < 8 || new TextEncoder().encode(form.password).length > 72) {
+      setMessage("Password must contain at least 8 characters and no more than 72 UTF-8 bytes.");
       return;
     }
-
     if (form.password !== form.confirmPassword) {
       setMessage("Passwords do not match.");
       return;
     }
-
     setLoading(true);
 
     try {
-      // Check usernames without exposing public.profiles to anonymous users.
-      const { data: usernameTaken, error: usernameError } = await supabase.rpc(
-        "is_username_taken",
-        { requested_username: form.username.trim() }
-      );
-
-      if (usernameError) {
-        throw new Error("Unable to check username availability. Please try again.");
-      }
-
-      if (usernameTaken) {
-        setMessage("This username is already taken. Please choose another username.");
-        return;
-      }
-
-      const { data, error } = await supabase.auth.signUp({
-        email: form.email.trim(),
-        password: form.password,
-        options: {
-          data: {
-            full_name: form.fullName.trim(),
-            username: form.username.trim(),
-            organization: form.organization.trim(),
-            organization_type: form.organizationType,
-            agency_lgu_id: form.organizationId,
-          },
+      const { data, error } = await supabase.functions.invoke("register-pending-user", {
+        body: {
+          full_name: form.fullName.trim(),
+          username: form.username.trim(),
+          email: form.email.trim().toLowerCase(),
+          organization_type: form.organizationType,
+          agency_lgu_id: form.organizationId,
+          password: form.password,
         },
       });
-
       if (error) {
-        // A concurrent signup can still claim a username after the availability check.
-        if (/database error saving new user/i.test(error.message || "")) {
-          const { data: takenNow, error: recheckError } = await supabase.rpc(
-            "is_username_taken",
-            { requested_username: form.username.trim() }
-          );
-          if (!recheckError && takenNow) {
-            throw new Error("This username is already taken. Please choose another username.");
-          }
-        }
-        throw error;
+        let details;
+        try { details = await error.context?.json(); } catch { /* no JSON response */ }
+        throw new Error(details?.error || error.message || "Unable to submit registration.");
       }
-
-      if (data.session) {
-        await supabase.auth.signOut();
-      }
-
+      if (!data?.success) throw new Error(data?.error || "Unable to submit registration.");
       setSuccess(true);
-      setMessage(
-        "Account created successfully. Please check your email for verification."
-      );
-
-      setTimeout(() => {
-        navigate("/login", { replace: true });
-      }, 1800);
+      setForm((current) => ({ ...current, password: "", confirmPassword: "" }));
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+      setMessage("Registration submitted successfully. Please wait for Super Admin approval and email verification before signing in.");
     } catch (error) {
-      setMessage(error.message || "Unable to create account.");
+      setMessage(error.message || "Unable to submit registration.");
     } finally {
       setLoading(false);
     }
@@ -159,6 +125,7 @@ function Register() {
         </div>
 
         <form onSubmit={handleSubmit}>
+          <fieldset disabled={loading || success} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
           <div className="form-group">
             <label htmlFor="fullName">Full Name</label>
 
@@ -227,38 +194,28 @@ function Register() {
 
           <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="registerPassword">Password</label>
-
-              <input
-                id="registerPassword"
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Create a password"
-                autoComplete="new-password"
-                required
-              />
+              <label htmlFor="password">Password</label>
+              <div style={{ position: "relative" }}>
+                <input id="password" name="password" type={showPassword ? "text" : "password"} value={form.password} onChange={handleChange} placeholder="Enter password" autoComplete="new-password" minLength={8} required style={{ width: "100%", boxSizing: "border-box", paddingRight: 58 }} />
+                <button type="button" aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword} onClick={() => setShowPassword((v) => !v)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "transparent", border: 0, color: "#435b37", cursor: "pointer", fontSize: 12 }}>{showPassword ? "Hide" : "Show"}</button>
+              </div>
             </div>
-
             <div className="form-group">
               <label htmlFor="confirmPassword">Confirm Password</label>
-
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={form.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm password"
-                autoComplete="new-password"
-                required
-              />
+              <div style={{ position: "relative" }}>
+                <input id="confirmPassword" name="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={form.confirmPassword} onChange={handleChange} placeholder="Confirm password" autoComplete="new-password" minLength={8} required style={{ width: "100%", boxSizing: "border-box", paddingRight: 58 }} />
+                <button type="button" aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"} aria-pressed={showConfirmPassword} onClick={() => setShowConfirmPassword((v) => !v)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "transparent", border: 0, color: "#435b37", cursor: "pointer", fontSize: 12 }}>{showConfirmPassword ? "Hide" : "Show"}</button>
+              </div>
             </div>
           </div>
+          </fieldset>
+          <p className="registration-notice" style={{ fontSize: 13, lineHeight: 1.6, color: "#435b37", background: "#edf6ef", padding: "12px 14px", borderRadius: 9, margin: "0 0 18px" }}>
+            Your registration requires Super Admin approval. Once approved, a verification email will be requested. After verification, you can sign in using your registered password.
+          </p>
 
           {message && (
             <div
+              role={success ? "status" : "alert"}
               className={`form-message ${
                 success ? "success" : "error"
               }`}
@@ -270,9 +227,9 @@ function Register() {
           <button
             className="primary-button"
             type="submit"
-            disabled={loading || organizationsLoading || Boolean(organizationsError)}
+            disabled={success || loading || organizationsLoading || Boolean(organizationsError)}
           >
-            {loading ? "Creating Account..." : "Create Account"}
+            {success ? "Registration Submitted" : loading ? "Submitting Registration..." : "Submit Registration"}
           </button>
         </form>
 
