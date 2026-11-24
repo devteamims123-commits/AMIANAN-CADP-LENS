@@ -20,6 +20,8 @@ export default function AgencyLGURegistration() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
+  const isAgency = form.organization_type === "Agency";
+
   async function refresh() {
     const { data, error: queryError } = await supabase.from("agencies_lgus")
       .select("id, organization_type, name, region, province, municipality")
@@ -32,6 +34,7 @@ export default function AgencyLGURegistration() {
     ...prev,
     [key]: value,
     ...(key === "province" ? { municipality: "" } : {}),
+    ...(key === "organization_type" && value === "Agency" ? { province: "", municipality: "" } : {}),
   }));
   const clear = () => { setForm(empty); setEditingId(null); setNotice(""); setError(""); };
 
@@ -41,8 +44,15 @@ export default function AgencyLGURegistration() {
     const payload = Object.fromEntries(Object.entries(form).map(([key, value]) => [key, value.trim()]));
     try {
       if (!payload.name || !payload.organization_type) throw new Error("Organization type and name are required.");
-      if (!LOCATIONS[payload.province]) throw new Error("Please select a province in Region I.");
-      if (!LOCATIONS[payload.province].includes(payload.municipality)) throw new Error("Please select a city or municipality under the chosen province.");
+      if (payload.organization_type === "Agency") {
+        payload.province = null;
+        payload.municipality = null;
+      } else if (payload.organization_type === "LGU") {
+        if (!LOCATIONS[payload.province]) throw new Error("Please select a province in Region I.");
+        if (!LOCATIONS[payload.province].includes(payload.municipality)) throw new Error("Please select a city or municipality under the chosen province.");
+      } else {
+        throw new Error("Invalid organization type.");
+      }
       payload.region = REGION;
       let result;
       if (editingId) {
@@ -61,7 +71,7 @@ export default function AgencyLGURegistration() {
   }
   function edit(item) {
     setEditingId(item.id);
-    setForm({ organization_type: item.organization_type, name: item.name, region: REGION, province: LOCATIONS[item.province] ? item.province : "", municipality: LOCATIONS[item.province]?.includes(item.municipality) ? item.municipality : "" });
+    setForm({ organization_type: item.organization_type, name: item.name, region: REGION, province: item.organization_type === "LGU" && LOCATIONS[item.province] ? item.province : "", municipality: item.organization_type === "LGU" && LOCATIONS[item.province]?.includes(item.municipality) ? item.municipality : "" });
     setNotice(""); setError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -86,8 +96,8 @@ export default function AgencyLGURegistration() {
           <label>Organization Type <span className="agency-required">*</span><select value={form.organization_type} onChange={(e) => update("organization_type", e.target.value)} required><option value="LGU">LGU</option><option value="Agency">Agency</option></select></label>
           <label>Agency / LGU Name <span className="agency-required">*</span><input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Enter agency or LGU name" required maxLength={200}/></label>
           <label>Region<input value={REGION} readOnly aria-readonly="true" /></label>
-          <label>Province <span className="agency-required">*</span><select value={form.province} onChange={(e) => update("province", e.target.value)} required><option value="">Select province</option>{Object.keys(LOCATIONS).map((province) => <option key={province} value={province}>{province}</option>)}</select></label>
-          <label>City / Municipality <span className="agency-required">*</span><select value={form.municipality} onChange={(e) => update("municipality", e.target.value)} disabled={!form.province} required><option value="">{form.province ? "Select city or municipality" : "Select a province first"}</option>{(LOCATIONS[form.province] || []).map((municipality) => <option key={municipality} value={municipality}>{municipality}</option>)}</select></label>
+          <label className={isAgency ? "agency-field-disabled" : undefined}>Province {!isAgency && <span className="agency-required">*</span>}<select value={form.province} onChange={(e) => update("province", e.target.value)} disabled={isAgency} required={!isAgency}><option value="">{isAgency ? "Not applicable to Agency" : "Select province"}</option>{!isAgency && Object.keys(LOCATIONS).map((province) => <option key={province} value={province}>{province}</option>)}</select></label>
+          <label className={isAgency ? "agency-field-disabled" : undefined}>City / Municipality {!isAgency && <span className="agency-required">*</span>}<select value={form.municipality} onChange={(e) => update("municipality", e.target.value)} disabled={isAgency || !form.province} required={!isAgency}><option value="">{isAgency ? "Not applicable to Agency" : form.province ? "Select city or municipality" : "Select a province first"}</option>{!isAgency && (LOCATIONS[form.province] || []).map((municipality) => <option key={municipality} value={municipality}>{municipality}</option>)}</select></label>
         </div>
         {error && <p className="agency-error" role="alert">{error}</p>}
         {notice && <p className="agency-success" role="status">{notice}</p>}

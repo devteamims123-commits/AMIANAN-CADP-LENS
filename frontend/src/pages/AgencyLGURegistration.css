@@ -303,3 +303,7 @@
 .agency-grid input[readonly] { background: #f7faf7; color: #536459; }
 .agency-grid select:disabled { background: #f7f9f7; color: #87958b; cursor: not-allowed; }
 .agency-actions button:hover:not(:disabled) { filter: brightness(.96); }
+
+/* Agency location fields */
+.agency-grid label.agency-field-disabled { color: #87958b; }
+.agency-grid .agency-field-disabled select:disabled { background: #f1f3f1; color: #87958b; border-color: #dce3dd; opacity: 1; cursor: not-allowed; }
