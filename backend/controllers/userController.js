@@ -133,19 +133,19 @@ export async function updateUser(req, res) {
     }
 
     const { data: target, error: targetError } = await supabaseAdmin
-      .from("profiles").select("role, account_status").eq("id", id).single();
+      .from("profiles").select("role, account_status, email").eq("id", id).single();
     if (targetError || !target) {
       return res.status(404).json({ success: false, message: "Account not found." });
     }
     if (target.role === "super_admin" && id !== req.authUser.id) {
       return res.status(403).json({ success: false, message: "Super Admin accounts are protected." });
     }
-    if (["pending", "approved", "rejected"].includes(target.account_status)) {
-      return res.status(409).json({ success: false, message: "Use the registration review workflow for this account." });
+    if (["pending", "approved", "rejected"].includes(target.account_status) && email !== clean(target.email).toLowerCase()) {
+      return res.status(409).json({ success: false, message: "Use the registration review workflow to change an unverified email address." });
     }
 
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(id, {
-      email,
+      ...(email !== clean(target.email).toLowerCase() ? { email } : {}),
       user_metadata: { full_name: fullName, username, ...(organizationFields || {}) },
     });
     if (authError) throw authError;
@@ -162,6 +162,12 @@ export async function updateUser(req, res) {
       })
       .eq("id", id);
     if (profileError) throw profileError;
+
+    const { error: registrationError } = await supabaseAdmin
+      .from("pending_registrations")
+      .update({ full_name: fullName, username, email, ...(organizationFields ? { organization_type: organizationFields.organization_type, agency_lgu_id: organizationFields.agency_lgu_id } : {}) })
+      .eq("auth_user_id", id);
+    if (registrationError) throw registrationError;
 
     await writeMaintenanceLog({
       userId: req.authUser.id,
@@ -186,7 +192,7 @@ export async function deleteUser(req, res) {
 
     const { data: target, error: lookupError } = await supabaseAdmin
       .from("profiles")
-      .select("full_name, username, role, account_status")
+      .select("full_name, username, role, account_status, email")
       .eq("id", id)
       .single();
 
@@ -197,12 +203,19 @@ export async function deleteUser(req, res) {
       return res.status(403).json({ success: false, message: "Super Admin accounts are protected." });
     }
 
-    if (["pending", "approved"].includes(target.account_status)) {
-      return res.status(409).json({ success: false, message: "Resolve the registration application before deleting this account." });
-    }
+    // Capture linked registration IDs before auth deletion (FKs may clear the link).
+    const { data: applications, error: applicationError } = await supabaseAdmin
+      .from("pending_registrations").select("id").eq("auth_user_id", id);
+    if (applicationError) throw applicationError;
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
     if (error) throw error;
+
+    if (applications?.length) {
+      const { error: cleanupError } = await supabaseAdmin
+        .from("pending_registrations").delete().in("id", applications.map(a => a.id));
+      if (cleanupError) throw new Error("Authentication account deleted, but registration cleanup failed: " + cleanupError.message);
+    }
 
     await writeMaintenanceLog({
       userId: req.authUser.id,
