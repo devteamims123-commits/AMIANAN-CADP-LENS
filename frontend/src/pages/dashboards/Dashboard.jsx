@@ -99,7 +99,7 @@ function Dashboard() {
   const [province, setProvince] = useState("all");
   const [siteId, setSiteId] = useState("all");
   const [period, setPeriod] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState("Ongoing");
+  const [selectedStatus, setSelectedStatus] = useState("all");
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -227,11 +227,13 @@ function Dashboard() {
 
     return records.filter((record) =>
 
-      filteredSiteIds.has(record.cadp_site_id)
+      filteredSiteIds.has(record.cadp_site_id) &&
+      (selectedStatus === "all" ||
+        (String(record.status || "Unspecified").trim() || "Unspecified").toLowerCase() === selectedStatus.toLowerCase())
 
     );
 
-  }, [records, filteredSiteIds]);
+  }, [records, filteredSiteIds, selectedStatus]);
 
   /*
 
@@ -265,16 +267,6 @@ function Dashboard() {
       0
     );
   }, [siteFilteredRecords, period]);
-
-  // Only the status KPI changes when the dropdown selection changes.
-  // Existing province, CADP site, and year filters still apply.
-  const selectedStatusCount = useMemo(() => {
-    return countPrograms(filteredRecords.filter(
-      (record) =>
-        String(record.status || "").trim().toLowerCase() ===
-        selectedStatus.toLowerCase()
-    ));
-  }, [filteredRecords, selectedStatus]);
 
   const statusData = useMemo(() => {
 
@@ -787,6 +779,16 @@ function Dashboard() {
 
         </label>
 
+        <label>
+          <span>Program Status</span>
+          <select value={selectedStatus} onChange={(event) => setSelectedStatus(event.target.value)}>
+            <option value="all">All Statuses</option>
+            {[...new Set([...STATUS_ORDER, ...records.map((record) => String(record.status || "Unspecified").trim() || "Unspecified")])].map((status) => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
+        </label>
+
       </section>
 
       {/* KPI CARDS */}
@@ -869,59 +871,7 @@ function Dashboard() {
 
         </article>
 
-        <article className="dashboard-card">
 
-          <div className="dashboard-card-icon">
-
-            <svg
-
-              viewBox="0 0 24 24"
-
-              aria-hidden="true"
-
-            >
-
-              <path d="m4 17 5-5 3 3 6-7h-4V6h7v7h-2V9.7l-6.9 8.1-3.1-3.1-3.6 3.7L4 17Z" />
-
-            </svg>
-
-          </div>
-
-          <div className="dashboard-card-content">
-
-            <span>Program Status</span>
-
-            <strong>{selectedStatusCount}</strong>
-
-            <select
-              aria-label="Select program or project status"
-              value={selectedStatus}
-              onChange={(event) => setSelectedStatus(event.target.value)}
-              style={{
-                display: "block",
-                width: "100%",
-                maxWidth: "190px",
-                marginTop: "9px",
-                padding: "5px 25px 5px 8px",
-                border: "1px solid #d2dcd4",
-                borderRadius: "7px",
-                background: "#fbfcfb",
-                color: "#2b4031",
-                fontSize: "11px",
-                fontFamily: "inherit",
-                cursor: "pointer",
-              }}
-            >
-              {STATUS_ORDER.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-
-          </div>
-
-        </article>
 
         <article className="dashboard-card">
 

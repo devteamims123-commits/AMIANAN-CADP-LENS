@@ -183,7 +183,7 @@
 
 .dashboard-filters {
   display: grid;
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 
   margin-bottom: 20px;
@@ -198,6 +198,7 @@
 }
 
 .dashboard-filters label {
+  min-width: 0;
   display: grid;
   gap: 7px;
 }
@@ -212,6 +213,8 @@
 }
 
 .dashboard-filters select {
+  box-sizing: border-box;
+  min-width: 0;
   width: 100%;
   min-height: 42px;
 
@@ -253,7 +256,7 @@
 
 .dashboard-cards {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 
   margin-bottom: 20px;
@@ -671,7 +674,7 @@
 }
 
 .dashboard-bar-fill {
-  min-width: 3px;
+  min-width: 0;
   height: 100%;
 
   border-radius: 20px;
@@ -894,9 +897,11 @@
 }
 
 @media (max-width: 1100px) {
+  .dashboard-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .dashboard-cards {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
