@@ -100,7 +100,12 @@ function DashboardShell() {
           ).length;
           if ((data || []).length < pageSize) break;
         }
-        if (active) setPendingInbox({ scope: inboxScope, count });
+        const { count: unread, error: unreadError } = await supabase.from("funding_endorsements")
+          .select("id", { count: "exact", head: true })
+          .eq("sender_id", profile.id).is("sender_read_at", null)
+          .in("status", ["accepted", "declined", "transferred"]);
+        if (unreadError) throw unreadError;
+        if (active) setPendingInbox({ scope: inboxScope, count: count + (unread || 0) });
       } catch (error) {
         console.warn("Unable to refresh funding inbox badge:", error);
       } finally {
@@ -110,10 +115,12 @@ function DashboardShell() {
     refresh();
     const timer = window.setInterval(refresh, 15000);
     window.addEventListener("focus", refresh);
+    window.addEventListener("cadp-funding-refresh", refresh);
     return () => {
       active = false;
       window.clearInterval(timer);
       window.removeEventListener("focus", refresh);
+      window.removeEventListener("cadp-funding-refresh", refresh);
     };
   }, [canViewPrograms, profile?.id, inboxOrganization, inboxType, inboxScope, location.pathname]);
 
@@ -301,8 +308,8 @@ function DashboardShell() {
               Programs / Projects
               {pendingCount > 0 && (
                 <span className="nav-funding-inbox-dot" role="img"
-                  aria-label={`${pendingCount} pending funding requests`}
-                  title={`${pendingCount} pending funding requests`} />
+                  aria-label={`${pendingCount} funding notifications`}
+                  title={`${pendingCount} funding notifications`} />
               )}
 
             </button>

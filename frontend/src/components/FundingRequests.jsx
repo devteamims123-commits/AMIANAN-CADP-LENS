@@ -105,11 +105,14 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
 
   const load = useCallback(async () => {
 
-    const result = await supabase.from("funding_endorsements").select("*").order("created_at", { ascending: false });
-
-    if (result.error) throw result.error;
-
-    setRequests(result.data || []);
+    const rows = [];
+    for (let offset = 0; ; offset += 500) {
+      const result = await supabase.from("funding_endorsements").select("*").order("created_at", { ascending: false }).order("id").range(offset, offset + 499);
+      if (result.error) throw result.error;
+      rows.push(...(result.data || []));
+      if ((result.data || []).length < 500) break;
+    }
+    setRequests(rows);
 
   }, []);
 
@@ -177,6 +180,16 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
   const sent = requests.filter((item) => item.sender_id === profile?.id);
 
   const pending = received.filter((item) => item.status === "pending").length;
+  const isUnread = (item) => item.sender_id === profile?.id && item.sender_read_at === null && ["accepted", "declined", "transferred"].includes(item.status);
+  const unread = sent.filter(isUnread).length;
+  const totalNotifications = pending + unread;
+  async function markRead(item) {
+    if (!isUnread(item)) return;
+    const { error } = await supabase.rpc("cadp_mark_funding_response_read", { p_request_id: item.id });
+    if (error) { setError(error.message); return; }
+    window.dispatchEvent(new Event("cadp-funding-refresh"));
+    try { await load(); } catch (err) { setError(err.message); }
+  }
 
   const visible = tab === "sent" ? sent : received;
 
@@ -285,13 +298,13 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
 
   return <>
 
-    <button type="button" className="cadp-inbox-button" title="Funding requests" aria-label={`Funding inbox, ${pending} pending requests`}
+    <button type="button" className="cadp-inbox-button" title="Funding requests" aria-label={`Funding inbox, ${totalNotifications} funding notifications`}
 
-      onClick={() => { setInbox(true); setTab("received"); setSelectedId(null); setNotice(""); }}>
+      onClick={() => { setInbox(true); setTab(pending || !unread ? "received" : "sent"); setSelectedId(null); setNotice(""); }}>
 
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg>
 
-      {pending > 0 && <span className="cadp-inbox-badge">{pending > 99 ? "99+" : pending}</span>}
+      {totalNotifications > 0 && <span className="cadp-inbox-badge">{totalNotifications > 99 ? "99+" : totalNotifications}</span>}
 
     </button>
 
@@ -326,7 +339,7 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
 
     {inbox && <Dialog title="Funding Requests" onClose={closeInbox}>
 
-      <div className="cadp-request-tabs"><button type="button" aria-pressed={tab === "received"} onClick={() => { setTab("received"); setSelectedId(null); setTransferOpen(false); }}>Inbox ({pending})</button><button type="button" aria-pressed={tab === "sent"} onClick={() => { setTab("sent"); setSelectedId(null); setTransferOpen(false); }}>Sent</button><button type="button" disabled={busy} onClick={() => load().then(() => setError("")).catch((err) => setError(err.message))}>Refresh</button></div>
+      <div className="cadp-request-tabs"><button type="button" aria-pressed={tab === "received"} onClick={() => { setTab("received"); setSelectedId(null); setTransferOpen(false); }}>Inbox ({pending})</button><button type="button" aria-pressed={tab === "sent"} onClick={() => { setTab("sent"); setSelectedId(null); setTransferOpen(false); }}>Sent {unread > 0 && <span className="cadp-response-dot" aria-label={`${unread} unread responses`} />}</button><button type="button" disabled={busy} onClick={() => load().then(() => setError("")).catch((err) => setError(err.message))}>Refresh</button></div>
 
       {error && <p role="alert" className="cadp-request-error">{error}</p>}
 
@@ -392,9 +405,9 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
 
         {visible.length === 0 && <p>No {tab === "sent" ? "sent" : "received"} requests yet.</p>}
 
-        {visible.map((item) => <button type="button" key={item.id} onClick={() => { setSelectedId(item.id); setTransferOpen(false); setReply(""); setNotice(""); }}>
+        {visible.map((item) => <button type="button" key={item.id} onClick={() => { setSelectedId(item.id); setTransferOpen(false); setReply(""); setNotice(""); if (tab === "sent") void markRead(item); }}>
 
-          <strong>{item.project_title}</strong><span>{tab === "sent" ? `To: ${item.recipient_agency}` : `From: ${item.sender_agency}`}</span><span className="cadp-request-preview">{item.message}</span><span className="cadp-request-status" data-status={item.recipient_deleted ? "deleted" : item.status}>{item.recipient_deleted ? "Deleted by receiver" : item.status}</span><small>{new Date(item.created_at).toLocaleString()}</small>
+          <strong>{item.project_title} {tab === "sent" && isUnread(item) && <span className="cadp-response-dot" aria-label="Unread response" />}</strong><span>{tab === "sent" ? `To: ${item.recipient_agency}` : `From: ${item.sender_agency}`}</span><span className="cadp-request-preview">{item.message}</span><span className="cadp-request-status" data-status={item.recipient_deleted ? "deleted" : item.status}>{item.recipient_deleted ? "Deleted by receiver" : item.status}</span><small>{new Date(item.created_at).toLocaleString()}</small>
 
         </button>)}
 
