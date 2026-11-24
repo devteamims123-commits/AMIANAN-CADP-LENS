@@ -28,7 +28,7 @@ export async function requireAdminOrSuperAdmin(req, res, next) {
 
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("id, full_name, username, email, role")
+      .select("id, full_name, username, email, role, account_status")
       .eq("id", user.id)
       .single();
 
@@ -40,6 +40,13 @@ export async function requireAdminOrSuperAdmin(req, res, next) {
       return res.status(403).json({
         success: false,
         message: "Super Admin or Admin access is required.",
+      });
+    }
+
+    if (profile.account_status !== "active" || !user.email_confirmed_at) {
+      return res.status(403).json({
+        success: false,
+        message: "An active and email-verified account is required.",
       });
     }
 

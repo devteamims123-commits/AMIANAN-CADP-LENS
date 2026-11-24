@@ -18,12 +18,19 @@ export async function requireSuperAdmin(req, res, next) {
 
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("id, role")
+      .select("id, role, account_status")
       .eq("id", user.id)
       .single();
 
     if (profileError || !profile || profile.role !== "super_admin") {
       return res.status(403).json({ success: false, message: "Super Admin access is required." });
+    }
+
+    if (profile.account_status !== "active" || !user.email_confirmed_at) {
+      return res.status(403).json({
+        success: false,
+        message: "An active and email-verified account is required.",
+      });
     }
 
     req.authUser = user;

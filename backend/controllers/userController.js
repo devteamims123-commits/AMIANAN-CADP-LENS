@@ -30,7 +30,7 @@ export async function listUsers(req, res) {
   try {
     const { data, error } = await supabaseAdmin
       .from("profiles")
-      .select("id, full_name, username, email, role, organization, organization_type, agency_lgu_id, created_at, updated_at")
+      .select("id, full_name, username, email, role, organization, organization_type, agency_lgu_id, account_status, created_at, updated_at")
       .order("created_at", { ascending: false });
     if (error) throw error;
 
@@ -83,6 +83,10 @@ export async function createUser(req, res) {
         username,
         email,
         role,
+        account_status: "active",
+        approved_by: req.authUser.id,
+        approved_at: new Date().toISOString(),
+        rejection_reason: null,
         ...organizationFields,
         updated_at: new Date().toISOString(),
       }, { onConflict: "id" });
@@ -128,6 +132,18 @@ export async function updateUser(req, res) {
       return res.status(409).json({ success: false, message: "Username is already in use." });
     }
 
+    const { data: target, error: targetError } = await supabaseAdmin
+      .from("profiles").select("role, account_status").eq("id", id).single();
+    if (targetError || !target) {
+      return res.status(404).json({ success: false, message: "Account not found." });
+    }
+    if (target.role === "super_admin" && id !== req.authUser.id) {
+      return res.status(403).json({ success: false, message: "Super Admin accounts are protected." });
+    }
+    if (["pending", "approved", "rejected"].includes(target.account_status)) {
+      return res.status(409).json({ success: false, message: "Use the registration review workflow for this account." });
+    }
+
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(id, {
       email,
       user_metadata: { full_name: fullName, username, ...(organizationFields || {}) },
@@ -170,7 +186,7 @@ export async function deleteUser(req, res) {
 
     const { data: target, error: lookupError } = await supabaseAdmin
       .from("profiles")
-      .select("full_name, username, role")
+      .select("full_name, username, role, account_status")
       .eq("id", id)
       .single();
 
@@ -179,6 +195,10 @@ export async function deleteUser(req, res) {
     }
     if (target.role === "super_admin") {
       return res.status(403).json({ success: false, message: "Super Admin accounts are protected." });
+    }
+
+    if (["pending", "approved"].includes(target.account_status)) {
+      return res.status(409).json({ success: false, message: "Resolve the registration application before deleting this account." });
     }
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
