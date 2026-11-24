@@ -67,8 +67,11 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
   const [requests, setRequests] = useState([]);
 
   const [agencies, setAgencies] = useState([]);
-  const [recipientType, setRecipientType] = useState("Agency");
-  const [transferType, setTransferType] = useState("Agency");
+  const canSelectLGU = normalize(profile?.organization_type) === "agency";
+  const [requestedRecipientType, setRecipientType] = useState("Agency");
+  const recipientType = canSelectLGU ? requestedRecipientType : "Agency";
+  const [requestedTransferType, setTransferType] = useState("Agency");
+  const transferType = canSelectLGU ? requestedTransferType : "Agency";
 
   const [inbox, setInbox] = useState(false);
 
@@ -202,7 +205,7 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
 
     event.preventDefault();
 
-    if (busy) return;
+    if (busy || loading || !recipientOptions.some((item) => item.agency === recipient)) return;
 
     setBusy(true); setError(""); setNotice("");
 
@@ -256,7 +259,7 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
 
     event.preventDefault();
 
-    if (busy || !mayRespond || !transferOptions.some((item) => item.agency === transferAgency)) return;
+    if (busy || loading || !mayRespond || !transferOptions.some((item) => item.agency === transferAgency)) return;
 
     setBusy(true); setError(""); setNotice("");
 
@@ -299,9 +302,9 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
         <p><strong>{endorsementProject.intervention}</strong></p>
 
         <label>Recipient Type
-          <select value={recipientType} disabled={busy || loading} onChange={(event) => { setRecipientType(event.target.value); setRecipient(""); }}>
+          <select value={recipientType} disabled={busy || loading || !canSelectLGU} onChange={(event) => { setRecipientType(event.target.value); setRecipient(""); }}>
             <option value="Agency">Agency</option>
-            <option value="LGU">LGU</option>
+            {canSelectLGU && <option value="LGU">LGU</option>}
           </select>
         </label>
         <label>Receiving {recipientType}
@@ -315,7 +318,7 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
 
         {error && <p role="alert" className="cadp-request-error">{error}</p>}
 
-        <div className="cadp-request-footer"><button type="button" disabled={busy} onClick={closeEndorsement}>Cancel</button><button className="cadp-primary" disabled={busy || loading || !recipient || !message.trim()}>{busy ? "Sending…" : "Send Request"}</button></div>
+        <div className="cadp-request-footer"><button type="button" disabled={busy} onClick={closeEndorsement}>Cancel</button><button className="cadp-primary" disabled={busy || loading || !recipientOptions.some((item) => item.agency === recipient) || !message.trim()}>{busy ? "Sending…" : "Send Request"}</button></div>
 
       </form>
 
@@ -365,9 +368,9 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
 
             <h4>Transfer to another organization</h4>
             <label>Recipient Type
-              <select value={transferType} disabled={busy || loading} onChange={(event) => { setTransferType(event.target.value); setTransferAgency(""); }}>
+              <select value={transferType} disabled={busy || loading || !canSelectLGU} onChange={(event) => { setTransferType(event.target.value); setTransferAgency(""); }}>
                 <option value="Agency">Agency</option>
-                <option value="LGU">LGU</option>
+                {canSelectLGU && <option value="LGU">LGU</option>}
               </select>
             </label>
             <label>Receiving {transferType}
@@ -379,7 +382,7 @@ export default function FundingRequests({ profile, endorsementProject, onCloseEn
             {!loading && transferOptions.length === 0 && <p>No eligible {transferType === "Agency" ? "agencies" : "LGUs"} are available.</p>}
           <label>Message<textarea required rows={3} maxLength={4000} disabled={busy} value={transferMessage} onChange={(event) => setTransferMessage(event.target.value)} /></label>
 
-          <div className="cadp-request-footer"><button type="button" disabled={busy} onClick={() => setTransferOpen(false)}>Cancel</button><button className="cadp-primary" disabled={busy || loading || !transferAgency || !transferMessage.trim()}>{busy ? "Transferring…" : "Transfer Request"}</button></div>
+          <div className="cadp-request-footer"><button type="button" disabled={busy} onClick={() => setTransferOpen(false)}>Cancel</button><button className="cadp-primary" disabled={busy || loading || !transferOptions.some((item) => item.agency === transferAgency) || !transferMessage.trim()}>{busy ? "Transferring…" : "Transfer Request"}</button></div>
 
         </form>}
 
