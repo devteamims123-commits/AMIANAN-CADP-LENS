@@ -877,7 +877,6 @@ function UserManagement() {
                         user.id ===
                         currentUserId;
 
-                      const reviewManaged = applications.some(a => a.auth_user_id === user.id) && accountStatuses[user.id] !== "active";
 
                        const protectedSuperAdmin =
                         user.role ===
@@ -932,7 +931,7 @@ function UserManagement() {
                               <button
                                 type="button"
                                 className="um-edit"
-                                disabled={reviewManaged || applicationLoading || Boolean(applicationError)}
+                                disabled={protectedSuperAdmin || applicationLoading || Boolean(applicationError)}
                                 onClick={() =>
                                   openEdit(
                                     user
@@ -946,7 +945,7 @@ function UserManagement() {
                                 type="button"
                                 className="um-delete"
                                 disabled={
-                                  isSelf || reviewManaged || applicationLoading || Boolean(applicationError) ||
+                                  isSelf || applicationLoading || Boolean(applicationError) ||
                                   protectedSuperAdmin
                                 }
                                 onClick={() =>
