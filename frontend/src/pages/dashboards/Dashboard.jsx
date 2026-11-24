@@ -1075,6 +1075,10 @@ function Dashboard() {
 
             </div>
 
+            <div className="dashboard-financial-total">
+              <span>Total</span>
+              <strong>{siteSummary.reduce((sum, site) => sum + site.programCount, 0)}</strong>
+            </div>
           </div>
 
           <div className="dashboard-bars">
