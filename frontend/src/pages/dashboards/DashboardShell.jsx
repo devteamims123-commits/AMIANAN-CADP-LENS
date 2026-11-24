@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
@@ -70,6 +70,53 @@ function DashboardShell() {
   
 
   const canViewPrograms = canViewCADPSites || role === "user";
+  const [pendingInbox, setPendingInbox] = useState({ scope: "", count: 0 });
+  const inboxOrganization = (profile?.organization || "").trim().toLowerCase();
+  const inboxType = profile?.organization_type || "";
+  const inboxScope = JSON.stringify([profile?.id, inboxOrganization, inboxType, role]);
+  const pendingCount = canViewPrograms && pendingInbox.scope === inboxScope ? pendingInbox.count : 0;
+
+  useEffect(() => {
+    if (!canViewPrograms || !profile?.id || !inboxOrganization || !inboxType) return;
+    let active = true;
+    let running = false;
+    const refresh = async () => {
+      if (!active || running) return;
+      running = true;
+      try {
+        let count = 0;
+        const pageSize = 500;
+        for (let offset = 0; active; offset += pageSize) {
+          const { data, error } = await supabase.from("funding_endorsements")
+            .select("id, recipient_agency")
+            .eq("status", "pending")
+            .eq("recipient_deleted", false)
+            .eq("recipient_organization_type", inboxType)
+            .order("id")
+            .range(offset, offset + pageSize - 1);
+          if (error) throw error;
+          count += (data || []).filter((item) =>
+            (item.recipient_agency || "").trim().toLowerCase() === inboxOrganization
+          ).length;
+          if ((data || []).length < pageSize) break;
+        }
+        if (active) setPendingInbox({ scope: inboxScope, count });
+      } catch (error) {
+        console.warn("Unable to refresh funding inbox badge:", error);
+      } finally {
+        running = false;
+      }
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 15000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [canViewPrograms, profile?.id, inboxOrganization, inboxType, inboxScope, location.pathname]);
+
 
   const canViewUserManagement = role === "super_admin";
   const canRegisterAgencyLGU = role === "super_admin";
@@ -252,6 +299,11 @@ function DashboardShell() {
             >
 
               Programs / Projects
+              {pendingCount > 0 && (
+                <span className="nav-funding-inbox-dot" role="img"
+                  aria-label={`${pendingCount} pending funding requests`}
+                  title={`${pendingCount} pending funding requests`} />
+              )}
 
             </button>
 

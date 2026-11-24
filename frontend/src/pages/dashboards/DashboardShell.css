@@ -522,3 +522,13 @@
   .logout-dialog { padding: 24px; }
   .logout-dialog .logout-dialog-brand-text strong { font-size: 15px; }
 }
+
+/* Pending funding inbox indicator */
+.sidebar-link .nav-funding-inbox-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 50%;
+  background: #dc2626;
+}
