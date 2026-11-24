@@ -1234,6 +1234,20 @@ function ProgramsProjects() {
 
 
 
+  // Completion requires every positive annual financial target to be funded.
+  const isFullyFunded = (projectId, values, contributions = fundingContributions) => {
+    if (!projectId) return false;
+    const periods = TARGET_PERIODS.filter((period) => Number(values[period.financialFormField]) > 0);
+    return periods.length > 0 && periods.every((period) => {
+      const target = Math.round(Number(values[period.financialFormField]) * 100);
+      const funded = contributions.filter((item) =>
+        String(item.program_project_id) === String(projectId) && item.target_year === period.year
+      ).reduce((total, item) => total + Math.round(Number(item.amount || 0) * 100), 0);
+      return Number.isFinite(target) && funded >= target;
+    });
+  };
+  const completionAvailable = !loading && isFullyFunded(editingId, form);
+
   const updateForm = (field, value) => {
 
 
@@ -1910,6 +1924,18 @@ function ProgramsProjects() {
       );
 
 
+
+      if (form.status === "Completed") {
+        if (!editingId) throw new Error("New projects cannot be marked Completed.");
+        const { data: latestFunding, error: latestFundingError } = await supabase
+          .from("project_funding_contributions")
+          .select("program_project_id, target_year, amount")
+          .eq("program_project_id", editingId);
+        if (latestFundingError) throw latestFundingError;
+        if (!isFullyFunded(editingId, form, latestFunding || [])) {
+          throw new Error("All annual financial targets must be fully funded before marking this project Completed.");
+        }
+      }
 
       const payload = {
 
@@ -6237,7 +6263,7 @@ function ProgramsProjects() {
 
 
 
-                  value={form.status}
+                  value={form.status === "Completed" && !completionAvailable ? "" : form.status}
 
 
 
@@ -6273,7 +6299,10 @@ function ProgramsProjects() {
 
 
 
-                  {STATUS_OPTIONS.map((status) => (
+                  {form.status === "Completed" && !completionAvailable && (
+                    <option value="" disabled>Select a valid status</option>
+                  )}
+                  {STATUS_OPTIONS.filter((status) => status !== "Completed" || completionAvailable).map((status) => (
 
 
 
@@ -6306,6 +6335,11 @@ function ProgramsProjects() {
 
 
                 </select>
+                {editingId && !completionAvailable && (
+                  <small className="programs-auto-field-note">
+                    Completed is available only when all financial targets are fully funded.
+                  </small>
+                )}
 
 
 
