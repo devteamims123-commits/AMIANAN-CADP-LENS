@@ -100,6 +100,7 @@ function Dashboard() {
   const [siteId, setSiteId] = useState("all");
   const [period, setPeriod] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [activeStatus, setActiveStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -483,83 +484,24 @@ function Dashboard() {
 
   };
 
-  /*
-
-   * Create a conic-gradient from the real status counts.
-
-   * No chart library is required.
-
-   */
-
-  const donutBackground = useMemo(() => {
-
-    const total = statusData.reduce(
-
-      (sum, item) => sum + item.value,
-
-      0
-
-    );
-
-    if (!total) {
-
-      return "#e8eee9";
-
-    }
-
-    let current = 0;
-
-    const segments = statusData.map(
-
-      (item, index) => {
-
-        const start = current;
-
-        const percentage =
-
-          (item.value / total) * 100;
-
-        current += percentage;
-
-        const color =
-
-          STATUS_COLORS[item.label] ||
-
-          [
-
-            "#225c36",
-
-            "#d6b84b",
-
-            "#78967f",
-
-            "#b98542",
-
-            "#6e806f",
-
-          ][index % 5];
-
-        return `${color} ${start}% ${current}%`;
-
-      }
-
-    );
-
-    return `conic-gradient(${segments.join(
-
-      ", "
-
-    )})`;
-
-  }, [statusData]);
-
-  const totalStatusRecords = statusData.reduce(
-
-    (total, item) => total + item.value,
-
-    0
-
-  );
+  const totalStatusRecords = statusData.reduce((sum, item) => sum + item.value, 0);
+  const statusColor = (item, index) => STATUS_COLORS[item.label] ||
+    ["#225c36", "#d6b84b", "#78967f", "#b98542", "#6e806f"][index % 5];
+  const percentage = (item) => totalStatusRecords > 0
+    ? (item.value / totalStatusRecords * 100).toFixed(2) : "0.00";
+  const activeItem = statusData.find((item) => item.label === activeStatus);
+  const arcPoint = (fraction) => {
+    const angle = fraction * 2 * Math.PI - Math.PI / 2;
+    return `${50 + 37.5 * Math.cos(angle)} ${50 + 37.5 * Math.sin(angle)}`;
+  };
+  let offset = 0;
+  const segments = statusData.map((item, index) => {
+    const length = totalStatusRecords > 0 ? item.value / totalStatusRecords * 100 : 0;
+    const segment = { ...item, length, offset, color: statusColor(item, index) };
+    offset += length;
+    return segment;
+  });
+  useEffect(() => { setActiveStatus(null); }, [statusData]);
 
   if (loading) {
 
@@ -951,30 +893,35 @@ function Dashboard() {
 
             <div className="dashboard-donut-layout">
 
-              <div
-
-                className="dashboard-donut"
-
-                style={{
-
-                  background: donutBackground,
-
-                }}
-
-              >
-
+              <div className="dashboard-donut" onPointerLeave={() => setActiveStatus(null)}>
+                <svg className="dashboard-donut-svg" viewBox="0 0 100 100" aria-label="Program status distribution">
+                  {segments.filter((item) => item.length > 0).map((item) => (
+                    <path key={item.label}
+                      d={item.length >= 100 - 1e-9
+                        ? `M ${arcPoint(0)} A 37.5 37.5 0 0 1 ${arcPoint(0.5)} A 37.5 37.5 0 0 1 ${arcPoint(1)}`
+                        : `M ${arcPoint(item.offset / 100)} A 37.5 37.5 0 ${item.length > 50 ? 1 : 0} 1 ${arcPoint((item.offset + item.length) / 100)}`}
+                      fill="none" stroke={item.color} strokeWidth="25"
+                      className={`dashboard-donut-segment${activeStatus === item.label ? " is-active" : ""}`}
+                      onPointerEnter={() => setActiveStatus(item.label)}
+                      onClick={() => setActiveStatus(item.label)}
+                      onFocus={() => setActiveStatus(item.label)}
+                      onBlur={() => setActiveStatus(null)}
+                      onKeyDown={(event) => { if (event.key === "Escape") setActiveStatus(null); }}
+                      tabIndex={0} aria-label={`${item.label}: ${item.value} programs, ${percentage(item)}%`}
+                    />
+                  ))}
+                </svg>
                 <div className="dashboard-donut-center">
-
-                  <strong>
-
-                    {totalStatusRecords}
-
-                  </strong>
-
+                  <strong>{totalStatusRecords}</strong>
                   <span>Total</span>
-
                 </div>
-
+                {activeItem && (
+                  <div className="dashboard-status-tooltip" role="tooltip">
+                    <strong>{activeItem.label}</strong>
+                    <span>Programs / Projects: {activeItem.value}</span>
+                    <span>Percentage: <b>{percentage(activeItem)}%</b></span>
+                  </div>
+                )}
               </div>
 
               <div className="dashboard-legend">
@@ -985,9 +932,16 @@ function Dashboard() {
 
                     <div
 
-                      className="dashboard-legend-row"
-
+                      className="dashboard-legend-row dashboard-status-legend-row"
                       key={item.label}
+                      tabIndex={0}
+                      aria-label={`${item.label}: ${item.value} programs, ${percentage(item)}%`}
+                      onPointerEnter={() => setActiveStatus(item.label)}
+                      onPointerLeave={() => setActiveStatus(null)}
+                      onClick={() => setActiveStatus(item.label)}
+                      onFocus={() => setActiveStatus(item.label)}
+                      onBlur={() => setActiveStatus(null)}
+                      onKeyDown={(event) => { if (event.key === "Escape") setActiveStatus(null); }}
 
                     >
 

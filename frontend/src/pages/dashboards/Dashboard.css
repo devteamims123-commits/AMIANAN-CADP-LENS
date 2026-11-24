@@ -1025,3 +1025,18 @@
     font-size: 24px;
   }
 }
+/* Status chart hover / keyboard / touch tooltip */
+.dashboard-donut-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.dashboard-donut::after, .dashboard-donut-center { pointer-events: none; }
+.dashboard-donut-segment { cursor: pointer; pointer-events: stroke; transition: filter .15s ease; }
+.dashboard-donut-segment.is-active { filter: brightness(1.12); }
+.dashboard-status-legend-row { cursor: pointer; }
+.dashboard-status-legend-row:hover { background: #f5f9f6; }
+.dashboard-status-tooltip {
+  position: absolute; z-index: 5; left: 50%; bottom: calc(100% + 8px);
+  transform: translateX(-50%); display: flex; flex-direction: column; gap: 4px;
+  width: max-content; max-width: 210px; padding: 10px 13px; border-radius: 8px;
+  background: #173b26; color: #fff; font-size: 11px; line-height: 1.5;
+  box-shadow: 0 4px 14px #0002; pointer-events: none; overflow-wrap: anywhere;
+}
+.dashboard-status-tooltip > strong { font-size: 12px; }
