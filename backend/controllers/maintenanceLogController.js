@@ -422,7 +422,7 @@ export async function listAutomaticMaintenanceLogs(req, res) {
     const size = 500;
     for (let offset = 0; ; offset += size) {
       const { data, error } = await supabaseAdmin.from("maintenance_logs")
-        .select("id, activity, module, details, performed_by, performed_by_name, performed_by_role, status, created_at")
+        .select("id, activity, module, details, performed_by, performed_by_name, performed_by_role, performed_by_organization, performed_by_organization_type, status, created_at")
         .order("created_at", { ascending: false }).order("id", { ascending: false })
         .range(offset, offset + size - 1);
       if (error) throw error;

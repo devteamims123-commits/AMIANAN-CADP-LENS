@@ -1413,6 +1413,7 @@ function AutomaticRecords({ getAccessToken }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
+  const [page, setPage] = useState(1);
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -1432,7 +1433,16 @@ function AutomaticRecords({ getAccessToken }) {
     return () => { cancelled = true; };
   }, [getAccessToken, refresh]);
   const dateKey = value => new Intl.DateTimeFormat("en-CA", {timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit"}).format(new Date(value));
-  const filtered = logs.filter(log => (!status || log.status === status) && (!date || dateKey(log.created_at) === date) && [log.activity, log.module, log.details, log.performed_by_name, log.performed_by_role].some(v => String(v || "").toLowerCase().includes(search.trim().toLowerCase())));
+  const filtered = logs.filter(log => (!status || log.status === status) && (!date || dateKey(log.created_at) === date) && [log.activity, log.module, log.details, log.performed_by_name, log.performed_by_role, log.performed_by_organization, log.performed_by_organization_type].some(v => String(v || "").toLowerCase().includes(search.trim().toLowerCase())));
+  const pageSize = 15;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const visibleLogs = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  useEffect(() => { setPage(1); }, [search, status, date, refresh]);
+  useEffect(() => { setPage(p => Math.min(p, totalPages)); }, [totalPages]);
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1)
+    .filter(n => totalPages <= 10 || n <= 2 || n >= totalPages - 2 ||
+      (currentPage <= 5 ? n <= 7 : Math.abs(n - currentPage) <= 2));
   return <main className="logs-content">
     {error && <div className="logs-alert error">{error}</div>}
     <section className="logs-card">
@@ -1443,7 +1453,20 @@ function AutomaticRecords({ getAccessToken }) {
         <button type="button" className="logs-switch-btn" onClick={() => setRefresh(v => v + 1)} disabled={loading}>Refresh</button>
         <div className="logs-toolbar-bottom"><span className="logs-count">{filtered.length} records</span></div>
       </div>
-      {loading ? <div className="logs-state"><div className="logs-loader" />Loading automatic records...</div> : error ? <div className="logs-state">Unable to load records.</div> : !filtered.length ? <div className="logs-state"><strong>No automatic records found</strong><span>Recorded system activities will appear here.</span></div> : <div className="logs-table-wrap"><table className="logs-table logs-auto-table"><thead><tr><th>Date / Time (PHT)</th><th>Activity</th><th>Module</th><th>Details</th><th>Performed By</th><th>Role</th><th>Status</th></tr></thead><tbody>{filtered.map(log => <tr key={log.id}><td>{new Date(log.created_at).toLocaleString("en-PH", {timeZone: "Asia/Manila", dateStyle: "medium", timeStyle: "short"})}</td><td><strong>{log.activity}</strong></td><td>{log.module}</td><td>{log.details}</td><td>{log.performed_by_name || "—"}</td><td>{log.performed_by_role || "—"}</td><td><span className={`logs-status ${log.status}`}>{log.status}</span></td></tr>)}</tbody></table></div>}
+      {loading ? <div className="logs-state"><div className="logs-loader" />Loading automatic records...</div> : error ? <div className="logs-state">Unable to load records.</div> : !filtered.length ? <div className="logs-state"><strong>No automatic records found</strong><span>Recorded system activities will appear here.</span></div> : <div className="logs-table-wrap"><table className="logs-table logs-auto-table"><thead><tr><th>Date / Time (PHT)</th><th>Activity</th><th>Module</th><th>Details</th><th>Performed By</th><th>Organization</th><th>Organization Type</th><th>Role</th><th>Status</th></tr></thead><tbody>{visibleLogs.map(log => <tr key={log.id}><td>{new Date(log.created_at).toLocaleString("en-PH", {timeZone: "Asia/Manila", dateStyle: "medium", timeStyle: "short"})}</td><td><strong>{log.activity}</strong></td><td>{log.module}</td><td>{log.details}</td><td>{log.performed_by_name || "—"}</td><td>{log.performed_by_organization || "—"}</td><td>{log.performed_by_organization_type || "—"}</td><td>{log.performed_by_role || "—"}</td><td><span className={`logs-status ${log.status}`}>{log.status}</span></td></tr>)}</tbody></table></div>}
+      {!loading && !error && filtered.length > 0 && (
+        <nav className="logs-pagination" aria-label="Automatic records pagination">
+          <span className="logs-pagination-count">Page {currentPage} of {totalPages} ({filtered.length} {filtered.length === 1 ? "item" : "items"})</span>
+          <button type="button" className="logs-page-arrow" aria-label="Previous page" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>‹</button>
+          {pageNumbers.map((n, i) => (
+            <span className="logs-page-group" key={n}>
+              {i > 0 && n - pageNumbers[i - 1] > 1 && <span className="logs-page-ellipsis">…</span>}
+              <button type="button" className={`logs-page-number${n === currentPage ? " current" : ""}`} aria-current={n === currentPage ? "page" : undefined} onClick={() => setPage(n)}>{n}</button>
+            </span>
+          ))}
+          <button type="button" className="logs-page-arrow" aria-label="Next page" disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}>›</button>
+        </nav>
+      )}
     </section>
   </main>;
 }
