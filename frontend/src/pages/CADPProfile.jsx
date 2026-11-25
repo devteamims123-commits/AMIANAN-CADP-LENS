@@ -5,6 +5,15 @@ import { supabase } from "../services/supabase";
 import { useProtectedAuth } from "../components/auth/ProtectedRoute";
 import "./CADPProfile.css";
 
+function safeDocumentsLink(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 function CADPProfile() {
   const navigate = useNavigate();
   const { profile, role } = useProtectedAuth();
@@ -32,6 +41,7 @@ function CADPProfile() {
           barangay,
           year_started,
           convergence_name,
+          documents_link,
           created_at
         `);
 
@@ -185,6 +195,7 @@ function CADPProfile() {
                   <th>Barangay</th>
                   <th>Year Started</th>
                   <th>Convergence Name</th>
+                  <th>Supporting Documents</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -192,13 +203,13 @@ function CADPProfile() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="profile-empty">
+                    <td colSpan="7" className="profile-empty">
                       Loading registered CADP sites...
                     </td>
                   </tr>
                 ) : filteredSites.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="profile-empty">
+                    <td colSpan="7" className="profile-empty">
                       {errorMessage
                         ? "Unable to display CADP sites."
                         : "No registered CADP sites found."}
@@ -221,6 +232,21 @@ function CADPProfile() {
                         <strong>
                           {site.convergence_name}
                         </strong>
+                      </td>
+
+                      <td>
+                        {safeDocumentsLink(site.documents_link) ? (
+                          <a
+                            href={safeDocumentsLink(site.documents_link)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: "#20683c", fontWeight: 600, textDecoration: "underline" }}
+                          >
+                            View Documents ↗
+                          </a>
+                        ) : (
+                          <span>—</span>
+                        )}
                       </td>
 
                       <td>

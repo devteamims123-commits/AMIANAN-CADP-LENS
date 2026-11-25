@@ -22,6 +22,7 @@ const initialForm = {
   yearStarted: "",
 
   convergenceName: "",
+  documentsLink: "",
 
 };
 
@@ -138,7 +139,7 @@ function CADPSiteRegistration() {
     try {
       let query = supabase.from("cadp_sites").select(`
         id, province, municipality_city, barangay, year_started,
-        convergence_name, created_at, updated_at
+        convergence_name, documents_link, created_at, updated_at
       `);
 
       if (isLGU) {
@@ -328,6 +329,7 @@ function CADPSiteRegistration() {
       yearStarted: String(site.year_started || ""),
 
       convergenceName: site.convergence_name || "",
+      documentsLink: site.documents_link || "",
 
     });
 
@@ -483,6 +485,17 @@ function CADPSiteRegistration() {
 
     }
 
+    const documentsLink = form.documentsLink.trim();
+    if (documentsLink) {
+      try {
+        const url = new URL(documentsLink);
+        if (url.protocol !== "https:" || url.username || url.password) throw new Error();
+      } catch {
+        setErrorMessage("Please enter a valid HTTPS supporting documents link.");
+        return;
+      }
+    }
+
     if (isDuplicate()) {
 
       setErrorMessage(
@@ -576,6 +589,7 @@ function CADPSiteRegistration() {
         convergence_name:
 
           form.convergenceName.trim(),
+        documents_link: documentsLink || null,
 
       };
 
@@ -1599,6 +1613,19 @@ function CADPSiteRegistration() {
 
                 </label>
 
+                <label className="cadp-full">
+                  <span>Supporting Documents Link (Optional)</span>
+                  <input
+                    type="url"
+                    value={form.documentsLink}
+                    onChange={(event) => update("documentsLink", event.target.value)}
+                    placeholder="https://drive.google.com/..."
+                    disabled={saving}
+                  />
+                  <small className="cadp-barangay-hint">
+                    Paste a shareable HTTPS link to a file or folder.
+                  </small>
+                </label>
               </div>
 
               {errorMessage && (
