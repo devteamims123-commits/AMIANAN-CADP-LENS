@@ -156,7 +156,8 @@ function CADPProfileView() {
 
             year_started,
 
-            convergence_name
+            convergence_name,
+            documents_link
 
           `)
 
@@ -656,6 +657,16 @@ function CADPProfileView() {
 
 
 
+  // Only allow HTTPS document links, including Google Drive shared folders.
+  const documentsLink = (() => {
+    try {
+      const url = new URL(site.documents_link || "");
+      return url.protocol === "https:" && !url.username && !url.password ? url.href : null;
+    } catch {
+      return null;
+    }
+  })();
+
   const field = (
 
     label,
@@ -967,6 +978,21 @@ function CADPProfileView() {
         </section>
 
 
+
+        <section className="profile-section">
+          <div className="profile-section-heading">
+            <h2>Supporting Documents</h2>
+            <p>Access shared files and folders for this CADP site.</p>
+          </div>
+          {documentsLink ? (
+            <a href={documentsLink} target="_blank" rel="noopener noreferrer"
+              style={{ display: "inline-flex", alignItems: "center", padding: "12px 18px", borderRadius: "8px", background: "#e8f2eb", color: "#20683c", fontWeight: 600, textDecoration: "underline" }}>
+              View Supporting Documents ↗
+            </a>
+          ) : (
+            <p>No supporting documents link provided.</p>
+          )}
+        </section>
 
         <section className="profile-section">
 
