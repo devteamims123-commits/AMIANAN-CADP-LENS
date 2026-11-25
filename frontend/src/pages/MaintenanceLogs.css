@@ -1207,3 +1207,14 @@
     border-bottom: none;
   }
 }
+.logs-header-actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.logs-switch-btn { min-height:48px; padding:0 18px; border:1px solid #b9d2bf; border-radius:9px; background:#edf5ef; color:#237a3b; font:600 13px Poppins,sans-serif; cursor:pointer; }
+.logs-switch-btn:hover { background:#e0eee3; }
+.logs-switch-btn:disabled { opacity:.6; cursor:wait; }
+.logs-auto-toolbar { grid-template-columns:minmax(200px,1fr) 160px 180px auto; }
+.logs-auto-table th:nth-child(n), .logs-auto-table td:nth-child(n) { width:auto; }
+.logs-auto-table th:nth-child(4) { width:28%; }
+.logs-auto-table th:nth-child(1) { width:16%; }
+.logs-auto-table td { white-space:normal; }
+@media(max-width:900px) { .logs-auto-toolbar { grid-template-columns:1fr 1fr; } }
+@media(max-width:560px) { .logs-auto-toolbar { grid-template-columns:1fr; } .logs-header-actions { width:100%; } .logs-header-actions button { width:100%; } }

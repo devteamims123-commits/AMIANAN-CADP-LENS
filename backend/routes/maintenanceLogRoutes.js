@@ -4,6 +4,7 @@ import { requireAdminOrSuperAdmin } from "../middleware/requireAdminOrSuperAdmin
 
 import {
   listMaintenanceLogs,
+  listAutomaticMaintenanceLogs,
   createMaintenanceLog,
   updateMaintenanceLog,
   deleteMaintenanceLog,
@@ -29,6 +30,7 @@ router.use((req, res, next) => {
 ========================================= */
 
 router.get("/", listMaintenanceLogs);
+router.get("/automatic", listAutomaticMaintenanceLogs);
 
 router.post("/", createMaintenanceLog);
 

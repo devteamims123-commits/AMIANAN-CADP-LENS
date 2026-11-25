@@ -415,3 +415,24 @@ export async function deleteMaintenanceLog(req, res) {
     });
   }
 }
+
+export async function listAutomaticMaintenanceLogs(req, res) {
+  try {
+    const logs = [];
+    const size = 500;
+    for (let offset = 0; ; offset += size) {
+      const { data, error } = await supabaseAdmin.from("maintenance_logs")
+        .select("id, activity, module, details, performed_by, performed_by_name, performed_by_role, status, created_at")
+        .order("created_at", { ascending: false }).order("id", { ascending: false })
+        .range(offset, offset + size - 1);
+      if (error) throw error;
+      logs.push(...(data || []));
+      if (!data || data.length < size) break;
+    }
+    res.set("Cache-Control", "no-store");
+    return res.json({ success: true, logs });
+  } catch (error) {
+    console.error("Load automatic records error:", error);
+    return res.status(500).json({ success: false, message: "Unable to load automatic records." });
+  }
+}

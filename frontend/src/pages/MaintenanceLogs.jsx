@@ -63,6 +63,7 @@ const createEmptyForm = () => ({
 
 function MaintenanceLogs() {
   const [logs, setLogs] = useState([]);
+  const [automatic, setAutomatic] = useState(false);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] =
@@ -100,7 +101,7 @@ function MaintenanceLogs() {
   const [deleting, setDeleting] =
     useState(false);
 
-  const getAccessToken = async () => {
+  const getAccessToken = useCallback(async () => {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -112,7 +113,7 @@ function MaintenanceLogs() {
     }
 
     return session.access_token;
-  };
+  }, []);
 
   const loadLogs = useCallback(async () => {
     setLoading(true);
@@ -519,18 +520,21 @@ function MaintenanceLogs() {
             AMIANAN-CADP L.E.N.S.
           </p>
 
-          <h1>Maintenance</h1>
+          <h1>{automatic ? "Automatic Maintenance Records" : "Maintenance"}</h1>
 
           <span>
-            Record and monitor system
-            maintenance activities.
+            {automatic ? "Monitor automatically recorded system activities." : "Record and monitor system maintenance activities."}
           </span>
         </div>
 
+        <div className="logs-header-actions">
+        <button type="button" className="logs-switch-btn" aria-pressed={automatic} onClick={() => setAutomatic(v => !v)}>
+          {automatic ? "Manual Maintenance" : "Automatic Records"}
+        </button>
         <button
           type="button"
           className="logs-add-btn"
-          onClick={openAdd}
+          onClick={() => { setAutomatic(false); openAdd(); }}
         >
           <span className="logs-add-icon">
             +
@@ -540,10 +544,12 @@ function MaintenanceLogs() {
             Add Maintenance
           </span>
         </button>
+        </div>
       </header>
 
       {/* CONTENT */}
 
+      {automatic ? <AutomaticRecords getAccessToken={getAccessToken} /> : (
       <main className="logs-content">
         {success && (
           <div className="logs-alert success">
@@ -771,6 +777,7 @@ function MaintenanceLogs() {
           )}
         </section>
       </main>
+      )}
 
       {/* ADD / EDIT MODAL */}
 
@@ -1396,6 +1403,49 @@ function ViewField({
       <p>{value || "—"}</p>
     </div>
   );
+}
+
+function AutomaticRecords({ getAccessToken }) {
+  const [logs, setLogs] = useState([]);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [date, setDate] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [refresh, setRefresh] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true); setError("");
+      try {
+        const token = await getAccessToken();
+        const response = await fetch(`${API_URL}/api/maintenance-logs/automatic`, {
+          headers: { Authorization: `Bearer ${token}` }, cache: "no-store"
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || "Unable to load automatic records.");
+        if (!cancelled) setLogs(result.logs || []);
+      } catch (err) { if (!cancelled) { setLogs([]); setError(err.message); } }
+      finally { if (!cancelled) setLoading(false); }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [getAccessToken, refresh]);
+  const dateKey = value => new Intl.DateTimeFormat("en-CA", {timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit"}).format(new Date(value));
+  const filtered = logs.filter(log => (!status || log.status === status) && (!date || dateKey(log.created_at) === date) && [log.activity, log.module, log.details, log.performed_by_name, log.performed_by_role].some(v => String(v || "").toLowerCase().includes(search.trim().toLowerCase())));
+  return <main className="logs-content">
+    {error && <div className="logs-alert error">{error}</div>}
+    <section className="logs-card">
+      <div className="logs-toolbar logs-auto-toolbar">
+        <div className="logs-search"><span className="logs-search-icon">⌕</span><input type="search" aria-label="Search automatic records" placeholder="Search automatic records..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+        <select aria-label="Status" value={status} onChange={e => setStatus(e.target.value)}><option value="">All Status</option>{[...new Set(logs.map(l => l.status))].filter(Boolean).map(v => <option key={v} value={v}>{v}</option>)}</select>
+        <input type="date" aria-label="Date" value={date} onChange={e => setDate(e.target.value)} />
+        <button type="button" className="logs-switch-btn" onClick={() => setRefresh(v => v + 1)} disabled={loading}>Refresh</button>
+        <div className="logs-toolbar-bottom"><span className="logs-count">{filtered.length} records</span></div>
+      </div>
+      {loading ? <div className="logs-state"><div className="logs-loader" />Loading automatic records...</div> : error ? <div className="logs-state">Unable to load records.</div> : !filtered.length ? <div className="logs-state"><strong>No automatic records found</strong><span>Recorded system activities will appear here.</span></div> : <div className="logs-table-wrap"><table className="logs-table logs-auto-table"><thead><tr><th>Date / Time (PHT)</th><th>Activity</th><th>Module</th><th>Details</th><th>Performed By</th><th>Role</th><th>Status</th></tr></thead><tbody>{filtered.map(log => <tr key={log.id}><td>{new Date(log.created_at).toLocaleString("en-PH", {timeZone: "Asia/Manila", dateStyle: "medium", timeStyle: "short"})}</td><td><strong>{log.activity}</strong></td><td>{log.module}</td><td>{log.details}</td><td>{log.performed_by_name || "—"}</td><td>{log.performed_by_role || "—"}</td><td><span className={`logs-status ${log.status}`}>{log.status}</span></td></tr>)}</tbody></table></div>}
+    </section>
+  </main>;
 }
 
 export default MaintenanceLogs;
